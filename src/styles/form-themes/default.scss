@@ -440,6 +440,44 @@ label[data-label-for] {
 }
 
 /* ========================================
+   Info Block Styles
+   ======================================== */
+
+/* Info block container */
+[data-info-block] {
+  flex: 1;
+  background: #E8E0ED;
+  border-bottom: 1px solid #ccc;
+}
+
+/* Info content */
+[data-info-content] {
+  padding: 12px 16px;
+  font-size: 13px;
+  line-height: 1.5;
+  color: #333;
+}
+
+/* Info block markdown styles */
+[data-info-content] strong {
+  color: #512B58;
+  font-weight: bold;
+}
+
+[data-info-content] em {
+  font-style: italic;
+}
+
+[data-info-content] a {
+  color: #512B58;
+  text-decoration: underline;
+}
+
+[data-info-content] a:hover {
+  color: #3d2042;
+}
+
+/* ========================================
    Table Field Styles
    ======================================== */
 

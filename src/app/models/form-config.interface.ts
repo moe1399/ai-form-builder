@@ -1,7 +1,7 @@
 /**
  * Supported form field types
  */
-export type FieldType = 'text' | 'email' | 'number' | 'textarea' | 'select' | 'checkbox' | 'radio' | 'date' | 'table';
+export type FieldType = 'text' | 'email' | 'number' | 'textarea' | 'select' | 'checkbox' | 'radio' | 'date' | 'table' | 'info';
 
 /**
  * Column types supported within tables (subset of FieldType)
@@ -79,6 +79,7 @@ export interface FormFieldConfig {
   width?: number; // Width as flex proportion (1-4), defaults to 1
   sectionId?: string; // Reference to FormSection.id
   tableConfig?: TableConfig; // Configuration for table field type
+  content?: string; // Markdown content for info field type
 }
 
 /**

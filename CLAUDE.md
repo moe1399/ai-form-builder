@@ -315,6 +315,7 @@ The main application (`src/app/app.ts` and `src/app/app.html`) provides a test h
 - `radio`: Radio button group (mutually exclusive single selection)
 - `checkbox`: Checkbox group (multiple selection) or single boolean toggle
 - `table`: Repeatable table with configurable columns
+- `info`: Static information block with markdown support
 
 #### Radio and Checkbox Groups
 
@@ -367,6 +368,49 @@ For `radio` and `checkbox` field types, use the `options` property to define cho
 - `data-checkbox-single`: Single boolean checkbox (no options)
 - `data-option-value`: The value of the option
 - `data-option-selected`: "true" | "false" for checkbox selection state
+
+#### Info Field Type
+
+The `info` field type displays static information blocks with markdown support. Use it for instructions, notes, or important messages within the form.
+
+**Info Configuration**:
+```typescript
+{
+  name: 'fundingNote',
+  label: 'Funding Information',  // Used internally, not displayed
+  type: 'info',
+  sectionId: 'funding-section',
+  content: '* If the teacher will be charged to more than one funding code during the year, please specify the dates in the notes section below and attach a copy of the relevant **Study Award/Principal Sabbatical Coding Notice**.'
+}
+```
+
+**Markdown Support**:
+- `**bold**` or `__bold__` → **bold**
+- `*italic*` or `_italic_` → *italic*
+- `[link text](url)` → clickable link
+- Line breaks preserved
+
+**Data Attributes for Info Block Styling**:
+- `data-info-block`: Container element
+- `data-info-content`: Content element with parsed markdown
+
+**Styling** (in theme):
+```scss
+[data-info-block] {
+  background: #E8E0ED;
+}
+
+[data-info-content] {
+  padding: 12px 16px;
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+[data-info-content] strong {
+  color: #512B58;
+  font-weight: bold;
+}
+```
 
 #### Table Field Type
 

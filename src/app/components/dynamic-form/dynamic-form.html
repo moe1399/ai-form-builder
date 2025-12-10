@@ -9,47 +9,61 @@
 
   <!-- Field template defined inside form for formControlName to work -->
   <ng-template #fieldTemplate let-field>
-    <div
-      [attr.data-field-name]="field.name"
-      [attr.data-field-type]="field.type"
-      [attr.data-field-valid]="!hasError(field.name)"
-      [attr.data-field-touched]="form.get(field.name)?.touched"
-      [attr.data-field-dirty]="form.get(field.name)?.dirty"
-      [attr.data-field-disabled]="form.get(field.name)?.disabled"
-      [attr.data-field-required]="isFieldRequired(field)"
-      [attr.data-field-width]="field.width || 1"
-      [ngClass]="field.cssClass">
+    <!-- Info field type - renders markdown content block -->
+    @if (field.type === 'info') {
+      <div
+        [attr.data-field-name]="field.name"
+        [attr.data-field-type]="field.type"
+        data-info-block
+        [ngClass]="field.cssClass">
+        <div
+          data-info-content
+          [innerHTML]="parseMarkdown(field.content)">
+        </div>
+      </div>
+    } @else {
+      <!-- Regular field types -->
+      <div
+        [attr.data-field-name]="field.name"
+        [attr.data-field-type]="field.type"
+        [attr.data-field-valid]="!hasError(field.name)"
+        [attr.data-field-touched]="form.get(field.name)?.touched"
+        [attr.data-field-dirty]="form.get(field.name)?.dirty"
+        [attr.data-field-disabled]="form.get(field.name)?.disabled"
+        [attr.data-field-required]="isFieldRequired(field)"
+        [attr.data-field-width]="field.width || 1"
+        [ngClass]="field.cssClass">
 
-      <label
-        [for]="field.name"
-        [attr.data-label-for]="field.name">
-        {{ field.label }}
-        @if (isFieldRequired(field)) {
-          <span data-required-indicator>*</span>
-        }
-        @if (field.description) {
-          <span
-            data-info-icon
-            (click)="togglePopover(field.name); $event.stopPropagation()"
-            [attr.data-popover-open]="activePopover === field.name"
-            title="Click for more information">
-            &#9432;
-          </span>
-          @if (activePopover === field.name) {
-            <span data-popover>
-              <span data-popover-content>{{ field.description }}</span>
-              <button
-                type="button"
-                data-popover-close
-                (click)="closePopover(); $event.stopPropagation()">
-                &times;
-              </button>
-            </span>
+        <label
+          [for]="field.name"
+          [attr.data-label-for]="field.name">
+          {{ field.label }}
+          @if (isFieldRequired(field)) {
+            <span data-required-indicator>*</span>
           }
-        }
-      </label>
+          @if (field.description) {
+            <span
+              data-info-icon
+              (click)="togglePopover(field.name); $event.stopPropagation()"
+              [attr.data-popover-open]="activePopover === field.name"
+              title="Click for more information">
+              &#9432;
+            </span>
+            @if (activePopover === field.name) {
+              <span data-popover>
+                <span data-popover-content>{{ field.description }}</span>
+                <button
+                  type="button"
+                  data-popover-close
+                  (click)="closePopover(); $event.stopPropagation()">
+                  &times;
+                </button>
+              </span>
+            }
+          }
+        </label>
 
-      <div data-input-container>
+        <div data-input-container>
         @switch (field.type) {
           @case ('text') {
             <input
@@ -300,6 +314,7 @@
         }
       </div>
     </div>
+    }
   </ng-template>
 
   <div data-form-section="fields">

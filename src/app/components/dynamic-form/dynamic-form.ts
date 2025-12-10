@@ -66,6 +66,11 @@ export class DynamicForm implements OnInit, OnDestroy {
     });
 
     sortedFields.forEach((field) => {
+      // Skip info fields - they don't have form controls
+      if (field.type === 'info') {
+        return;
+      }
+
       if (field.type === 'table' && field.tableConfig) {
         // Create FormArray for table rows
         group[field.name] = this.createTableFormArray(field);
@@ -813,5 +818,35 @@ export class DynamicForm implements OnInit, OnDestroy {
    */
   hasColumnRequiredValidation(column: TableColumnConfig): boolean {
     return column.validations?.some((v) => v.type === 'required') ?? false;
+  }
+
+  // ============================================
+  // Info Field Methods
+  // ============================================
+
+  /**
+   * Parse markdown content to HTML
+   * Supports: **bold**, *italic*, [links](url), line breaks
+   */
+  parseMarkdown(content: string | undefined): string {
+    if (!content) return '';
+
+    let html = content
+      // Escape HTML entities first
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      // Bold: **text** or __text__
+      .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+      .replace(/__(.+?)__/g, '<strong>$1</strong>')
+      // Italic: *text* or _text_
+      .replace(/\*(.+?)\*/g, '<em>$1</em>')
+      .replace(/_(.+?)_/g, '<em>$1</em>')
+      // Links: [text](url)
+      .replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank" rel="noopener">$1</a>')
+      // Line breaks
+      .replace(/\n/g, '<br>');
+
+    return html;
   }
 }

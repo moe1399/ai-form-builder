@@ -223,24 +223,41 @@
             </select>
           </div>
 
-          <div class="form-group">
-            <label>Placeholder</label>
-            <input
-              type="text"
-              [ngModel]="field.placeholder"
-              (ngModelChange)="updateFieldPlaceholder(fieldIndex, $event)"
-            />
-          </div>
+          <!-- Info block content (only for info type) -->
+          @if (field.type === 'info') {
+            <div class="form-group">
+              <label>Content (Markdown supported)</label>
+              <textarea
+                rows="6"
+                [ngModel]="field.content"
+                (ngModelChange)="updateFieldContent(fieldIndex, $event)"
+                placeholder="Enter information text. Supports **bold**, *italic*, and [links](url)"
+              ></textarea>
+              <small class="form-hint">Supports: **bold**, *italic*, [link text](url), line breaks</small>
+            </div>
+          }
 
-          <div class="form-group">
-            <label>Description (help text)</label>
-            <textarea
-              rows="2"
-              [ngModel]="field.description"
-              (ngModelChange)="updateFieldDescription(fieldIndex, $event)"
-              placeholder="Optional help text shown via info icon"
-            ></textarea>
-          </div>
+          <!-- Placeholder (not for info type) -->
+          @if (field.type !== 'info') {
+            <div class="form-group">
+              <label>Placeholder</label>
+              <input
+                type="text"
+                [ngModel]="field.placeholder"
+                (ngModelChange)="updateFieldPlaceholder(fieldIndex, $event)"
+              />
+            </div>
+
+            <div class="form-group">
+              <label>Description (help text)</label>
+              <textarea
+                rows="2"
+                [ngModel]="field.description"
+                (ngModelChange)="updateFieldDescription(fieldIndex, $event)"
+                placeholder="Optional help text shown via info icon"
+              ></textarea>
+            </div>
+          }
 
           <!-- Inline Group Settings -->
           <div class="form-group">
@@ -543,59 +560,61 @@
             </div>
           }
 
-          <!-- Validations -->
-          <div class="validations-section">
-            <h4>Validations</h4>
-            <button class="btn-sm btn-primary" (click)="addValidation(fieldIndex)">+ Add Validation</button>
+          <!-- Validations (not for info type) -->
+          @if (field.type !== 'info') {
+            <div class="validations-section">
+              <h4>Validations</h4>
+              <button class="btn-sm btn-primary" (click)="addValidation(fieldIndex)">+ Add Validation</button>
 
-            @for (validation of field.validations; track $index; let vi = $index) {
-              <div class="validation-item">
-                <div class="form-group">
-                  <label>Type</label>
-                  <select
-                    [ngModel]="validation.type"
-                    (ngModelChange)="updateValidationType(fieldIndex, vi, $event)">
-                    @for (vType of validationTypes; track vType) {
-                      <option [value]="vType">{{ vType }}</option>
-                    }
-                  </select>
-                </div>
-
-                @if (validation.type === 'minLength' || validation.type === 'maxLength' || validation.type === 'min' || validation.type === 'max') {
+              @for (validation of field.validations; track $index; let vi = $index) {
+                <div class="validation-item">
                   <div class="form-group">
-                    <label>Value</label>
-                    <input
-                      type="number"
-                      [ngModel]="validation.value"
-                      (ngModelChange)="updateValidationValue(fieldIndex, vi, $event)"
-                    />
+                    <label>Type</label>
+                    <select
+                      [ngModel]="validation.type"
+                      (ngModelChange)="updateValidationType(fieldIndex, vi, $event)">
+                      @for (vType of validationTypes; track vType) {
+                        <option [value]="vType">{{ vType }}</option>
+                      }
+                    </select>
                   </div>
-                }
 
-                @if (validation.type === 'pattern') {
+                  @if (validation.type === 'minLength' || validation.type === 'maxLength' || validation.type === 'min' || validation.type === 'max') {
+                    <div class="form-group">
+                      <label>Value</label>
+                      <input
+                        type="number"
+                        [ngModel]="validation.value"
+                        (ngModelChange)="updateValidationValue(fieldIndex, vi, $event)"
+                      />
+                    </div>
+                  }
+
+                  @if (validation.type === 'pattern') {
+                    <div class="form-group">
+                      <label>Pattern (regex)</label>
+                      <input
+                        type="text"
+                        [ngModel]="validation.value"
+                        (ngModelChange)="updateValidationValue(fieldIndex, vi, $event)"
+                      />
+                    </div>
+                  }
+
                   <div class="form-group">
-                    <label>Pattern (regex)</label>
+                    <label>Error Message</label>
                     <input
                       type="text"
-                      [ngModel]="validation.value"
-                      (ngModelChange)="updateValidationValue(fieldIndex, vi, $event)"
+                      [ngModel]="validation.message"
+                      (ngModelChange)="updateValidationMessage(fieldIndex, vi, $event)"
                     />
                   </div>
-                }
 
-                <div class="form-group">
-                  <label>Error Message</label>
-                  <input
-                    type="text"
-                    [ngModel]="validation.message"
-                    (ngModelChange)="updateValidationMessage(fieldIndex, vi, $event)"
-                  />
+                  <button class="btn-sm btn-danger" (click)="removeValidation(fieldIndex, vi)">Remove</button>
                 </div>
-
-                <button class="btn-sm btn-danger" (click)="removeValidation(fieldIndex, vi)">Remove</button>
-              </div>
-            }
-          </div>
+              }
+            </div>
+          }
         </div>
       } @else {
         <div class="empty-editor">

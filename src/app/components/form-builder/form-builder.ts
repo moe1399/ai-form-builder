@@ -41,7 +41,7 @@ export class FormBuilder {
   message = signal<{ type: 'success' | 'error'; text: string } | null>(null);
 
   // Field types for dropdown
-  fieldTypes: FieldType[] = ['text', 'email', 'number', 'textarea', 'date', 'select', 'radio', 'checkbox', 'table'];
+  fieldTypes: FieldType[] = ['text', 'email', 'number', 'textarea', 'date', 'select', 'radio', 'checkbox', 'table', 'info'];
 
   // Table column types for dropdown
   tableColumnTypes: TableColumnType[] = ['text', 'number', 'date', 'select'];
@@ -324,6 +324,19 @@ export class FormBuilder {
       delete field.tableConfig;
     }
 
+    // Initialize content when switching to info type
+    if (type === 'info' && !field.content) {
+      field.content = '';
+      // Info fields don't have validations or options
+      delete field.validations;
+      delete field.options;
+    }
+
+    // Clear content when switching away from info type
+    if (type !== 'info') {
+      delete field.content;
+    }
+
     this.updateField(index, field);
   }
 
@@ -339,6 +352,11 @@ export class FormBuilder {
 
   updateFieldDescription(index: number, description: string): void {
     const field = { ...this.currentConfig().fields[index], description };
+    this.updateField(index, field);
+  }
+
+  updateFieldContent(index: number, content: string): void {
+    const field = { ...this.currentConfig().fields[index], content };
     this.updateField(index, field);
   }
 
