@@ -1,7 +1,7 @@
 /**
  * Supported form field types
  */
-export type FieldType = 'text' | 'email' | 'number' | 'textarea' | 'select' | 'checkbox' | 'radio' | 'date' | 'table' | 'info';
+export type FieldType = 'text' | 'email' | 'number' | 'textarea' | 'select' | 'checkbox' | 'radio' | 'date' | 'table' | 'info' | 'datagrid';
 
 /**
  * Column types supported within tables (subset of FieldType)
@@ -37,6 +37,74 @@ export interface TableConfig {
   maxRows?: number; // For dynamic mode: maximum rows (default: 10)
   addRowLabel?: string; // Button text for adding rows (default: 'Add row')
   removeRowLabel?: string; // Button aria-label for removing rows (default: 'Remove')
+}
+
+/**
+ * Column types supported within datagrids
+ */
+export type DataGridColumnType = 'text' | 'number' | 'date' | 'select';
+
+/**
+ * DataGrid column group configuration for two-tier headers
+ */
+export interface DataGridColumnGroup {
+  id: string;
+  label: string;
+  columnIds: string[]; // References to DataGridColumnConfig.name
+}
+
+/**
+ * Computed column formula configuration
+ */
+export interface DataGridFormula {
+  type: 'expression';
+  expression: string; // e.g., "students * 0.5" or "col1 + col2"
+}
+
+/**
+ * DataGrid column configuration
+ */
+export interface DataGridColumnConfig {
+  name: string;
+  label: string;
+  type: DataGridColumnType;
+  placeholder?: string;
+  validations?: ValidationRule[];
+  options?: { label: string; value: any }[]; // For select columns
+  width?: number; // Column width (1-4)
+  computed?: boolean; // If true, column is read-only and calculated
+  formula?: DataGridFormula; // Formula for computed columns
+  showInColumnTotal?: boolean; // Include in total row calculation (default: true for number)
+  showInRowTotal?: boolean; // Include in row total calculation (default: true for number)
+}
+
+/**
+ * DataGrid row label configuration
+ */
+export interface DataGridRowLabel {
+  id: string; // Unique identifier for the row
+  label: string; // Display label (e.g., "Year 1", "13+")
+}
+
+/**
+ * DataGrid totals configuration
+ */
+export interface DataGridTotalsConfig {
+  showRowTotals?: boolean; // Add a total column on the right
+  rowTotalLabel?: string; // Header for total column (default: "Total")
+  showColumnTotals?: boolean; // Add a total row at the bottom
+  columnTotalLabel?: string; // Label for total row (default: "Total")
+}
+
+/**
+ * DataGrid field configuration
+ */
+export interface DataGridConfig {
+  columns: DataGridColumnConfig[];
+  rowLabels: DataGridRowLabel[];
+  columnGroups?: DataGridColumnGroup[];
+  rowLabelHeader?: string; // Header for the row label column (e.g., "Year Level")
+  totals?: DataGridTotalsConfig;
 }
 
 /**
@@ -79,6 +147,7 @@ export interface FormFieldConfig {
   width?: number; // Width as flex proportion (1-4), defaults to 1
   sectionId?: string; // Reference to FormSection.id
   tableConfig?: TableConfig; // Configuration for table field type
+  datagridConfig?: DataGridConfig; // Configuration for datagrid field type
   content?: string; // Markdown content for info field type
 }
 

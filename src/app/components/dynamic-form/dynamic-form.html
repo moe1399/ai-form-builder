@@ -162,7 +162,7 @@
                       (change)="toggleCheckboxOption(field.name, option.value)"
                       data-checkbox-input
                     />
-                    <span data-checkbox-label>{{ option.label }}</span>
+                    <span data-checkbox-label [innerHTML]="parseMarkdown(option.label)"></span>
                   </label>
                 }
               </div>
@@ -303,6 +303,246 @@
                     </button>
                   </div>
                 }
+              </div>
+            }
+          }
+          @case ('datagrid') {
+            @if (field.datagridConfig) {
+              <div
+                data-datagrid-container
+                [attr.data-datagrid-name]="field.name"
+                [attr.data-datagrid-valid]="isDataGridValid(field.name)"
+                [attr.data-has-column-groups]="hasDataGridColumnGroups(field)"
+                [attr.data-has-row-totals]="hasDataGridRowTotals(field)"
+                [attr.data-has-column-totals]="hasDataGridColumnTotals(field)">
+
+                <table data-datagrid [attr.data-datagrid-for]="field.name">
+                  <!-- Column width definitions with explicit equal widths -->
+                  <colgroup>
+                    <col data-col-row-label style="width: 80px" />
+                    @for (column of field.datagridConfig.columns; track column.name) {
+                      <col data-col-data [style.width]="getDataGridDataColumnWidth(field)" />
+                    }
+                    @if (hasDataGridRowTotals(field)) {
+                      <col data-col-total style="width: 80px" />
+                    }
+                  </colgroup>
+
+                  <!-- Two-tier header: Column Groups -->
+                  @if (hasDataGridColumnGroups(field)) {
+                    <thead data-datagrid-header data-datagrid-header-groups>
+                      <!-- First row: Group headers and ungrouped columns in column order -->
+                      <tr data-datagrid-group-row>
+                        <!-- Row label column header (spans both rows) -->
+                        <th
+                          data-datagrid-header-cell
+                          data-row-label-header
+                          rowspan="2">
+                          {{ field.datagridConfig.rowLabelHeader || '' }}
+                        </th>
+
+                        <!-- Headers in column order -->
+                        @for (item of getDataGridOrderedHeaderItems(field); track item.type === 'group' ? item.group.id : item.column.name) {
+                          @if (item.type === 'group') {
+                            <th
+                              data-datagrid-header-cell
+                              data-column-group
+                              [attr.data-column-group-id]="item.group.id"
+                              [attr.data-column-group-label]="item.group.label"
+                              [attr.colspan]="item.group.columnIds.length">
+                              {{ item.group.label }}
+                            </th>
+                          } @else {
+                            <th
+                              data-datagrid-header-cell
+                              data-column-ungrouped
+                              [attr.data-column-name]="item.column.name"
+                              [attr.data-column-type]="item.column.type"
+                              [attr.data-column-computed]="item.column.computed || false"
+                              [attr.data-column-width]="item.column.width || 1"
+                              rowspan="2">
+                              {{ item.column.label }}
+                              @if (!item.column.computed && hasDataGridColumnRequiredValidation(item.column)) {
+                                <span data-required-indicator>*</span>
+                              }
+                            </th>
+                          }
+                        }
+
+                        <!-- Row total header (spans both rows) -->
+                        @if (hasDataGridRowTotals(field)) {
+                          <th
+                            data-datagrid-header-cell
+                            data-row-total-header
+                            rowspan="2">
+                            {{ field.datagridConfig.totals?.rowTotalLabel || 'Total' }}
+                          </th>
+                        }
+                      </tr>
+
+                      <!-- Second row: Individual columns within groups (in column order) -->
+                      <tr data-datagrid-column-row>
+                        @for (item of getDataGridOrderedHeaderItems(field); track item.type === 'group' ? item.group.id : item.column.name) {
+                          @if (item.type === 'group') {
+                            @for (columnName of item.group.columnIds; track columnName) {
+                              <th
+                                data-datagrid-header-cell
+                                [attr.data-column-name]="columnName"
+                                [attr.data-column-type]="getDataGridColumn(field, columnName)?.type"
+                                [attr.data-column-computed]="getDataGridColumn(field, columnName)?.computed || false"
+                                [attr.data-column-width]="getDataGridColumn(field, columnName)?.width || 1"
+                                [attr.data-in-group]="item.group.id">
+                                {{ getDataGridColumn(field, columnName)?.label }}
+                                @if (!getDataGridColumn(field, columnName)?.computed && hasDataGridColumnRequiredValidation(getDataGridColumn(field, columnName)!)) {
+                                  <span data-required-indicator>*</span>
+                                }
+                              </th>
+                            }
+                          }
+                        }
+                      </tr>
+                    </thead>
+                  } @else {
+                    <!-- Single-tier header (no groups) -->
+                    <thead data-datagrid-header>
+                      <tr data-datagrid-header-row>
+                        <th data-datagrid-header-cell data-row-label-header>
+                          {{ field.datagridConfig.rowLabelHeader || '' }}
+                        </th>
+                        @for (column of field.datagridConfig.columns; track column.name) {
+                          <th
+                            data-datagrid-header-cell
+                            [attr.data-column-name]="column.name"
+                            [attr.data-column-type]="column.type"
+                            [attr.data-column-computed]="column.computed || false"
+                            [attr.data-column-width]="column.width || 1">
+                            {{ column.label }}
+                            @if (!column.computed && hasDataGridColumnRequiredValidation(column)) {
+                              <span data-required-indicator>*</span>
+                            }
+                          </th>
+                        }
+                        @if (hasDataGridRowTotals(field)) {
+                          <th data-datagrid-header-cell data-row-total-header>
+                            {{ field.datagridConfig.totals?.rowTotalLabel || 'Total' }}
+                          </th>
+                        }
+                      </tr>
+                    </thead>
+                  }
+
+                  <!-- Data rows -->
+                  <tbody data-datagrid-body [formGroupName]="field.name">
+                    @for (rowLabel of field.datagridConfig.rowLabels; track rowLabel.id) {
+                      <tr
+                        data-datagrid-row
+                        [formGroupName]="rowLabel.id"
+                        [attr.data-row-id]="rowLabel.id"
+                        [attr.data-row-label]="rowLabel.label">
+
+                        <!-- Row label cell -->
+                        <td data-datagrid-cell data-row-label-cell>
+                          {{ rowLabel.label }}
+                        </td>
+
+                        <!-- Data cells -->
+                        @for (column of field.datagridConfig.columns; track column.name) {
+                          <td
+                            data-datagrid-cell
+                            [attr.data-column-name]="column.name"
+                            [attr.data-column-type]="column.type"
+                            [attr.data-column-computed]="column.computed || false"
+                            [attr.data-cell-valid]="column.computed || !hasDataGridCellError(field.name, rowLabel.id, column.name)">
+
+                            @if (column.computed) {
+                              <!-- Computed cell (read-only) -->
+                              <span data-datagrid-computed-value>
+                                {{ getDataGridComputedValue(field, rowLabel.id, column) }}
+                              </span>
+                            } @else {
+                              <!-- Editable cell -->
+                              @switch (column.type) {
+                                @case ('text') {
+                                  <input
+                                    type="text"
+                                    [formControlName]="column.name"
+                                    [placeholder]="column.placeholder || ''"
+                                    data-datagrid-input
+                                    [attr.data-input-type]="column.type"
+                                  />
+                                }
+                                @case ('number') {
+                                  <input
+                                    type="number"
+                                    [formControlName]="column.name"
+                                    [placeholder]="column.placeholder || ''"
+                                    data-datagrid-input
+                                    [attr.data-input-type]="column.type"
+                                  />
+                                }
+                                @case ('date') {
+                                  <input
+                                    type="date"
+                                    [formControlName]="column.name"
+                                    data-datagrid-input
+                                    [attr.data-input-type]="column.type"
+                                  />
+                                }
+                                @case ('select') {
+                                  <select
+                                    [formControlName]="column.name"
+                                    data-datagrid-input
+                                    [attr.data-input-type]="column.type">
+                                    <option value="">--</option>
+                                    @for (option of column.options; track option.value) {
+                                      <option [value]="option.value">{{ option.label }}</option>
+                                    }
+                                  </select>
+                                }
+                              }
+                            }
+                          </td>
+                        }
+
+                        <!-- Row total cell -->
+                        @if (hasDataGridRowTotals(field)) {
+                          <td data-datagrid-cell data-row-total-cell data-is-total-column="true">
+                            <span data-datagrid-computed-value>
+                              {{ getDataGridRowTotal(field, rowLabel.id) }}
+                            </span>
+                          </td>
+                        }
+                      </tr>
+                    }
+
+                    <!-- Column totals row -->
+                    @if (hasDataGridColumnTotals(field)) {
+                      <tr data-datagrid-row data-is-total-row="true">
+                        <td data-datagrid-cell data-row-label-cell data-total-label-cell>
+                          {{ field.datagridConfig.totals?.columnTotalLabel || 'Total' }}
+                        </td>
+                        @for (column of field.datagridConfig.columns; track column.name) {
+                          <td
+                            data-datagrid-cell
+                            data-column-total-cell
+                            [attr.data-column-name]="column.name"
+                            data-is-total-row="true">
+                            <span data-datagrid-computed-value>
+                              {{ getDataGridColumnTotal(field, column.name) }}
+                            </span>
+                          </td>
+                        }
+                        @if (hasDataGridRowTotals(field)) {
+                          <td data-datagrid-cell data-grand-total-cell data-is-total-row="true" data-is-total-column="true">
+                            <span data-datagrid-computed-value>
+                              {{ getDataGridGrandTotal(field) }}
+                            </span>
+                          </td>
+                        }
+                      </tr>
+                    }
+                  </tbody>
+                </table>
               </div>
             }
           }

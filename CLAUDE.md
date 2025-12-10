@@ -212,6 +212,7 @@ Visual form builder UI for business users to create custom forms without coding.
 - Validation rule builder with multiple validation types
 - Save/load form configurations from local storage
 - JSON import/export for sharing configurations
+- URL-based sharing with compression (via `UrlSchemaService`)
 - Real-time preview integration
 - Message notifications for user actions
 
@@ -248,6 +249,20 @@ Manages persistence of form submission data.
 - `getAllForms()`: Get all saved form submissions
 
 **Storage Key Pattern**: `dynamic_form_{formId}` - Individual form data
+
+#### 5. URL Schema Service (`src/app/services/url-schema.ts`)
+Enables URL-based form schema sharing with compression.
+
+**Key Methods**:
+- `encodeSchema(config: FormConfig)`: Compress config to URL-safe base64
+- `decodeSchema(encoded: string)`: Decompress and parse config from URL
+- `generateShareUrl(config: FormConfig)`: Create shareable URL with embedded schema
+- `getSchemaFromUrl()`: Extract schema from current URL
+- `hasSchemaInUrl()`: Check if URL contains a schema
+- `clearSchemaFromUrl()`: Remove schema parameter from URL
+- `copyShareUrlToClipboard(config: FormConfig)`: Copy share URL to clipboard
+
+**URL Parameter**: `schema` - Contains compressed, URL-safe base64 encoded form config
 
 ### Theming System
 
@@ -298,6 +313,7 @@ The main application (`src/app/app.ts` and `src/app/app.html`) provides a test h
 - Configure validations and inline groups
 - Save/load configurations
 - Import/export JSON
+- URL-based sharing (generates compressed shareable URLs)
 
 #### Preview & Test View
 - Live form preview with default theme
@@ -316,6 +332,7 @@ The main application (`src/app/app.ts` and `src/app/app.html`) provides a test h
 - `checkbox`: Checkbox group (multiple selection) or single boolean toggle
 - `table`: Repeatable table with configurable columns
 - `info`: Static information block with markdown support
+- `datagrid`: Fixed-row data grid with column groups, computed columns, and totals
 
 #### Radio and Checkbox Groups
 
@@ -544,6 +561,181 @@ Tables use a hybrid responsive approach:
 - **Desktop (>640px)**: Standard table layout with columns
 - **Mobile (≤640px)**: Card layout where each row becomes a card with labeled fields stacked vertically. Column labels are shown using `::before` pseudo-elements with `attr(data-column-label)`
 
+#### DataGrid Field Type
+
+The `datagrid` field type creates a fixed-row grid with configurable row labels, column groups, computed columns, and row/column totals. Ideal for enrollment data, budget tables, or any matrix-style input.
+
+**DataGrid Configuration**:
+```typescript
+{
+  name: 'enrollmentData',
+  label: 'Student Enrollment',
+  type: 'datagrid',
+  sectionId: 'enrollment-section',
+  datagridConfig: {
+    rowLabelHeader: 'Year Level',
+    rowLabels: [
+      { id: 'year1', label: 'Year 1' },
+      { id: 'year2', label: 'Year 2' },
+      { id: 'year3', label: 'Year 3' }
+    ],
+    columnGroups: [
+      { id: 'stp', label: 'STP', columnIds: ['students', 'fte'] }
+    ],
+    columns: [
+      {
+        name: 'students',
+        label: 'Students',
+        type: 'number',
+        placeholder: '0'
+      },
+      {
+        name: 'fte',
+        label: 'FTE',
+        type: 'number',
+        computed: true,
+        formula: { type: 'expression', expression: 'students * 0.5' }
+      }
+    ],
+    totals: {
+      showRowTotals: true,
+      rowTotalLabel: 'Total',
+      showColumnTotals: true,
+      columnTotalLabel: 'Total'
+    }
+  }
+}
+```
+
+**DataGridConfig Interface**:
+```typescript
+interface DataGridConfig {
+  columns: DataGridColumnConfig[];
+  rowLabels: DataGridRowLabel[];
+  columnGroups?: DataGridColumnGroup[];
+  rowLabelHeader?: string;
+  totals?: DataGridTotalsConfig;
+}
+
+interface DataGridRowLabel {
+  id: string;    // Unique identifier for the row
+  label: string; // Display label (e.g., "Year 1")
+}
+
+interface DataGridColumnGroup {
+  id: string;
+  label: string;
+  columnIds: string[]; // References to column names
+}
+
+interface DataGridColumnConfig {
+  name: string;
+  label: string;
+  type: 'text' | 'number' | 'date' | 'select';
+  placeholder?: string;
+  validations?: ValidationRule[];
+  options?: { label: string; value: any }[];
+  width?: number;  // Column width (1-4)
+  computed?: boolean;
+  formula?: DataGridFormula;
+  showInColumnTotal?: boolean;  // Include in column totals (default: true for number)
+  showInRowTotal?: boolean;     // Include in row totals (default: true for number)
+}
+
+interface DataGridFormula {
+  type: 'expression';
+  expression: string;  // e.g., "students * 0.5" or "col1 + col2"
+}
+
+interface DataGridTotalsConfig {
+  showRowTotals?: boolean;
+  rowTotalLabel?: string;
+  showColumnTotals?: boolean;
+  columnTotalLabel?: string;
+}
+```
+
+**Column Groups (Two-Tier Headers)**:
+- Define groups with `columnGroups` array
+- Each group spans multiple columns with a shared header
+- Columns not in any group appear as single-tier headers
+
+**Computed Columns**:
+- Set `computed: true` and provide a `formula`
+- Formula expression can reference other column names as variables
+- Computed cells are read-only and display calculated values
+- Example: `{ expression: "students * 0.5" }` calculates FTE from students
+
+**Totals**:
+- Row totals: Sum of numeric columns for each row (rightmost column)
+- Column totals: Sum of values in each column (bottom row)
+- Grand total: Sum of all values (bottom-right cell)
+- Use `showInRowTotal` and `showInColumnTotal` to exclude columns from totals
+
+**Data Storage Format**:
+```typescript
+// DataGrid value is an object keyed by row ID
+{
+  "year1": { "students": 25, "level1": 10, "level2": 5 },
+  "year2": { "students": 30, "level1": 12, "level2": 8 },
+  "year3": { "students": 28, "level1": 11, "level2": 7 }
+}
+// Computed values and totals are NOT stored - calculated on render
+```
+
+**Data Attributes for DataGrid Styling**:
+- `data-datagrid-container`: Container wrapper
+- `data-datagrid-name`: Field name on container
+- `data-datagrid-valid`: "true" | "false" - Overall grid validity
+- `data-datagrid`: Table element
+- `data-datagrid-header`: Thead element
+- `data-column-group`: Column group header cell (spans multiple columns)
+- `data-column-group-id`: Group identifier
+- `data-row-label-header`: Row label column header
+- `data-datagrid-header-cell`: Column header cell
+- `data-column-computed`: "true" on computed column headers/cells
+- `data-datagrid-body`: Tbody element
+- `data-datagrid-row`: Data row element
+- `data-row-id`: Row identifier
+- `data-row-label-cell`: Row label cell
+- `data-datagrid-cell`: Data cell
+- `data-datagrid-input`: Input within cell
+- `data-datagrid-computed-value`: Computed value span
+- `data-cell-valid`: "true" | "false" - Cell validity
+- `data-is-total-row`: "true" on column totals row
+- `data-is-total-column`: "true" on row totals column
+- `data-is-grand-total`: "true" on grand total cell
+- `data-datagrid-total-value`: Total value span
+
+**Styling** (in theme):
+```scss
+[data-datagrid-container] {
+  /* container styles */
+}
+
+[data-column-group] {
+  background: #512B58;
+  color: #fff;
+  text-align: center;
+}
+
+[data-row-label-cell] {
+  background: #E8E0ED;
+  font-weight: normal;
+}
+
+[data-datagrid-computed-value] {
+  background: #f5f5f5;
+  font-style: italic;
+}
+
+[data-is-total-row] td,
+[data-is-total-column] {
+  font-weight: bold;
+  background: #f0f0f0;
+}
+```
+
 ### Validation Types
 - `required`: Field must have a value
 - `email`: Must be valid email format
@@ -619,11 +811,13 @@ src/
 │   │   └── form-config.interface.ts # Type definitions
 │   ├── services/
 │   │   ├── form-storage.ts          # Form data persistence
-│   │   └── form-builder.ts          # Config persistence
+│   │   ├── form-builder.ts          # Config persistence
+│   │   └── url-schema.ts            # URL-based schema sharing
 │   ├── app.ts                       # Test harness component
 │   ├── app.html                     # Test harness template
 │   └── app.scss                     # Test harness styles
 └── styles/
+    ├── reset.scss                   # CSS reset
     └── form-themes/
         └── default.scss             # Default theme (government style)
 ```
@@ -761,11 +955,7 @@ When working with Angular templates in this project, be aware:
 - **No arrow functions**: Create component methods instead of inline `() => {}`
 - **No complex expressions**: Keep template expressions simple, move logic to component
 
-## Design Documents
-Design documents and architecture diagrams should be placed in the `design-docs/` directory.
-
 ## Documentation Maintenance
 **Important**: When making significant changes to the codebase:
 - Update this CLAUDE.md file to reflect new architectural patterns, commands, or configurations
-- Update relevant documentation in `design-docs/` when modifying system design or architecture
 - Keep README.md synchronized with any changes to development workflow or setup instructions

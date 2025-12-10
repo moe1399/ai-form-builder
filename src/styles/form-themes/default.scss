@@ -366,6 +366,24 @@ button[data-action="submit"][data-can-submit="false"]:hover {
   flex: 1;
 }
 
+/* Checkbox label markdown styles */
+[data-checkbox-label] a {
+  color: #512B58;
+  text-decoration: underline;
+}
+
+[data-checkbox-label] a:hover {
+  color: #3d2042;
+}
+
+[data-checkbox-label] strong {
+  font-weight: bold;
+}
+
+[data-checkbox-label] em {
+  font-style: italic;
+}
+
 /* Radio/Checkbox fields - adjust input container */
 [data-field-type="radio"] [data-input-container],
 [data-field-type="checkbox"]:has([data-checkbox-group]) [data-input-container] {
@@ -735,6 +753,8 @@ button[data-table-action="remove"]:hover:not(:disabled) {
   table-layout: fixed;
 }
 
+/* Column widths are set via inline styles on <col> elements in the template */
+
 /* DataGrid Header - Two-tier with groups */
 [data-datagrid-header] {
   background: #E8E0ED;
@@ -772,22 +792,22 @@ button[data-table-action="remove"]:hover:not(:disabled) {
 }
 
 /* Row label header - spans both rows with purple bg */
+/* Width is controlled by colgroup col element */
 [data-row-label-header] {
   background: #512B58 !important;
   color: #ffffff !important;
   font-weight: bold;
   text-align: left;
-  min-width: 120px;
   border-right: 1px solid #ccc;
 }
 
 /* Row total header */
+/* Width is controlled by colgroup col element */
 [data-row-total-header] {
   background: #512B58 !important;
   color: #ffffff !important;
   font-weight: bold;
   text-align: center;
-  min-width: 80px;
   border-left: 1px solid #ccc;
 }
 
@@ -953,22 +973,8 @@ button[data-table-action="remove"]:hover:not(:disabled) {
   color: #512B58;
 }
 
-/* Column width proportions */
-[data-datagrid-header-cell][data-column-width="1"] {
-  width: 10%;
-}
-
-[data-datagrid-header-cell][data-column-width="2"] {
-  width: 15%;
-}
-
-[data-datagrid-header-cell][data-column-width="3"] {
-  width: 20%;
-}
-
-[data-datagrid-header-cell][data-column-width="4"] {
-  width: 25%;
-}
+/* Data column widths are set via inline styles on <col> elements in the template */
+/* All data columns have equal widths calculated dynamically */
 
 /* Responsive */
 @media (max-width: 640px) {

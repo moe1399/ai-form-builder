@@ -8,6 +8,8 @@ import {
   ValidationRule,
   FieldError,
   TableColumnConfig,
+  DataGridColumnConfig,
+  DataGridColumnGroup,
 } from '../../models/form-config.interface';
 import { FormStorage } from '../../services/form-storage';
 
@@ -57,7 +59,7 @@ export class DynamicForm implements OnInit, OnDestroy {
    * Initialize the form based on configuration
    */
   private initializeForm(): void {
-    const group: { [key: string]: FormControl | FormArray } = {};
+    const group: { [key: string]: FormControl | FormArray | FormGroup } = {};
     const currentConfig = this.config();
 
     // Sort fields by order if specified
@@ -74,6 +76,9 @@ export class DynamicForm implements OnInit, OnDestroy {
       if (field.type === 'table' && field.tableConfig) {
         // Create FormArray for table rows
         group[field.name] = this.createTableFormArray(field);
+      } else if (field.type === 'datagrid' && field.datagridConfig) {
+        // Create FormGroup for datagrid rows
+        group[field.name] = this.createDataGridFormGroup(field);
       } else {
         const validators = this.buildValidators(field.validations || []);
         // Initialize checkbox fields with options as arrays
@@ -134,6 +139,39 @@ export class DynamicForm implements OnInit, OnDestroy {
     });
 
     return new FormGroup(controls);
+  }
+
+  /**
+   * Create FormGroup for a datagrid field
+   * Structure: { rowId: { columnName: value, ... }, ... }
+   */
+  private createDataGridFormGroup(field: FormFieldConfig): FormGroup {
+    const datagridConfig = field.datagridConfig!;
+    const existingValue = (field.value as { [key: string]: any }) || {};
+    const group: { [key: string]: FormGroup } = {};
+
+    // Create a FormGroup for each row label
+    datagridConfig.rowLabels.forEach((rowLabel) => {
+      const rowData = existingValue[rowLabel.id] || {};
+      const rowControls: { [key: string]: FormControl } = {};
+
+      datagridConfig.columns.forEach((column) => {
+        // Skip computed columns - they don't need form controls
+        if (column.computed) {
+          return;
+        }
+
+        const validators = this.buildValidators(column.validations || []);
+        rowControls[column.name] = new FormControl(
+          { value: rowData[column.name] ?? '', disabled: field.disabled ?? false },
+          validators
+        );
+      });
+
+      group[rowLabel.id] = new FormGroup(rowControls);
+    });
+
+    return new FormGroup(group);
   }
 
   /**
@@ -268,21 +306,24 @@ export class DynamicForm implements OnInit, OnDestroy {
       this.form.get(key)?.markAsTouched();
     });
 
-    // Mark table cells as touched
+    // Mark table and datagrid cells as touched
     this.markTableFieldsTouched();
+    this.markDataGridFieldsTouched();
 
     this.updateErrors();
 
-    // Check regular form validity AND table validity
+    // Check regular form validity AND table/datagrid validity
     let isValid = true;
     const currentConfig = this.config();
 
-    // Check table fields (empty rows are OK)
     for (const field of currentConfig.fields) {
       if (field.type === 'table' && !this.isTableValid(field.name)) {
         isValid = false;
         break;
-      } else if (field.type !== 'table') {
+      } else if (field.type === 'datagrid' && !this.isDataGridValid(field.name)) {
+        isValid = false;
+        break;
+      } else if (field.type !== 'table' && field.type !== 'datagrid') {
         const control = this.form.get(field.name);
         if (control?.invalid) {
           isValid = false;
@@ -472,6 +513,10 @@ export class DynamicForm implements OnInit, OnDestroy {
     for (const field of currentConfig.fields) {
       if (field.type === 'table') {
         if (!this.isTableValid(field.name)) {
+          return false;
+        }
+      } else if (field.type === 'datagrid') {
+        if (!this.isDataGridValid(field.name)) {
           return false;
         }
       } else {
@@ -848,5 +893,367 @@ export class DynamicForm implements OnInit, OnDestroy {
       .replace(/\n/g, '<br>');
 
     return html;
+  }
+
+  // ============================================
+  // DataGrid Field Methods
+  // ============================================
+
+  /**
+   * Check if datagrid has column groups
+   */
+  hasDataGridColumnGroups(field: FormFieldConfig): boolean {
+    return (field.datagridConfig?.columnGroups?.length ?? 0) > 0;
+  }
+
+  /**
+   * Get column groups for a datagrid
+   */
+  getDataGridColumnGroups(field: FormFieldConfig): DataGridColumnGroup[] {
+    return field.datagridConfig?.columnGroups || [];
+  }
+
+  /**
+   * Get a specific column by name from a datagrid
+   */
+  getDataGridColumn(field: FormFieldConfig, columnName: string): DataGridColumnConfig | undefined {
+    return field.datagridConfig?.columns.find((c) => c.name === columnName);
+  }
+
+  /**
+   * Get columns that are not in any group
+   */
+  getDataGridUngroupedColumns(field: FormFieldConfig): DataGridColumnConfig[] {
+    const groupedColumnNames = new Set(
+      field.datagridConfig?.columnGroups?.flatMap((g) => g.columnIds) || []
+    );
+    return field.datagridConfig?.columns.filter((c) => !groupedColumnNames.has(c.name)) || [];
+  }
+
+  /**
+   * Get header items in column order (groups and ungrouped columns interleaved)
+   * Returns items in the order they should appear based on the columns array
+   */
+  getDataGridOrderedHeaderItems(
+    field: FormFieldConfig
+  ): Array<{ type: 'group'; group: DataGridColumnGroup } | { type: 'column'; column: DataGridColumnConfig }> {
+    const columns = field.datagridConfig?.columns || [];
+    const groups = field.datagridConfig?.columnGroups || [];
+
+    // Build a map of columnName -> group
+    const columnToGroup = new Map<string, DataGridColumnGroup>();
+    for (const group of groups) {
+      for (const colName of group.columnIds) {
+        columnToGroup.set(colName, group);
+      }
+    }
+
+    const result: Array<
+      { type: 'group'; group: DataGridColumnGroup } | { type: 'column'; column: DataGridColumnConfig }
+    > = [];
+    const addedGroups = new Set<string>();
+
+    for (const column of columns) {
+      const group = columnToGroup.get(column.name);
+      if (group) {
+        // Column belongs to a group - add group if not already added
+        if (!addedGroups.has(group.id)) {
+          result.push({ type: 'group', group });
+          addedGroups.add(group.id);
+        }
+      } else {
+        // Ungrouped column
+        result.push({ type: 'column', column });
+      }
+    }
+
+    return result;
+  }
+
+  /**
+   * Check if datagrid has row totals enabled
+   */
+  hasDataGridRowTotals(field: FormFieldConfig): boolean {
+    return field.datagridConfig?.totals?.showRowTotals ?? false;
+  }
+
+  /**
+   * Check if datagrid has column totals enabled
+   */
+  hasDataGridColumnTotals(field: FormFieldConfig): boolean {
+    return field.datagridConfig?.totals?.showColumnTotals ?? false;
+  }
+
+  /**
+   * Calculate equal width for each data column in a datagrid
+   * Accounts for fixed-width row label and optional row total columns
+   */
+  getDataGridDataColumnWidth(field: FormFieldConfig): string {
+    const columnCount = field.datagridConfig?.columns.length || 1;
+    const hasRowTotals = this.hasDataGridRowTotals(field);
+    const fixedWidth = hasRowTotals ? 160 : 80; // row label (80px) + optional row total (80px)
+    return `calc((100% - ${fixedWidth}px) / ${columnCount})`;
+  }
+
+  /**
+   * Get row FormGroup from datagrid
+   */
+  getDataGridRowFormGroup(fieldName: string, rowId: string): FormGroup | null {
+    const formGroup = this.form.get(fieldName) as FormGroup;
+    return (formGroup?.get(rowId) as FormGroup) || null;
+  }
+
+  /**
+   * Evaluate a formula expression with row data
+   */
+  private evaluateFormula(expression: string, rowData: Record<string, any>): number | null {
+    // Extract column references from expression
+    const columnRefs = expression.match(/[a-zA-Z_][a-zA-Z0-9_]*/g) || [];
+
+    // Check all referenced columns have values
+    for (const ref of columnRefs) {
+      const value = rowData[ref];
+      if (value === undefined || value === '' || value === null) {
+        return null;
+      }
+    }
+
+    // Substitute values and evaluate
+    let evalExpression = expression;
+    for (const ref of columnRefs) {
+      const value = parseFloat(rowData[ref]);
+      if (isNaN(value)) return null;
+      evalExpression = evalExpression.replace(new RegExp(`\\b${ref}\\b`, 'g'), String(value));
+    }
+
+    // Safe math evaluation
+    try {
+      const result = new Function(`return ${evalExpression}`)();
+      return typeof result === 'number' && !isNaN(result) && isFinite(result) ? result : null;
+    } catch {
+      return null;
+    }
+  }
+
+  /**
+   * Get computed value for a datagrid cell
+   */
+  getDataGridComputedValue(field: FormFieldConfig, rowId: string, column: DataGridColumnConfig): string {
+    if (!column.formula) return '';
+
+    const rowGroup = this.getDataGridRowFormGroup(field.name, rowId);
+    if (!rowGroup) return '';
+
+    // Get row data including computed values from other columns
+    const rowData: Record<string, any> = { ...rowGroup.value };
+
+    // Add computed columns to rowData for dependent calculations
+    field.datagridConfig?.columns.forEach((col) => {
+      if (col.computed && col.formula && col.name !== column.name) {
+        const computedResult = this.evaluateFormula(col.formula.expression, rowGroup.value);
+        if (computedResult !== null) {
+          rowData[col.name] = computedResult;
+        }
+      }
+    });
+
+    const result = this.evaluateFormula(column.formula.expression, rowData);
+    return result !== null ? result.toFixed(2) : '';
+  }
+
+  /**
+   * Get numeric computed value (for totals calculation)
+   */
+  private getDataGridComputedNumericValue(
+    field: FormFieldConfig,
+    rowId: string,
+    column: DataGridColumnConfig
+  ): number {
+    const stringValue = this.getDataGridComputedValue(field, rowId, column);
+    return stringValue ? parseFloat(stringValue) : NaN;
+  }
+
+  /**
+   * Get row total for a datagrid row
+   */
+  getDataGridRowTotal(field: FormFieldConfig, rowId: string): string {
+    const rowGroup = this.getDataGridRowFormGroup(field.name, rowId);
+    if (!rowGroup) return '';
+
+    const columns =
+      field.datagridConfig?.columns.filter(
+        (c) => c.type === 'number' && c.showInRowTotal !== false
+      ) || [];
+
+    let total = 0;
+    let hasValue = false;
+
+    for (const column of columns) {
+      let value: number;
+      if (column.computed) {
+        value = this.getDataGridComputedNumericValue(field, rowId, column);
+      } else {
+        value = parseFloat(rowGroup.get(column.name)?.value);
+      }
+      if (!isNaN(value)) {
+        total += value;
+        hasValue = true;
+      }
+    }
+
+    return hasValue ? total.toFixed(2) : '';
+  }
+
+  /**
+   * Get column total for a datagrid column
+   */
+  getDataGridColumnTotal(field: FormFieldConfig, columnName: string): string {
+    const column = this.getDataGridColumn(field, columnName);
+    if (!column || column.showInColumnTotal === false) return '';
+
+    const rowLabels = field.datagridConfig?.rowLabels || [];
+
+    let total = 0;
+    let hasValue = false;
+
+    for (const rowLabel of rowLabels) {
+      let value: number;
+      if (column.computed) {
+        value = this.getDataGridComputedNumericValue(field, rowLabel.id, column);
+      } else {
+        const rowGroup = this.getDataGridRowFormGroup(field.name, rowLabel.id);
+        value = parseFloat(rowGroup?.get(columnName)?.value);
+      }
+      if (!isNaN(value)) {
+        total += value;
+        hasValue = true;
+      }
+    }
+
+    return hasValue ? total.toFixed(2) : '';
+  }
+
+  /**
+   * Get grand total (sum of all row totals or column totals)
+   */
+  getDataGridGrandTotal(field: FormFieldConfig): string {
+    const rowLabels = field.datagridConfig?.rowLabels || [];
+    const columns =
+      field.datagridConfig?.columns.filter(
+        (c) => c.type === 'number' && c.showInRowTotal !== false
+      ) || [];
+
+    let total = 0;
+    let hasValue = false;
+
+    for (const rowLabel of rowLabels) {
+      for (const column of columns) {
+        let value: number;
+        if (column.computed) {
+          value = this.getDataGridComputedNumericValue(field, rowLabel.id, column);
+        } else {
+          const rowGroup = this.getDataGridRowFormGroup(field.name, rowLabel.id);
+          value = parseFloat(rowGroup?.get(column.name)?.value);
+        }
+        if (!isNaN(value)) {
+          total += value;
+          hasValue = true;
+        }
+      }
+    }
+
+    return hasValue ? total.toFixed(2) : '';
+  }
+
+  /**
+   * Check if datagrid is valid (all non-computed cells are valid)
+   */
+  isDataGridValid(fieldName: string): boolean {
+    const field = this.getField(fieldName);
+    if (!field || field.type !== 'datagrid') return true;
+
+    const formGroup = this.form.get(fieldName) as FormGroup;
+    if (!formGroup) return true;
+
+    for (const rowId of Object.keys(formGroup.controls)) {
+      const rowGroup = formGroup.get(rowId) as FormGroup;
+      if (rowGroup?.invalid) return false;
+    }
+
+    return true;
+  }
+
+  /**
+   * Check if datagrid cell has error
+   */
+  hasDataGridCellError(fieldName: string, rowId: string, columnName: string): boolean {
+    const rowGroup = this.getDataGridRowFormGroup(fieldName, rowId);
+    if (!rowGroup) return false;
+
+    const control = rowGroup.get(columnName);
+    if (!control) return false;
+
+    return control.invalid && control.touched;
+  }
+
+  /**
+   * Get datagrid cell error message
+   */
+  getDataGridCellErrorMessage(
+    field: FormFieldConfig,
+    rowId: string,
+    columnName: string
+  ): string {
+    const datagridConfig = field.datagridConfig;
+    if (!datagridConfig) return '';
+
+    const column = datagridConfig.columns.find((c) => c.name === columnName);
+    if (!column) return '';
+
+    const rowGroup = this.getDataGridRowFormGroup(field.name, rowId);
+    if (!rowGroup) return '';
+
+    const control = rowGroup.get(columnName);
+    if (!control || !control.errors) return '';
+
+    // Find matching validation message
+    const validations = column.validations || [];
+    for (const validation of validations) {
+      const errorKey = validation.type;
+      if (control.hasError(errorKey) || control.hasError('custom')) {
+        return validation.message;
+      }
+    }
+
+    return 'Invalid value';
+  }
+
+  /**
+   * Check if a datagrid column has required validation
+   */
+  hasDataGridColumnRequiredValidation(column: DataGridColumnConfig): boolean {
+    return column.validations?.some((v) => v.type === 'required') ?? false;
+  }
+
+  /**
+   * Mark all datagrid cells as touched (for form submission)
+   */
+  private markDataGridFieldsTouched(): void {
+    const currentConfig = this.config();
+    currentConfig.fields.forEach((field) => {
+      if (field.type === 'datagrid') {
+        const formGroup = this.form.get(field.name) as FormGroup;
+        if (formGroup) {
+          Object.keys(formGroup.controls).forEach((rowId) => {
+            const rowGroup = formGroup.get(rowId) as FormGroup;
+            if (rowGroup) {
+              Object.keys(rowGroup.controls).forEach((key) => {
+                rowGroup.get(key)?.markAsTouched();
+              });
+            }
+          });
+        }
+      }
+    });
   }
 }

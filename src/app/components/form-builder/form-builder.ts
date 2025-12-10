@@ -11,6 +11,11 @@ import {
   TableRowMode,
   TableColumnConfig,
   TableConfig,
+  DataGridColumnType,
+  DataGridColumnConfig,
+  DataGridColumnGroup,
+  DataGridRowLabel,
+  DataGridConfig,
 } from '../../models/form-config.interface';
 import { FormBuilder as FormBuilderService } from '../../services/form-builder';
 
@@ -42,7 +47,10 @@ export class FormBuilder {
   message = signal<{ type: 'success' | 'error'; text: string } | null>(null);
 
   // Field types for dropdown
-  fieldTypes: FieldType[] = ['text', 'email', 'number', 'textarea', 'date', 'select', 'radio', 'checkbox', 'table', 'info'];
+  fieldTypes: FieldType[] = ['text', 'email', 'number', 'textarea', 'date', 'select', 'radio', 'checkbox', 'table', 'info', 'datagrid'];
+
+  // DataGrid column types for dropdown
+  datagridColumnTypes: DataGridColumnType[] = ['text', 'number', 'date', 'select'];
 
   // Table column types for dropdown
   tableColumnTypes: TableColumnType[] = ['text', 'number', 'date', 'select'];
@@ -323,6 +331,24 @@ export class FormBuilder {
     // Clear tableConfig when switching away from table type
     if (type !== 'table') {
       delete field.tableConfig;
+    }
+
+    // Initialize datagridConfig when switching to datagrid type
+    if (type === 'datagrid' && !field.datagridConfig) {
+      field.datagridConfig = {
+        columns: [{ name: 'column_1', label: 'Column 1', type: 'number' }],
+        rowLabels: [{ id: 'row_1', label: 'Row 1' }],
+        rowLabelHeader: 'Row',
+        totals: {
+          showRowTotals: false,
+          showColumnTotals: false,
+        },
+      };
+    }
+
+    // Clear datagridConfig when switching away from datagrid type
+    if (type !== 'datagrid') {
+      delete field.datagridConfig;
     }
 
     // Initialize content when switching to info type
@@ -846,5 +872,576 @@ export class FormBuilder {
    */
   updateColumnOptionValue(fieldIndex: number, columnIndex: number, optionIndex: number, value: string): void {
     this.updateColumnOption(fieldIndex, columnIndex, optionIndex, { value });
+  }
+
+  // ============================================
+  // DataGrid Configuration Methods
+  // ============================================
+
+  /**
+   * Update datagrid config property
+   */
+  updateDataGridConfig(fieldIndex: number, updates: Partial<DataGridConfig>): void {
+    const field = this.currentConfig().fields[fieldIndex];
+    if (!field.datagridConfig) return;
+
+    const updatedField = {
+      ...field,
+      datagridConfig: { ...field.datagridConfig, ...updates },
+    };
+    this.updateField(fieldIndex, updatedField);
+  }
+
+  /**
+   * Update row label header
+   */
+  updateDataGridRowLabelHeader(fieldIndex: number, header: string): void {
+    this.updateDataGridConfig(fieldIndex, { rowLabelHeader: header || undefined });
+  }
+
+  // ============================================
+  // DataGrid Row Label Methods
+  // ============================================
+
+  /**
+   * Add a row label to datagrid
+   */
+  addDataGridRowLabel(fieldIndex: number): void {
+    const field = this.currentConfig().fields[fieldIndex];
+    if (!field.datagridConfig) return;
+
+    const newRowLabel: DataGridRowLabel = {
+      id: `row_${Date.now()}`,
+      label: 'New Row',
+    };
+
+    const rowLabels = [...field.datagridConfig.rowLabels, newRowLabel];
+    this.updateDataGridConfig(fieldIndex, { rowLabels });
+  }
+
+  /**
+   * Update a row label
+   */
+  updateDataGridRowLabel(fieldIndex: number, rowIndex: number, updates: Partial<DataGridRowLabel>): void {
+    const field = this.currentConfig().fields[fieldIndex];
+    if (!field.datagridConfig) return;
+
+    const rowLabels = [...field.datagridConfig.rowLabels];
+    rowLabels[rowIndex] = { ...rowLabels[rowIndex], ...updates };
+    this.updateDataGridConfig(fieldIndex, { rowLabels });
+  }
+
+  /**
+   * Remove a row label
+   */
+  removeDataGridRowLabel(fieldIndex: number, rowIndex: number): void {
+    const field = this.currentConfig().fields[fieldIndex];
+    if (!field.datagridConfig || field.datagridConfig.rowLabels.length <= 1) return;
+
+    const rowLabels = field.datagridConfig.rowLabels.filter((_, i) => i !== rowIndex);
+    this.updateDataGridConfig(fieldIndex, { rowLabels });
+  }
+
+  /**
+   * Move row label up
+   */
+  moveDataGridRowLabelUp(fieldIndex: number, rowIndex: number): void {
+    if (rowIndex === 0) return;
+    const field = this.currentConfig().fields[fieldIndex];
+    if (!field.datagridConfig) return;
+
+    const rowLabels = [...field.datagridConfig.rowLabels];
+    [rowLabels[rowIndex - 1], rowLabels[rowIndex]] = [rowLabels[rowIndex], rowLabels[rowIndex - 1]];
+    this.updateDataGridConfig(fieldIndex, { rowLabels });
+  }
+
+  /**
+   * Move row label down
+   */
+  moveDataGridRowLabelDown(fieldIndex: number, rowIndex: number): void {
+    const field = this.currentConfig().fields[fieldIndex];
+    if (!field.datagridConfig) return;
+    if (rowIndex >= field.datagridConfig.rowLabels.length - 1) return;
+
+    const rowLabels = [...field.datagridConfig.rowLabels];
+    [rowLabels[rowIndex], rowLabels[rowIndex + 1]] = [rowLabels[rowIndex + 1], rowLabels[rowIndex]];
+    this.updateDataGridConfig(fieldIndex, { rowLabels });
+  }
+
+  /**
+   * Update row label id
+   */
+  updateDataGridRowLabelId(fieldIndex: number, rowIndex: number, id: string): void {
+    this.updateDataGridRowLabel(fieldIndex, rowIndex, { id });
+  }
+
+  /**
+   * Update row label text
+   */
+  updateDataGridRowLabelText(fieldIndex: number, rowIndex: number, label: string): void {
+    this.updateDataGridRowLabel(fieldIndex, rowIndex, { label });
+  }
+
+  // ============================================
+  // DataGrid Column Methods
+  // ============================================
+
+  /**
+   * Add a column to datagrid
+   */
+  addDataGridColumn(fieldIndex: number): void {
+    const field = this.currentConfig().fields[fieldIndex];
+    if (!field.datagridConfig) return;
+
+    const newColumn: DataGridColumnConfig = {
+      name: `column_${Date.now()}`,
+      label: 'New Column',
+      type: 'number',
+    };
+
+    const columns = [...field.datagridConfig.columns, newColumn];
+    this.updateDataGridConfig(fieldIndex, { columns });
+  }
+
+  /**
+   * Update a datagrid column
+   */
+  updateDataGridColumn(fieldIndex: number, columnIndex: number, updates: Partial<DataGridColumnConfig>): void {
+    const field = this.currentConfig().fields[fieldIndex];
+    if (!field.datagridConfig) return;
+
+    const columns = [...field.datagridConfig.columns];
+    columns[columnIndex] = { ...columns[columnIndex], ...updates };
+    this.updateDataGridConfig(fieldIndex, { columns });
+  }
+
+  /**
+   * Remove a datagrid column
+   */
+  removeDataGridColumn(fieldIndex: number, columnIndex: number): void {
+    const field = this.currentConfig().fields[fieldIndex];
+    if (!field.datagridConfig || field.datagridConfig.columns.length <= 1) return;
+
+    const column = field.datagridConfig.columns[columnIndex];
+    const columns = field.datagridConfig.columns.filter((_, i) => i !== columnIndex);
+
+    // Also remove column from any column groups
+    let columnGroups = field.datagridConfig.columnGroups;
+    if (columnGroups) {
+      columnGroups = columnGroups
+        .map((group) => ({
+          ...group,
+          columnIds: group.columnIds.filter((id) => id !== column.name),
+        }))
+        .filter((group) => group.columnIds.length > 0);
+    }
+
+    this.updateDataGridConfig(fieldIndex, { columns, columnGroups });
+  }
+
+  /**
+   * Move datagrid column up (left)
+   */
+  moveDataGridColumnUp(fieldIndex: number, columnIndex: number): void {
+    if (columnIndex === 0) return;
+    const field = this.currentConfig().fields[fieldIndex];
+    if (!field.datagridConfig) return;
+
+    const columns = [...field.datagridConfig.columns];
+    [columns[columnIndex - 1], columns[columnIndex]] = [columns[columnIndex], columns[columnIndex - 1]];
+    this.updateDataGridConfig(fieldIndex, { columns });
+  }
+
+  /**
+   * Move datagrid column down (right)
+   */
+  moveDataGridColumnDown(fieldIndex: number, columnIndex: number): void {
+    const field = this.currentConfig().fields[fieldIndex];
+    if (!field.datagridConfig) return;
+    if (columnIndex >= field.datagridConfig.columns.length - 1) return;
+
+    const columns = [...field.datagridConfig.columns];
+    [columns[columnIndex], columns[columnIndex + 1]] = [columns[columnIndex + 1], columns[columnIndex]];
+    this.updateDataGridConfig(fieldIndex, { columns });
+  }
+
+  /**
+   * Update datagrid column helper methods
+   */
+  updateDataGridColumnName(fieldIndex: number, columnIndex: number, name: string): void {
+    const field = this.currentConfig().fields[fieldIndex];
+    if (!field.datagridConfig) return;
+
+    const oldName = field.datagridConfig.columns[columnIndex].name;
+
+    // Update column name
+    this.updateDataGridColumn(fieldIndex, columnIndex, { name });
+
+    // Update any column groups that reference the old name
+    const columnGroups = field.datagridConfig.columnGroups;
+    if (columnGroups) {
+      const updatedGroups = columnGroups.map((group) => ({
+        ...group,
+        columnIds: group.columnIds.map((id) => (id === oldName ? name : id)),
+      }));
+      this.updateDataGridConfig(fieldIndex, { columnGroups: updatedGroups });
+    }
+  }
+
+  updateDataGridColumnLabel(fieldIndex: number, columnIndex: number, label: string): void {
+    this.updateDataGridColumn(fieldIndex, columnIndex, { label });
+  }
+
+  updateDataGridColumnType(fieldIndex: number, columnIndex: number, type: DataGridColumnType): void {
+    this.updateDataGridColumn(fieldIndex, columnIndex, { type });
+  }
+
+  updateDataGridColumnPlaceholder(fieldIndex: number, columnIndex: number, placeholder: string): void {
+    this.updateDataGridColumn(fieldIndex, columnIndex, { placeholder: placeholder || undefined });
+  }
+
+  updateDataGridColumnWidth(fieldIndex: number, columnIndex: number, width: number): void {
+    this.updateDataGridColumn(fieldIndex, columnIndex, { width: Number(width) });
+  }
+
+  updateDataGridColumnComputed(fieldIndex: number, columnIndex: number, computed: boolean): void {
+    const updates: Partial<DataGridColumnConfig> = { computed };
+    if (computed) {
+      updates.formula = { type: 'expression', expression: '' };
+    } else {
+      updates.formula = undefined;
+    }
+    this.updateDataGridColumn(fieldIndex, columnIndex, updates);
+  }
+
+  updateDataGridColumnFormula(fieldIndex: number, columnIndex: number, expression: string): void {
+    this.updateDataGridColumn(fieldIndex, columnIndex, {
+      formula: { type: 'expression', expression },
+    });
+  }
+
+  updateDataGridColumnShowInColumnTotal(fieldIndex: number, columnIndex: number, show: boolean): void {
+    this.updateDataGridColumn(fieldIndex, columnIndex, { showInColumnTotal: show });
+  }
+
+  updateDataGridColumnShowInRowTotal(fieldIndex: number, columnIndex: number, show: boolean): void {
+    this.updateDataGridColumn(fieldIndex, columnIndex, { showInRowTotal: show });
+  }
+
+  // ============================================
+  // DataGrid Column Validation Methods
+  // ============================================
+
+  /**
+   * Add validation to datagrid column
+   */
+  addDataGridColumnValidation(fieldIndex: number, columnIndex: number): void {
+    const field = this.currentConfig().fields[fieldIndex];
+    if (!field.datagridConfig) return;
+
+    const column = field.datagridConfig.columns[columnIndex];
+    const validations = [
+      ...(column.validations || []),
+      { type: 'required', message: 'This field is required' } as ValidationRule,
+    ];
+    this.updateDataGridColumn(fieldIndex, columnIndex, { validations });
+  }
+
+  /**
+   * Update datagrid column validation
+   */
+  updateDataGridColumnValidation(
+    fieldIndex: number,
+    columnIndex: number,
+    validationIndex: number,
+    updates: Partial<ValidationRule>
+  ): void {
+    const field = this.currentConfig().fields[fieldIndex];
+    if (!field.datagridConfig) return;
+
+    const column = field.datagridConfig.columns[columnIndex];
+    const validations = [...(column.validations || [])];
+    validations[validationIndex] = { ...validations[validationIndex], ...updates };
+    this.updateDataGridColumn(fieldIndex, columnIndex, { validations });
+  }
+
+  /**
+   * Remove datagrid column validation
+   */
+  removeDataGridColumnValidation(fieldIndex: number, columnIndex: number, validationIndex: number): void {
+    const field = this.currentConfig().fields[fieldIndex];
+    if (!field.datagridConfig) return;
+
+    const column = field.datagridConfig.columns[columnIndex];
+    const validations = (column.validations || []).filter((_, i) => i !== validationIndex);
+    this.updateDataGridColumn(fieldIndex, columnIndex, { validations });
+  }
+
+  /**
+   * Update datagrid column validation type
+   */
+  updateDataGridColumnValidationType(
+    fieldIndex: number,
+    columnIndex: number,
+    validationIndex: number,
+    type: string
+  ): void {
+    this.updateDataGridColumnValidation(fieldIndex, columnIndex, validationIndex, { type: type as any });
+  }
+
+  /**
+   * Update datagrid column validation value
+   */
+  updateDataGridColumnValidationValue(
+    fieldIndex: number,
+    columnIndex: number,
+    validationIndex: number,
+    value: any
+  ): void {
+    this.updateDataGridColumnValidation(fieldIndex, columnIndex, validationIndex, { value });
+  }
+
+  /**
+   * Update datagrid column validation message
+   */
+  updateDataGridColumnValidationMessage(
+    fieldIndex: number,
+    columnIndex: number,
+    validationIndex: number,
+    message: string
+  ): void {
+    this.updateDataGridColumnValidation(fieldIndex, columnIndex, validationIndex, { message });
+  }
+
+  // ============================================
+  // DataGrid Column Options Methods (for select type)
+  // ============================================
+
+  /**
+   * Add option to datagrid select column
+   */
+  addDataGridColumnOption(fieldIndex: number, columnIndex: number): void {
+    const field = this.currentConfig().fields[fieldIndex];
+    if (!field.datagridConfig) return;
+
+    const column = field.datagridConfig.columns[columnIndex];
+    const options = [...(column.options || []), { label: 'New Option', value: '' }];
+    this.updateDataGridColumn(fieldIndex, columnIndex, { options });
+  }
+
+  /**
+   * Update datagrid column option
+   */
+  updateDataGridColumnOption(
+    fieldIndex: number,
+    columnIndex: number,
+    optionIndex: number,
+    updates: { label?: string; value?: string }
+  ): void {
+    const field = this.currentConfig().fields[fieldIndex];
+    if (!field.datagridConfig) return;
+
+    const column = field.datagridConfig.columns[columnIndex];
+    const options = [...(column.options || [])];
+    options[optionIndex] = { ...options[optionIndex], ...updates };
+    this.updateDataGridColumn(fieldIndex, columnIndex, { options });
+  }
+
+  /**
+   * Remove datagrid column option
+   */
+  removeDataGridColumnOption(fieldIndex: number, columnIndex: number, optionIndex: number): void {
+    const field = this.currentConfig().fields[fieldIndex];
+    if (!field.datagridConfig) return;
+
+    const column = field.datagridConfig.columns[columnIndex];
+    const options = (column.options || []).filter((_, i) => i !== optionIndex);
+    this.updateDataGridColumn(fieldIndex, columnIndex, { options });
+  }
+
+  /**
+   * Update datagrid column option label
+   */
+  updateDataGridColumnOptionLabel(
+    fieldIndex: number,
+    columnIndex: number,
+    optionIndex: number,
+    label: string
+  ): void {
+    this.updateDataGridColumnOption(fieldIndex, columnIndex, optionIndex, { label });
+  }
+
+  /**
+   * Update datagrid column option value
+   */
+  updateDataGridColumnOptionValue(
+    fieldIndex: number,
+    columnIndex: number,
+    optionIndex: number,
+    value: string
+  ): void {
+    this.updateDataGridColumnOption(fieldIndex, columnIndex, optionIndex, { value });
+  }
+
+  // ============================================
+  // DataGrid Column Group Methods
+  // ============================================
+
+  /**
+   * Add a column group to datagrid
+   */
+  addDataGridColumnGroup(fieldIndex: number): void {
+    const field = this.currentConfig().fields[fieldIndex];
+    if (!field.datagridConfig) return;
+
+    const newGroup: DataGridColumnGroup = {
+      id: `group_${Date.now()}`,
+      label: 'New Group',
+      columnIds: [],
+    };
+
+    const columnGroups = [...(field.datagridConfig.columnGroups || []), newGroup];
+    this.updateDataGridConfig(fieldIndex, { columnGroups });
+  }
+
+  /**
+   * Update a column group
+   */
+  updateDataGridColumnGroup(
+    fieldIndex: number,
+    groupIndex: number,
+    updates: Partial<DataGridColumnGroup>
+  ): void {
+    const field = this.currentConfig().fields[fieldIndex];
+    if (!field.datagridConfig?.columnGroups) return;
+
+    const columnGroups = [...field.datagridConfig.columnGroups];
+    columnGroups[groupIndex] = { ...columnGroups[groupIndex], ...updates };
+    this.updateDataGridConfig(fieldIndex, { columnGroups });
+  }
+
+  /**
+   * Remove a column group
+   */
+  removeDataGridColumnGroup(fieldIndex: number, groupIndex: number): void {
+    const field = this.currentConfig().fields[fieldIndex];
+    if (!field.datagridConfig?.columnGroups) return;
+
+    const columnGroups = field.datagridConfig.columnGroups.filter((_, i) => i !== groupIndex);
+    this.updateDataGridConfig(fieldIndex, { columnGroups: columnGroups.length > 0 ? columnGroups : undefined });
+  }
+
+  /**
+   * Update column group id
+   */
+  updateDataGridColumnGroupId(fieldIndex: number, groupIndex: number, id: string): void {
+    this.updateDataGridColumnGroup(fieldIndex, groupIndex, { id });
+  }
+
+  /**
+   * Update column group label
+   */
+  updateDataGridColumnGroupLabel(fieldIndex: number, groupIndex: number, label: string): void {
+    this.updateDataGridColumnGroup(fieldIndex, groupIndex, { label });
+  }
+
+  /**
+   * Toggle a column in a group
+   */
+  toggleDataGridColumnInGroup(fieldIndex: number, groupIndex: number, columnName: string): void {
+    const field = this.currentConfig().fields[fieldIndex];
+    if (!field.datagridConfig?.columnGroups) return;
+
+    const group = field.datagridConfig.columnGroups[groupIndex];
+    let columnIds: string[];
+
+    if (group.columnIds.includes(columnName)) {
+      // Remove from this group
+      columnIds = group.columnIds.filter((id) => id !== columnName);
+    } else {
+      // Remove from any other group first
+      const columnGroups = field.datagridConfig.columnGroups.map((g, i) => {
+        if (i === groupIndex) return g;
+        return {
+          ...g,
+          columnIds: g.columnIds.filter((id) => id !== columnName),
+        };
+      });
+      this.updateDataGridConfig(fieldIndex, { columnGroups });
+
+      // Add to this group
+      columnIds = [...group.columnIds, columnName];
+    }
+
+    this.updateDataGridColumnGroup(fieldIndex, groupIndex, { columnIds });
+  }
+
+  /**
+   * Check if column is in a group
+   */
+  isDataGridColumnInGroup(fieldIndex: number, groupIndex: number, columnName: string): boolean {
+    const field = this.currentConfig().fields[fieldIndex];
+    if (!field.datagridConfig?.columnGroups) return false;
+
+    const group = field.datagridConfig.columnGroups[groupIndex];
+    return group?.columnIds.includes(columnName) || false;
+  }
+
+  /**
+   * Get the group a column belongs to (if any)
+   */
+  getDataGridColumnGroupId(fieldIndex: number, columnName: string): string | null {
+    const field = this.currentConfig().fields[fieldIndex];
+    if (!field.datagridConfig?.columnGroups) return null;
+
+    for (const group of field.datagridConfig.columnGroups) {
+      if (group.columnIds.includes(columnName)) {
+        return group.id;
+      }
+    }
+    return null;
+  }
+
+  // ============================================
+  // DataGrid Totals Configuration Methods
+  // ============================================
+
+  /**
+   * Update totals config
+   */
+  updateDataGridTotalsConfig(fieldIndex: number, updates: Partial<DataGridConfig['totals']>): void {
+    const field = this.currentConfig().fields[fieldIndex];
+    if (!field.datagridConfig) return;
+
+    const totals = { ...field.datagridConfig.totals, ...updates };
+    this.updateDataGridConfig(fieldIndex, { totals });
+  }
+
+  /**
+   * Toggle show row totals
+   */
+  updateDataGridShowRowTotals(fieldIndex: number, show: boolean): void {
+    this.updateDataGridTotalsConfig(fieldIndex, { showRowTotals: show });
+  }
+
+  /**
+   * Update row total label
+   */
+  updateDataGridRowTotalLabel(fieldIndex: number, label: string): void {
+    this.updateDataGridTotalsConfig(fieldIndex, { rowTotalLabel: label || undefined });
+  }
+
+  /**
+   * Toggle show column totals
+   */
+  updateDataGridShowColumnTotals(fieldIndex: number, show: boolean): void {
+    this.updateDataGridTotalsConfig(fieldIndex, { showColumnTotals: show });
+  }
+
+  /**
+   * Update column total label
+   */
+  updateDataGridColumnTotalLabel(fieldIndex: number, label: string): void {
+    this.updateDataGridTotalsConfig(fieldIndex, { columnTotalLabel: label || undefined });
   }
 }
