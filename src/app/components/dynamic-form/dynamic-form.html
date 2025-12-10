@@ -3,7 +3,7 @@
   [formGroup]="form"
   (ngSubmit)="submitForm()"
   [attr.data-form-id]="config().id"
-  [attr.data-form-valid]="form.valid"
+  [attr.data-form-valid]="isFormValidForSubmit()"
   [attr.data-form-dirty]="form.dirty"
   [attr.data-form-touched]="form.touched">
 
@@ -360,7 +360,7 @@
     <button
       type="submit"
       data-action="submit"
-      [attr.data-can-submit]="form.valid">
+      [attr.data-can-submit]="isFormValidForSubmit()">
       {{ config().submitLabel || 'Submit' }}
     </button>
   </div>

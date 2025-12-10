@@ -459,9 +459,55 @@ export class DynamicForm implements OnInit, OnDestroy {
   }
 
   /**
+   * Check if form is valid for submission (excludes empty table rows)
+   */
+  isFormValidForSubmit(): boolean {
+    const currentConfig = this.config();
+
+    for (const field of currentConfig.fields) {
+      if (field.type === 'table') {
+        if (!this.isTableValid(field.name)) {
+          return false;
+        }
+      } else {
+        const control = this.form.get(field.name);
+        if (control?.invalid) {
+          return false;
+        }
+      }
+    }
+
+    return true;
+  }
+
+  /**
    * Check if field has error
    */
   hasError(fieldName: string): boolean {
+    const field = this.getField(fieldName);
+
+    // For table fields, use the special table validation that excludes empty rows
+    if (field?.type === 'table') {
+      const formArray = this.getTableFormArray(fieldName);
+      if (!formArray) return false;
+
+      // Check if any cell in the table is touched
+      let anyTouched = false;
+      for (let i = 0; i < formArray.length; i++) {
+        const rowGroup = formArray.at(i) as FormGroup;
+        for (const key of Object.keys(rowGroup.controls)) {
+          if (rowGroup.get(key)?.touched) {
+            anyTouched = true;
+            break;
+          }
+        }
+        if (anyTouched) break;
+      }
+
+      // Only show error if touched and invalid (excluding empty rows)
+      return anyTouched && !this.isTableValid(fieldName);
+    }
+
     const control = this.form.get(fieldName);
     return !!(control?.invalid && control?.touched);
   }

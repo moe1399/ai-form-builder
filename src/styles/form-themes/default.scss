@@ -161,17 +161,17 @@ select[data-input-type] {
   cursor: pointer;
 }
 
-/* Invalid Field State */
-[data-field-valid="false"] input,
-[data-field-valid="false"] textarea,
-[data-field-valid="false"] select {
+/* Invalid Field State - excludes table inputs which use cell-level validation */
+[data-field-valid="false"] input:not([data-table-input]),
+[data-field-valid="false"] textarea:not([data-table-input]),
+[data-field-valid="false"] select:not([data-table-input]) {
   border-color: #c00;
   background: #fff8f8;
 }
 
-[data-field-valid="false"] input:focus,
-[data-field-valid="false"] textarea:focus,
-[data-field-valid="false"] select:focus {
+[data-field-valid="false"] input:not([data-table-input]):focus,
+[data-field-valid="false"] textarea:not([data-table-input]):focus,
+[data-field-valid="false"] select:not([data-table-input]):focus {
   box-shadow: 0 0 0 2px rgba(204, 0, 0, 0.15);
 }
 
