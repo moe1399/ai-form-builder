@@ -43,7 +43,9 @@ export class FormBuilder {
   selectedFieldIndex = signal<number | null>(null);
   selectedSectionId = signal<string | null>(null);
   showJsonEditor = signal(false);
+  jsonEditorMode = signal<'import' | 'export'>('import');
   jsonEditorContent = signal('');
+  copyButtonText = signal('Copy to Clipboard');
   message = signal<{ type: 'success' | 'error'; text: string } | null>(null);
 
   // Field types for dropdown
@@ -244,7 +246,32 @@ export class FormBuilder {
   exportJson(): void {
     const json = this.formBuilderService.exportConfig(this.currentConfig());
     this.jsonEditorContent.set(json);
+    this.jsonEditorMode.set('export');
+    this.copyButtonText.set('Copy to Clipboard');
     this.showJsonEditor.set(true);
+  }
+
+  /**
+   * Open import JSON modal
+   */
+  openImportJson(): void {
+    this.jsonEditorContent.set('');
+    this.jsonEditorMode.set('import');
+    this.showJsonEditor.set(true);
+  }
+
+  /**
+   * Copy JSON to clipboard
+   */
+  async copyJsonToClipboard(): Promise<void> {
+    try {
+      await navigator.clipboard.writeText(this.jsonEditorContent());
+      this.copyButtonText.set('Copied!');
+      setTimeout(() => this.copyButtonText.set('Copy to Clipboard'), 2000);
+    } catch {
+      this.copyButtonText.set('Failed to copy');
+      setTimeout(() => this.copyButtonText.set('Copy to Clipboard'), 2000);
+    }
   }
 
   /**
