@@ -70,6 +70,32 @@
         }
       </div>
 
+      <!-- Sections List -->
+      <div class="panel-section">
+        <h3>Sections</h3>
+        <button class="btn btn-sm btn-primary" (click)="addSection()">+ Add Section</button>
+        <div class="sections-list">
+          @for (section of getSortedSections(); track section.id) {
+            <div
+              class="section-item"
+              [class.selected]="selectedSectionId() === section.id"
+              (click)="selectSection(section.id)">
+              <div class="section-info">
+                <strong>{{ section.title }}</strong>
+              </div>
+              <div class="section-actions">
+                <button class="btn-icon" (click)="moveSectionUp(section.id); $event.stopPropagation()" title="Move Up">↑</button>
+                <button class="btn-icon" (click)="moveSectionDown(section.id); $event.stopPropagation()" title="Move Down">↓</button>
+                <button class="btn-icon btn-danger" (click)="removeSection(section.id); $event.stopPropagation()" title="Delete">×</button>
+              </div>
+            </div>
+          }
+          @if (getSortedSections().length === 0) {
+            <p class="empty-state">No sections. Fields will render ungrouped.</p>
+          }
+        </div>
+      </div>
+
       <!-- Fields List -->
       <div class="panel-section">
         <h3>Fields</h3>
@@ -112,9 +138,57 @@
       </div>
     </div>
 
-    <!-- Right Panel: Field Editor -->
+    <!-- Right Panel: Field/Section Editor -->
     <div class="right-panel">
-      @if (selectedFieldIndex() !== null && getSelectedField()) {
+      <!-- Section Editor -->
+      @if (selectedSectionId() !== null && getSelectedSection()) {
+        <div class="section-editor">
+          <h3>Edit Section</h3>
+          @let section = getSelectedSection()!;
+
+          <div class="form-group">
+            <label>Section ID</label>
+            <input
+              type="text"
+              [value]="section.id"
+              disabled
+            />
+            <small class="form-hint">Auto-generated, read-only</small>
+          </div>
+
+          <div class="form-group">
+            <label>Title</label>
+            <input
+              type="text"
+              [ngModel]="section.title"
+              (ngModelChange)="updateSectionTitle(section.id, $event)"
+            />
+          </div>
+
+          <div class="form-group">
+            <label>Description (optional)</label>
+            <textarea
+              rows="3"
+              [ngModel]="section.description"
+              (ngModelChange)="updateSectionDescription(section.id, $event)"
+              placeholder="Description text appears below the section header"
+            ></textarea>
+          </div>
+
+          <div class="form-group">
+            <label>Anchor ID (optional)</label>
+            <input
+              type="text"
+              [ngModel]="section.anchorId"
+              (ngModelChange)="updateSectionAnchorId(section.id, $event)"
+              placeholder="Leave empty to auto-generate from title"
+            />
+            <small class="form-hint">Custom anchor for navigation links (e.g., #school-info)</small>
+          </div>
+        </div>
+      }
+      <!-- Field Editor -->
+      @else if (selectedFieldIndex() !== null && getSelectedField()) {
         <div class="field-editor">
           <h3>Edit Field</h3>
           @let field = getSelectedField()!;
@@ -193,6 +267,20 @@
             <small class="form-hint">Relative width within inline group</small>
           </div>
 
+          <!-- Section Assignment -->
+          <div class="form-group">
+            <label>Section</label>
+            <select
+              [ngModel]="field.sectionId || ''"
+              (ngModelChange)="updateFieldSectionId(fieldIndex, $event)">
+              <option value="">-- No Section --</option>
+              @for (section of getSortedSections(); track section.id) {
+                <option [value]="section.id">{{ section.title }}</option>
+              }
+            </select>
+            <small class="form-hint">Assign field to a section</small>
+          </div>
+
           <div class="form-group">
             <label>
               <input
@@ -260,7 +348,7 @@
         </div>
       } @else {
         <div class="empty-editor">
-          <p>Select a field to edit or add a new field to get started</p>
+          <p>Select a section or field to edit, or add new ones to get started</p>
         </div>
       }
     </div>

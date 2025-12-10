@@ -182,6 +182,12 @@ Form-level attributes:
 - `data-form-dirty`: "true" | "false" - Whether form has been modified
 - `data-form-touched`: "true" | "false" - Whether form has been interacted with
 
+Section-level attributes:
+- `data-section-id`: Section identifier
+- `data-section-header`: Present on section title elements
+- `data-section-description`: Present on section description elements
+- Section containers are rendered as `<section>` elements with `id` attribute for anchor navigation
+
 Field-level attributes:
 - `data-field-name`: Field identifier (e.g., "email", "firstName")
 - `data-field-type`: Field type ("text", "email", "number", "textarea", "date")
@@ -199,8 +205,10 @@ Error and action attributes:
 Visual form builder UI for business users to create custom forms without coding.
 
 **Key Features**:
+- Section management (add, edit, remove, reorder sections)
 - Visual drag-and-drop field ordering
 - Field configuration (name, label, type, placeholder, disabled state)
+- Field-to-section assignment
 - Validation rule builder with multiple validation types
 - Save/load form configurations from local storage
 - JSON import/export for sharing configurations
@@ -316,6 +324,54 @@ The main application (`src/app/app.ts` and `src/app/app.html`) provides a test h
 - `pattern`: Must match regex pattern (requires value)
 - `custom`: Custom validation function (requires validator function)
 
+### Sections
+
+Sections allow grouping form fields into logical groups with headers and descriptions:
+
+**FormSection Interface**:
+```typescript
+interface FormSection {
+  id: string;           // Unique identifier
+  title: string;        // Display title (e.g., "School Information")
+  description?: string; // Optional description below header
+  anchorId?: string;    // Custom anchor ID (auto-generated from title if not provided)
+  order?: number;       // Section ordering
+}
+```
+
+**Section Features**:
+- Fields reference sections via `sectionId` property
+- Fields without `sectionId` render as ungrouped (outside sections)
+- Section containers use `<section>` HTML element with anchor `id`
+- Anchor IDs auto-generated from title (e.g., "School Information" → "school-information")
+- Custom anchor IDs can override auto-generated ones
+
+**Section Data Attributes**:
+- `data-section-id`: Section identifier on container
+- `data-section-header`: Section title element
+- `data-section-description`: Section description element
+
+**Section Styling** (in theme):
+```scss
+[data-section-id] {
+  /* section container styles */
+}
+
+[data-section-header] {
+  background: #512B58;
+  color: #ffffff;
+  padding: 8px 12px;
+  font-weight: bold;
+}
+
+[data-section-description] {
+  background: #512B58;
+  color: #ffffff;
+  padding: 6px 12px;
+  font-size: 13px;
+}
+```
+
 ### File Structure
 ```
 src/
@@ -345,13 +401,26 @@ src/
 ### Usage Example
 
 ```typescript
-// 1. Create form configuration
-const contactForm = signal<FormConfig>({
-  id: 'contact-form',
-  submitLabel: 'Send Message',
+// 1. Create form configuration with sections
+const applicationForm = signal<FormConfig>({
+  id: 'application-form',
+  submitLabel: 'Submit Application',
   saveLabel: 'Save Draft',
   autoSave: true,
   autoSaveInterval: 5000,
+  sections: [
+    {
+      id: 'personal-info',
+      title: 'Personal Information',
+      description: 'Please provide your contact details',
+      order: 0
+    },
+    {
+      id: 'message-section',
+      title: 'Your Message',
+      order: 1
+    }
+  ],
   fields: [
     {
       name: 'email',
@@ -359,6 +428,7 @@ const contactForm = signal<FormConfig>({
       type: 'email',
       placeholder: 'you@example.com',
       order: 0,
+      sectionId: 'personal-info',  // Assign to section
       validations: [
         { type: 'required', message: 'Email is required' },
         { type: 'email', message: 'Please enter a valid email' }
@@ -370,6 +440,7 @@ const contactForm = signal<FormConfig>({
       type: 'textarea',
       placeholder: 'Your message here...',
       order: 1,
+      sectionId: 'message-section',  // Assign to section
       validations: [
         { type: 'required', message: 'Message is required' },
         { type: 'minLength', value: 10, message: 'Message must be at least 10 characters' }
@@ -380,17 +451,32 @@ const contactForm = signal<FormConfig>({
 
 // 2. Use in template
 <app-dynamic-form
-  [config]="contactForm()"
+  [config]="applicationForm()"
   (formSubmit)="handleSubmit($event)"
   (formSave)="handleSave($event)"
   (validationErrors)="handleErrors($event)"
 />
 
 // 3. Create custom theme (in your SCSS file)
-form[data-form-id="contact-form"] {
+form[data-form-id="application-form"] {
   padding: 2rem;
   background: white;
   border-radius: 8px;
+
+  // Section styling
+  [data-section-header] {
+    background: #512B58;
+    color: white;
+    padding: 0.75rem 1rem;
+    font-weight: bold;
+  }
+
+  [data-section-description] {
+    background: #512B58;
+    color: white;
+    padding: 0.5rem 1rem;
+    font-size: 0.875rem;
+  }
 
   [data-field-name] {
     margin-bottom: 1rem;

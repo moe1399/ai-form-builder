@@ -19,6 +19,11 @@ form[data-form-id] {
   margin: 0;
 }
 
+/* Section Container */
+[data-section-id] {
+  margin: 0;
+}
+
 /* Section Headers - Purple background */
 [data-section-header] {
   background: #512B58;
@@ -26,6 +31,23 @@ form[data-form-id] {
   padding: 8px 12px;
   font-weight: bold;
   font-size: 14px;
+  margin: 0;
+  border-bottom: 1px solid #ccc;
+}
+
+/* Remove header border when followed by description */
+[data-section-header] + [data-section-description] {
+  margin-top: -1px; /* Merge with header border */
+}
+
+/* Section Description - Purple background, smaller text */
+[data-section-description] {
+  background: #512B58;
+  color: #ffffff;
+  padding: 6px 12px 10px 12px;
+  font-size: 13px;
+  font-weight: normal;
+  line-height: 1.4;
   margin: 0;
   border-bottom: 1px solid #ccc;
 }

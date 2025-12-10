@@ -4,6 +4,17 @@
 export type FieldType = 'text' | 'email' | 'number' | 'textarea' | 'select' | 'checkbox' | 'radio' | 'date';
 
 /**
+ * Form section configuration
+ */
+export interface FormSection {
+  id: string;
+  title: string;
+  description?: string;
+  anchorId?: string; // Custom anchor ID (auto-generated from title if not provided)
+  order?: number;
+}
+
+/**
  * Validation rule configuration
  */
 export interface ValidationRule {
@@ -30,6 +41,7 @@ export interface FormFieldConfig {
   order?: number;
   inlineGroup?: string; // Fields with same group name render on same row
   width?: number; // Width as flex proportion (1-4), defaults to 1
+  sectionId?: string; // Reference to FormSection.id
 }
 
 /**
@@ -38,6 +50,7 @@ export interface FormFieldConfig {
 export interface FormConfig {
   id: string;
   fields: FormFieldConfig[];
+  sections?: FormSection[];
   submitLabel?: string;
   saveLabel?: string;
   autoSave?: boolean;

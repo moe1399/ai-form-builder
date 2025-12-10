@@ -4,6 +4,7 @@ import { CommonModule } from '@angular/common';
 import {
   FormConfig,
   FormFieldConfig,
+  FormSection,
   ValidationRule,
   FieldError,
 } from '../../models/form-config.interface';
@@ -25,7 +26,7 @@ export class DynamicForm implements OnInit, OnDestroy {
   validationErrors = output<FieldError[]>();
 
   // Component state
-  form!: FormGroup;
+  form: FormGroup = new FormGroup({});
   errors: FieldError[] = [];
   activePopover: string | null = null;
   private autoSaveTimer?: number;
@@ -285,6 +286,102 @@ export class DynamicForm implements OnInit, OnDestroy {
    */
   isInlineGroup(group: FormFieldConfig[]): boolean {
     return group.length > 1;
+  }
+
+  /**
+   * Get sorted sections
+   */
+  getSections(): FormSection[] {
+    const currentConfig = this.config();
+    return [...(currentConfig.sections || [])].sort((a, b) => {
+      return (a.order ?? 0) - (b.order ?? 0);
+    });
+  }
+
+  /**
+   * Check if form has any sections defined
+   */
+  hasSections(): boolean {
+    const currentConfig = this.config();
+    return (currentConfig.sections?.length ?? 0) > 0;
+  }
+
+  /**
+   * Get fields for a specific section, grouped by inlineGroup
+   */
+  getFieldsForSection(sectionId: string): FormFieldConfig[][] {
+    const sortedFields = this.getSortedFields().filter((f) => f.sectionId === sectionId);
+    return this.groupFieldsByInline(sortedFields);
+  }
+
+  /**
+   * Get ungrouped fields (not assigned to any section), grouped by inlineGroup
+   */
+  getUngroupedFields(): FormFieldConfig[][] {
+    const sortedFields = this.getSortedFields().filter((f) => !f.sectionId);
+    return this.groupFieldsByInline(sortedFields);
+  }
+
+  /**
+   * Group an array of fields by their inlineGroup property
+   */
+  private groupFieldsByInline(fields: FormFieldConfig[]): FormFieldConfig[][] {
+    const groups: FormFieldConfig[][] = [];
+    let currentGroup: FormFieldConfig[] = [];
+    let currentGroupName: string | undefined = undefined;
+
+    fields.forEach((field) => {
+      if (field.inlineGroup) {
+        if (field.inlineGroup === currentGroupName) {
+          currentGroup.push(field);
+        } else {
+          if (currentGroup.length > 0) {
+            groups.push(currentGroup);
+          }
+          currentGroup = [field];
+          currentGroupName = field.inlineGroup;
+        }
+      } else {
+        if (currentGroup.length > 0) {
+          groups.push(currentGroup);
+          currentGroup = [];
+          currentGroupName = undefined;
+        }
+        groups.push([field]);
+      }
+    });
+
+    if (currentGroup.length > 0) {
+      groups.push(currentGroup);
+    }
+
+    return groups;
+  }
+
+  /**
+   * Generate anchor ID from title (URL-friendly)
+   */
+  generateAnchorId(title: string): string {
+    return title
+      .toLowerCase()
+      .replace(/[^a-z0-9\s-]/g, '')
+      .replace(/\s+/g, '-')
+      .replace(/-+/g, '-')
+      .trim();
+  }
+
+  /**
+   * Get anchor ID for a section (custom or auto-generated)
+   */
+  getSectionAnchorId(section: FormSection): string {
+    return section.anchorId || this.generateAnchorId(section.title);
+  }
+
+  /**
+   * Check if form is ready (has controls)
+   */
+  isFormReady(): boolean {
+    return Object.keys(this.form.controls).length > 0;
   }
 
   /**

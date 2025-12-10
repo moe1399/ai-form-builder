@@ -149,6 +149,55 @@ $text-muted: #666;
   gap: 0.25rem;
 }
 
+/* Section list styles - mirror field styles */
+.sections-list {
+  margin-top: 0.75rem;
+}
+
+.section-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.625rem;
+  margin-bottom: 0.5rem;
+  border: 1px solid $border-color;
+  background: $lavender-light;
+  cursor: pointer;
+
+  &:hover {
+    background: $lavender;
+  }
+
+  &.selected {
+    background: $lavender;
+    border-color: $purple;
+  }
+}
+
+.section-info {
+  small {
+    color: $text-muted;
+    margin-left: 0.5rem;
+  }
+}
+
+.section-actions {
+  display: flex;
+  gap: 0.25rem;
+}
+
+.section-editor {
+  h3 {
+    margin: 0 0 1rem 0;
+    padding: 0.5rem 0.75rem;
+    font-size: 0.875rem;
+    font-weight: bold;
+    text-transform: uppercase;
+    color: #fff;
+    background: $purple;
+  }
+}
+
 .saved-config-item {
   display: flex;
   justify-content: space-between;

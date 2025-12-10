@@ -4,6 +4,7 @@ import { FormsModule } from '@angular/forms';
 import {
   FormConfig,
   FormFieldConfig,
+  FormSection,
   ValidationRule,
   FieldType,
 } from '../../models/form-config.interface';
@@ -27,6 +28,7 @@ export class FormBuilder {
 
   // UI state
   selectedFieldIndex = signal<number | null>(null);
+  selectedSectionId = signal<string | null>(null);
   showJsonEditor = signal(false);
   jsonEditorContent = signal('');
   message = signal<{ type: 'success' | 'error'; text: string } | null>(null);
@@ -262,6 +264,7 @@ export class FormBuilder {
    */
   selectField(index: number): void {
     this.selectedFieldIndex.set(index);
+    this.selectedSectionId.set(null);
   }
 
   /**
@@ -337,5 +340,133 @@ export class FormBuilder {
       message,
     };
     this.updateValidation(fieldIndex, validationIndex, validation);
+  }
+
+  // ============================================
+  // Section Management Methods
+  // ============================================
+
+  /**
+   * Add a new section
+   */
+  addSection(): void {
+    const config = { ...this.currentConfig() };
+    const sections = config.sections || [];
+    const newSection: FormSection = {
+      id: `section_${Date.now()}`,
+      title: 'New Section',
+      order: sections.length,
+    };
+
+    config.sections = [...sections, newSection];
+    this.currentConfig.set(config);
+    this.selectedSectionId.set(newSection.id);
+    this.emitConfigChange();
+  }
+
+  /**
+   * Update a section
+   */
+  updateSection(id: string, updates: Partial<FormSection>): void {
+    const config = { ...this.currentConfig() };
+    config.sections = (config.sections || []).map((section) =>
+      section.id === id ? { ...section, ...updates } : section
+    );
+    this.currentConfig.set(config);
+    this.emitConfigChange();
+  }
+
+  /**
+   * Remove a section (fields become ungrouped)
+   */
+  removeSection(id: string): void {
+    const config = { ...this.currentConfig() };
+    // Remove section
+    config.sections = (config.sections || []).filter((s) => s.id !== id);
+    // Clear sectionId from fields that were in this section
+    config.fields = config.fields.map((field) =>
+      field.sectionId === id ? { ...field, sectionId: undefined } : field
+    );
+    this.currentConfig.set(config);
+    this.selectedSectionId.set(null);
+    this.emitConfigChange();
+  }
+
+  /**
+   * Move section up
+   */
+  moveSectionUp(id: string): void {
+    const config = { ...this.currentConfig() };
+    const sections = [...(config.sections || [])];
+    const index = sections.findIndex((s) => s.id === id);
+    if (index <= 0) return;
+
+    [sections[index - 1], sections[index]] = [sections[index], sections[index - 1]];
+    sections.forEach((section, i) => (section.order = i));
+    config.sections = sections;
+    this.currentConfig.set(config);
+    this.emitConfigChange();
+  }
+
+  /**
+   * Move section down
+   */
+  moveSectionDown(id: string): void {
+    const config = { ...this.currentConfig() };
+    const sections = [...(config.sections || [])];
+    const index = sections.findIndex((s) => s.id === id);
+    if (index < 0 || index >= sections.length - 1) return;
+
+    [sections[index], sections[index + 1]] = [sections[index + 1], sections[index]];
+    sections.forEach((section, i) => (section.order = i));
+    config.sections = sections;
+    this.currentConfig.set(config);
+    this.emitConfigChange();
+  }
+
+  /**
+   * Select a section
+   */
+  selectSection(id: string | null): void {
+    this.selectedSectionId.set(id);
+    this.selectedFieldIndex.set(null);
+  }
+
+  /**
+   * Get selected section
+   */
+  getSelectedSection(): FormSection | null {
+    const id = this.selectedSectionId();
+    return id ? (this.currentConfig().sections || []).find((s) => s.id === id) || null : null;
+  }
+
+  /**
+   * Get sections sorted by order
+   */
+  getSortedSections(): FormSection[] {
+    return [...(this.currentConfig().sections || [])].sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
+  }
+
+  /**
+   * Update field section assignment
+   */
+  updateFieldSectionId(index: number, sectionId: string): void {
+    const field = { ...this.currentConfig().fields[index], sectionId: sectionId || undefined };
+    this.updateField(index, field);
+  }
+
+  /**
+   * Helper methods for section property updates
+   */
+  updateSectionTitle(id: string, title: string): void {
+    this.updateSection(id, { title });
+  }
+
+  updateSectionDescription(id: string, description: string): void {
+    this.updateSection(id, { description: description || undefined });
+  }
+
+  updateSectionAnchorId(id: string, anchorId: string): void {
+    this.updateSection(id, { anchorId: anchorId || undefined });
   }
 }
