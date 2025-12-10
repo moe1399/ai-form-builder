@@ -1,4 +1,4 @@
-import { Component, output, signal, computed } from '@angular/core';
+import { Component, output, signal, computed, input, effect } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import {
@@ -17,6 +17,9 @@ import { FormBuilder as FormBuilderService } from '../../services/form-builder';
   styleUrl: './form-builder.scss',
 })
 export class FormBuilder {
+  // Inputs
+  initialConfig = input<FormConfig | null>(null);
+
   // Outputs
   configChanged = output<FormConfig>();
 
@@ -40,7 +43,16 @@ export class FormBuilder {
   validationTypes = ['required', 'email', 'minLength', 'maxLength', 'min', 'max', 'pattern'];
 
   constructor(private formBuilderService: FormBuilderService) {
+    // Initialize with blank config, will be updated by effect if initialConfig is provided
     this.currentConfig = signal<FormConfig>(this.formBuilderService.createBlankConfig());
+
+    // Use effect to initialize from input when component is created
+    effect(() => {
+      const initial = this.initialConfig();
+      if (initial) {
+        this.currentConfig.set(initial);
+      }
+    });
   }
 
   /**

@@ -35,7 +35,9 @@
         </ul>
       </div>
 
-      <app-form-builder (configChanged)="onConfigChanged($event)" />
+      <app-form-builder
+        [initialConfig]="currentConfig()"
+        (configChanged)="onConfigChanged($event)" />
     </div>
   }
 
