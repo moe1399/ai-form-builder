@@ -479,6 +479,7 @@ interface TableColumnConfig {
 - `data-row-index`: Row index (0-based)
 - `data-row-empty`: "true" | "false" - Whether row is empty
 - `data-table-cell`: Cell td element
+- `data-column-label`: Column label text (used for responsive card labels)
 - `data-cell-valid`: "true" | "false" - Cell validity
 - `data-table-input`: Input within cell
 - `data-cell-error-tooltip`: Error tooltip element
@@ -486,6 +487,11 @@ interface TableColumnConfig {
 - `data-table-action`: "add" | "remove" - Button action type
 - `data-table-actions-column`: Actions column header
 - `data-table-actions-cell`: Actions cell (remove button)
+
+**Responsive Behavior**:
+Tables use a hybrid responsive approach:
+- **Desktop (>640px)**: Standard table layout with columns
+- **Mobile (≤640px)**: Card layout where each row becomes a card with labeled fields stacked vertically. Column labels are shown using `::before` pseudo-elements with `attr(data-column-label)`
 
 ### Validation Types
 - `required`: Field must have a value

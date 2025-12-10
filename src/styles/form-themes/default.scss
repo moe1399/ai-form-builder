@@ -696,13 +696,96 @@ button[data-table-action="remove"]:hover:not(:disabled) {
     width: 100%;
   }
 
-  /* Table responsive - horizontal scroll */
+  /* Table responsive - Card layout on mobile */
   [data-table-container] {
-    overflow-x: auto;
-    -webkit-overflow-scrolling: touch;
+    overflow-x: visible;
   }
 
   [data-table] {
-    min-width: 500px;
+    display: block;
+    min-width: 0;
+  }
+
+  [data-table-header] {
+    display: none; /* Hide header row - labels shown per cell */
+  }
+
+  [data-table-body] {
+    display: block;
+  }
+
+  /* Each row becomes a card */
+  [data-table-row] {
+    display: block;
+    margin-bottom: 12px;
+    padding: 12px;
+    background: #fff;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+  }
+
+  [data-table-row]:last-child {
+    margin-bottom: 0;
+  }
+
+  [data-table-row][data-row-empty="true"] {
+    background: #fafafa;
+  }
+
+  /* Each cell becomes a labeled field */
+  [data-table-cell] {
+    display: flex;
+    flex-direction: column;
+    padding: 8px 0;
+    border-right: none;
+    border-bottom: 1px solid #eee;
+  }
+
+  [data-table-cell]:last-child {
+    border-bottom: none;
+  }
+
+  /* Show column label before input */
+  [data-table-cell][data-column-label]::before {
+    content: attr(data-column-label);
+    display: block;
+    margin-bottom: 4px;
+    font-size: 12px;
+    font-weight: bold;
+    color: #666;
+  }
+
+  /* Actions cell styling */
+  [data-table-actions-cell] {
+    flex-direction: row;
+    justify-content: flex-end;
+    padding-top: 12px;
+    border-bottom: none;
+  }
+
+  [data-table-actions-cell]::before {
+    display: none; /* No label for actions */
+  }
+
+  /* Table inputs full width in card mode */
+  [data-table-input] {
+    width: 100%;
+  }
+
+  /* Cell error tooltip positioning for cards */
+  [data-cell-error-tooltip] {
+    position: relative;
+    top: auto;
+    left: auto;
+    margin-top: 4px;
+  }
+
+  [data-cell-error-tooltip]::before {
+    display: none; /* Hide arrow in card mode */
+  }
+
+  /* Table footer */
+  [data-table-footer] {
+    margin-top: 12px;
   }
 }

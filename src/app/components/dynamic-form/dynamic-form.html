@@ -199,6 +199,7 @@
                           <td
                             data-table-cell
                             [attr.data-column-name]="column.name"
+                            [attr.data-column-label]="column.label"
                             [attr.data-cell-valid]="!hasTableCellError(field.name, rowIndex, column.name)"
                             [attr.data-cell-row]="rowIndex"
                             (mouseenter)="hasTableCellError(field.name, rowIndex, column.name) ? showCellTooltip(field.name, rowIndex, column.name) : null"
