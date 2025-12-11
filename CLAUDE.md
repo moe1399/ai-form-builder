@@ -327,6 +327,7 @@ The main application (`src/app/app.ts` and `src/app/app.html`) provides a test h
 - `number`: Number input
 - `textarea`: Multi-line text area
 - `date`: Date picker
+- `daterange`: Date range with from/to date inputs
 - `select`: Dropdown selection with options
 - `radio`: Radio button group (mutually exclusive single selection)
 - `checkbox`: Checkbox group (multiple selection) or single boolean toggle
@@ -500,6 +501,90 @@ interface CountryCodeOption {
 }
 
 [data-phone-valid="false"] [data-phone-number] {
+  border-color: #c00;
+  background: #fff8f8;
+}
+```
+
+#### Date Range Field Type
+
+The `daterange` field type provides two date inputs for entering a "from" date and a "to" date. Useful for date ranges like employment periods, report periods, or event durations.
+
+**Date Range Configuration**:
+```typescript
+{
+  name: 'employmentPeriod',
+  label: 'Employment Period',
+  type: 'daterange',
+  sectionId: 'employment-info',
+  daterangeConfig: {
+    fromLabel: 'Start Date',
+    toLabel: 'End Date',
+    separatorText: 'to'
+  },
+  validations: [{ type: 'required', message: 'Employment period is required' }]
+}
+```
+
+**DateRangeConfig Interface**:
+```typescript
+interface DateRangeConfig {
+  fromLabel?: string;      // Label for "from" date input (default: none)
+  toLabel?: string;        // Label for "to" date input (default: none)
+  separatorText?: string;  // Text between the two inputs (default: 'to')
+  toDateOptional?: boolean; // If true, "to date" can be empty even with required validation (default: false)
+}
+```
+
+**Data Storage Format**:
+```typescript
+// Date range value is stored as an object
+{
+  fromDate: '2024-01-15',
+  toDate: '2024-12-31'
+}
+```
+
+**Data Attributes for Date Range Field Styling**:
+- `data-daterange-container`: Container for the date range inputs
+- `data-daterange-valid`: "true" | "false" - Date range field validation state
+- `data-daterange-field`: Wrapper for each date input (with label)
+- `data-daterange-from-field`: From date field wrapper
+- `data-daterange-to-field`: To date field wrapper
+- `data-daterange-label`: Label element for date input
+- `data-daterange-from-label`: From date label
+- `data-daterange-to-label`: To date label
+- `data-daterange-input`: Date input element
+- `data-daterange-from`: From date input
+- `data-daterange-to`: To date input
+- `data-daterange-separator`: Separator text between inputs
+
+**Styling** (in theme):
+```scss
+[data-daterange-container] {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+[data-daterange-field] {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+}
+
+[data-daterange-label] {
+  font-size: 11px;
+  color: #666;
+  margin-bottom: 4px;
+}
+
+[data-daterange-separator] {
+  padding: 0 4px;
+  color: #666;
+}
+
+[data-daterange-valid="false"] input[data-daterange-input] {
   border-color: #c00;
   background: #fff8f8;
 }

@@ -1,7 +1,7 @@
 /**
  * Supported form field types
  */
-export type FieldType = 'text' | 'email' | 'number' | 'textarea' | 'select' | 'checkbox' | 'radio' | 'date' | 'table' | 'info' | 'datagrid' | 'phone';
+export type FieldType = 'text' | 'email' | 'number' | 'textarea' | 'select' | 'checkbox' | 'radio' | 'date' | 'daterange' | 'table' | 'info' | 'datagrid' | 'phone';
 
 /**
  * Country code option for phone field
@@ -18,6 +18,16 @@ export interface CountryCodeOption {
 export interface PhoneConfig {
   countryCodes: CountryCodeOption[];
   defaultCountryCode?: string;  // Default selected country code e.g., '+61'
+}
+
+/**
+ * Date range field configuration
+ */
+export interface DateRangeConfig {
+  fromLabel?: string;      // Label for "from" date input (default: 'From')
+  toLabel?: string;        // Label for "to" date input (default: 'To')
+  separatorText?: string;  // Text between the two inputs (default: 'to')
+  toDateOptional?: boolean; // If true, "to date" can be empty even with required validation (default: false)
 }
 
 /**
@@ -167,6 +177,7 @@ export interface FormFieldConfig {
   datagridConfig?: DataGridConfig; // Configuration for datagrid field type
   content?: string; // Markdown content for info field type
   phoneConfig?: PhoneConfig; // Configuration for phone field type
+  daterangeConfig?: DateRangeConfig; // Configuration for daterange field type
 }
 
 /**

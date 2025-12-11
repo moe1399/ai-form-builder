@@ -567,6 +567,58 @@
             </div>
           }
 
+          <!-- Date Range Configuration (for daterange fields) -->
+          @if (field.type === 'daterange') {
+            <div class="daterange-config-section">
+              <h4>Date Range Configuration</h4>
+
+              <div class="form-group">
+                <label>From Date Label</label>
+                <input
+                  type="text"
+                  [ngModel]="field.daterangeConfig?.fromLabel || ''"
+                  (ngModelChange)="updateDateRangeFromLabel(fieldIndex, $event)"
+                  placeholder="e.g., Start Date"
+                />
+                <small class="form-hint">Optional label shown above the from date input</small>
+              </div>
+
+              <div class="form-group">
+                <label>To Date Label</label>
+                <input
+                  type="text"
+                  [ngModel]="field.daterangeConfig?.toLabel || ''"
+                  (ngModelChange)="updateDateRangeToLabel(fieldIndex, $event)"
+                  placeholder="e.g., End Date"
+                />
+                <small class="form-hint">Optional label shown above the to date input</small>
+              </div>
+
+              <div class="form-group">
+                <label>Separator Text</label>
+                <input
+                  type="text"
+                  [ngModel]="field.daterangeConfig?.separatorText || 'to'"
+                  (ngModelChange)="updateDateRangeSeparator(fieldIndex, $event)"
+                  placeholder="to"
+                />
+                <small class="form-hint">Text displayed between the two date inputs</small>
+              </div>
+
+              <div class="form-group checkbox-group">
+                <label>
+                  <input
+                    type="checkbox"
+                    [ngModel]="field.daterangeConfig?.toDateOptional || false"
+                    (ngModelChange)="updateDateRangeToDateOptional(fieldIndex, $event)"
+                  />
+                  To date is optional
+                </label>
+                <small class="form-hint">If checked, the "to date" can be empty even with required validation</small>
+              </div>
+            </div>
+          }
+
           <!-- DataGrid Configuration (for datagrid fields) -->
           @if (field.type === 'datagrid') {
             <div class="datagrid-config-section">

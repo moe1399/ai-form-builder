@@ -18,6 +18,7 @@ import {
   DataGridConfig,
   PhoneConfig,
   CountryCodeOption,
+  DateRangeConfig,
 } from '../../models/form-config.interface';
 import { FormBuilder as FormBuilderService } from '../../services/form-builder';
 
@@ -51,7 +52,7 @@ export class FormBuilder {
   message = signal<{ type: 'success' | 'error'; text: string } | null>(null);
 
   // Field types for dropdown
-  fieldTypes: FieldType[] = ['text', 'email', 'number', 'textarea', 'date', 'select', 'radio', 'checkbox', 'table', 'info', 'datagrid', 'phone'];
+  fieldTypes: FieldType[] = ['text', 'email', 'number', 'textarea', 'date', 'daterange', 'select', 'radio', 'checkbox', 'table', 'info', 'datagrid', 'phone'];
 
   // Default country codes for phone field
   defaultCountryCodes: CountryCodeOption[] = [
@@ -430,6 +431,19 @@ export class FormBuilder {
     // Clear phoneConfig when switching away from phone type
     if (type !== 'phone') {
       delete field.phoneConfig;
+    }
+
+    // Initialize daterangeConfig when switching to daterange type
+    if (type === 'daterange' && !field.daterangeConfig) {
+      field.daterangeConfig = {
+        separatorText: 'to',
+        toDateOptional: false,
+      };
+    }
+
+    // Clear daterangeConfig when switching away from daterange type
+    if (type !== 'daterange') {
+      delete field.daterangeConfig;
     }
 
     this.updateField(index, field);
@@ -1632,5 +1646,51 @@ export class FormBuilder {
    */
   updatePhoneCountryCodeFlag(fieldIndex: number, countryIndex: number, flag: string): void {
     this.updatePhoneCountryCode(fieldIndex, countryIndex, { flag: flag || undefined });
+  }
+
+  // ============================================
+  // Date Range Field Methods
+  // ============================================
+
+  /**
+   * Update daterange config
+   */
+  updateDateRangeConfig(fieldIndex: number, updates: Partial<DateRangeConfig>): void {
+    const field = this.currentConfig().fields[fieldIndex];
+    if (!field.daterangeConfig) return;
+
+    const updatedField = {
+      ...field,
+      daterangeConfig: { ...field.daterangeConfig, ...updates },
+    };
+    this.updateField(fieldIndex, updatedField);
+  }
+
+  /**
+   * Update daterange from label
+   */
+  updateDateRangeFromLabel(fieldIndex: number, fromLabel: string): void {
+    this.updateDateRangeConfig(fieldIndex, { fromLabel: fromLabel || undefined });
+  }
+
+  /**
+   * Update daterange to label
+   */
+  updateDateRangeToLabel(fieldIndex: number, toLabel: string): void {
+    this.updateDateRangeConfig(fieldIndex, { toLabel: toLabel || undefined });
+  }
+
+  /**
+   * Update daterange separator text
+   */
+  updateDateRangeSeparator(fieldIndex: number, separatorText: string): void {
+    this.updateDateRangeConfig(fieldIndex, { separatorText: separatorText || undefined });
+  }
+
+  /**
+   * Update daterange toDateOptional
+   */
+  updateDateRangeToDateOptional(fieldIndex: number, toDateOptional: boolean): void {
+    this.updateDateRangeConfig(fieldIndex, { toDateOptional });
   }
 }

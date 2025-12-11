@@ -11,6 +11,7 @@ import {
   DataGridColumnConfig,
   DataGridColumnGroup,
   PhoneConfig,
+  DateRangeConfig,
 } from '../../models/form-config.interface';
 import { FormStorage } from '../../services/form-storage';
 
@@ -83,6 +84,9 @@ export class DynamicForm implements OnInit, OnDestroy {
       } else if (field.type === 'phone') {
         // Create FormGroup for phone field with countryCode and number
         group[field.name] = this.createPhoneFormGroup(field);
+      } else if (field.type === 'daterange') {
+        // Create FormGroup for daterange field with fromDate and toDate
+        group[field.name] = this.createDateRangeFormGroup(field);
       } else {
         const validators = this.buildValidators(field.validations || []);
         // Initialize checkbox fields with options as arrays
@@ -174,6 +178,39 @@ export class DynamicForm implements OnInit, OnDestroy {
       number: new FormControl(
         { value: existingValue.number ?? '', disabled: field.disabled ?? false },
         numberValidators
+      ),
+    });
+  }
+
+  /**
+   * Create FormGroup for a daterange field
+   * Structure: { fromDate: string, toDate: string }
+   */
+  private createDateRangeFormGroup(field: FormFieldConfig): FormGroup {
+    const existingValue = (field.value as { fromDate?: string; toDate?: string }) || {};
+    const isRequired = field.validations?.some((v) => v.type === 'required');
+    const toDateOptional = field.daterangeConfig?.toDateOptional ?? false;
+
+    // Build validators for fromDate
+    const fromValidators: any[] = [];
+    if (isRequired) {
+      fromValidators.push(Validators.required);
+    }
+
+    // Build validators for toDate (skip required if toDateOptional is true)
+    const toValidators: any[] = [];
+    if (isRequired && !toDateOptional) {
+      toValidators.push(Validators.required);
+    }
+
+    return new FormGroup({
+      fromDate: new FormControl(
+        { value: existingValue.fromDate ?? '', disabled: field.disabled ?? false },
+        fromValidators
+      ),
+      toDate: new FormControl(
+        { value: existingValue.toDate ?? '', disabled: field.disabled ?? false },
+        toValidators
       ),
     });
   }
@@ -343,14 +380,15 @@ export class DynamicForm implements OnInit, OnDestroy {
       this.form.get(key)?.markAsTouched();
     });
 
-    // Mark table, datagrid, and phone fields as touched
+    // Mark table, datagrid, phone, and daterange fields as touched
     this.markTableFieldsTouched();
     this.markDataGridFieldsTouched();
     this.markPhoneFieldsTouched();
+    this.markDateRangeFieldsTouched();
 
     this.updateErrors();
 
-    // Check regular form validity AND table/datagrid/phone validity
+    // Check regular form validity AND table/datagrid/phone/daterange validity
     let isValid = true;
     const currentConfig = this.config();
 
@@ -364,7 +402,10 @@ export class DynamicForm implements OnInit, OnDestroy {
       } else if (field.type === 'phone' && !this.isPhoneValid(field.name)) {
         isValid = false;
         break;
-      } else if (field.type !== 'table' && field.type !== 'datagrid' && field.type !== 'phone') {
+      } else if (field.type === 'daterange' && !this.isDateRangeValid(field.name)) {
+        isValid = false;
+        break;
+      } else if (field.type !== 'table' && field.type !== 'datagrid' && field.type !== 'phone' && field.type !== 'daterange') {
         const control = this.form.get(field.name);
         if (control?.invalid) {
           isValid = false;
@@ -562,6 +603,10 @@ export class DynamicForm implements OnInit, OnDestroy {
         }
       } else if (field.type === 'phone') {
         if (!this.isPhoneValid(field.name)) {
+          return false;
+        }
+      } else if (field.type === 'daterange') {
+        if (!this.isDateRangeValid(field.name)) {
           return false;
         }
       } else {
@@ -1405,6 +1450,86 @@ export class DynamicForm implements OnInit, OnDestroy {
         if (phoneGroup) {
           phoneGroup.get('countryCode')?.markAsTouched();
           phoneGroup.get('number')?.markAsTouched();
+        }
+      }
+    });
+  }
+
+  // ============================================
+  // Date Range Field Methods
+  // ============================================
+
+  /**
+   * Get FormGroup for a daterange field
+   */
+  getDateRangeFormGroup(fieldName: string): FormGroup | null {
+    const control = this.form.get(fieldName);
+    return control instanceof FormGroup ? control : null;
+  }
+
+  /**
+   * Check if daterange field is valid
+   */
+  isDateRangeValid(fieldName: string): boolean {
+    const dateRangeGroup = this.getDateRangeFormGroup(fieldName);
+    if (!dateRangeGroup) return true;
+
+    const fromControl = dateRangeGroup.get('fromDate');
+    const toControl = dateRangeGroup.get('toDate');
+    return !fromControl?.invalid && !toControl?.invalid;
+  }
+
+  /**
+   * Check if daterange field has error (for display)
+   */
+  hasDateRangeError(fieldName: string): boolean {
+    const dateRangeGroup = this.getDateRangeFormGroup(fieldName);
+    if (!dateRangeGroup) return false;
+
+    const fromControl = dateRangeGroup.get('fromDate');
+    const toControl = dateRangeGroup.get('toDate');
+    const fromHasError = !!(fromControl?.invalid && fromControl?.touched);
+    const toHasError = !!(toControl?.invalid && toControl?.touched);
+    return fromHasError || toHasError;
+  }
+
+  /**
+   * Get daterange error message
+   */
+  getDateRangeErrorMessage(fieldName: string): string {
+    const field = this.getField(fieldName);
+    if (!field) return '';
+
+    const dateRangeGroup = this.getDateRangeFormGroup(fieldName);
+    if (!dateRangeGroup) return '';
+
+    const fromControl = dateRangeGroup.get('fromDate');
+    const toControl = dateRangeGroup.get('toDate');
+
+    // Check validation rules from field config
+    const validations = field.validations || [];
+    for (const validation of validations) {
+      if (validation.type === 'required') {
+        if (fromControl?.hasError('required') || toControl?.hasError('required')) {
+          return validation.message;
+        }
+      }
+    }
+
+    return 'Invalid date range';
+  }
+
+  /**
+   * Mark daterange fields as touched (for form submission)
+   */
+  private markDateRangeFieldsTouched(): void {
+    const currentConfig = this.config();
+    currentConfig.fields.forEach((field) => {
+      if (field.type === 'daterange') {
+        const dateRangeGroup = this.getDateRangeFormGroup(field.name);
+        if (dateRangeGroup) {
+          dateRangeGroup.get('fromDate')?.markAsTouched();
+          dateRangeGroup.get('toDate')?.markAsTouched();
         }
       }
     });

@@ -270,6 +270,35 @@ $text-muted: #666;
   }
 }
 
+/* Date Range Configuration Section */
+.daterange-config-section {
+  margin-top: 1rem;
+  padding-top: 1rem;
+  border-top: 1px solid $border-color;
+
+  h4 {
+    margin: 0 0 0.75rem 0;
+    font-size: 0.875rem;
+    padding: 0.5rem 0.75rem;
+    background: $purple;
+    color: #fff;
+  }
+
+  .checkbox-group {
+    label {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      cursor: pointer;
+
+      input[type="checkbox"] {
+        width: auto;
+        margin: 0;
+      }
+    }
+  }
+}
+
 .columns-section {
   margin-top: 1rem;
   padding-top: 1rem;

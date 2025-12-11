@@ -345,6 +345,51 @@
               </div>
             }
           }
+          @case ('daterange') {
+            <div
+              data-daterange-container
+              [formGroupName]="field.name"
+              [attr.data-daterange-valid]="!hasDateRangeError(field.name)">
+              <div data-daterange-field data-daterange-from-field>
+                @if (field.daterangeConfig?.fromLabel) {
+                  <label data-daterange-label data-daterange-from-label>
+                    {{ field.daterangeConfig.fromLabel }}
+                  </label>
+                }
+                <input
+                  type="date"
+                  formControlName="fromDate"
+                  data-daterange-input
+                  data-daterange-from
+                  [attr.data-input-type]="'daterange-from'"
+                />
+              </div>
+              <span data-daterange-separator>
+                {{ field.daterangeConfig?.separatorText || 'to' }}
+              </span>
+              <div data-daterange-field data-daterange-to-field>
+                @if (field.daterangeConfig?.toLabel) {
+                  <label data-daterange-label data-daterange-to-label>
+                    {{ field.daterangeConfig.toLabel }}
+                  </label>
+                }
+                <input
+                  type="date"
+                  formControlName="toDate"
+                  data-daterange-input
+                  data-daterange-to
+                  [attr.data-input-type]="'daterange-to'"
+                />
+              </div>
+            </div>
+            @if (hasDateRangeError(field.name)) {
+              <div
+                [attr.data-error-for]="field.name"
+                data-validation-error>
+                {{ getDateRangeErrorMessage(field.name) }}
+              </div>
+            }
+          }
           @case ('datagrid') {
             @if (field.datagridConfig) {
               <div
