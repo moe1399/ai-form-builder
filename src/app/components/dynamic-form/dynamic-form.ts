@@ -12,8 +12,10 @@ import {
   DataGridColumnGroup,
   PhoneConfig,
   DateRangeConfig,
+  FormRefConfig,
 } from '../../models/form-config.interface';
 import { FormStorage } from '../../services/form-storage';
+import { FormBuilder as FormBuilderService } from '../../services/form-builder';
 
 @Component({
   selector: 'app-dynamic-form',
@@ -37,7 +39,13 @@ export class DynamicForm implements OnInit, OnDestroy {
   activeCellTooltip: { field: string; row: number; col: string } | null = null;
   private autoSaveTimer?: number;
 
-  constructor(private formStorage: FormStorage) {
+  // Cache for resolved form references (fieldName -> FormConfig)
+  resolvedFormRefs: Map<string, FormConfig> = new Map();
+
+  constructor(
+    private formStorage: FormStorage,
+    private formBuilderService: FormBuilderService
+  ) {
     // React to config changes
     effect(() => {
       const currentConfig = this.config();
@@ -87,6 +95,12 @@ export class DynamicForm implements OnInit, OnDestroy {
       } else if (field.type === 'daterange') {
         // Create FormGroup for daterange field with fromDate and toDate
         group[field.name] = this.createDateRangeFormGroup(field);
+      } else if (field.type === 'formref' && field.formrefConfig) {
+        // Create FormGroup for embedded form fields
+        const formRefGroup = this.createFormRefFormGroup(field);
+        if (formRefGroup) {
+          group[field.name] = formRefGroup;
+        }
       } else {
         const validators = this.buildValidators(field.validations || []);
         // Initialize checkbox fields with options as arrays
@@ -213,6 +227,137 @@ export class DynamicForm implements OnInit, OnDestroy {
         toValidators
       ),
     });
+  }
+
+  /**
+   * Create FormGroup for a formref field
+   * Loads the referenced form and creates controls for its fields
+   * Structure: { embeddedFieldName: value, ... }
+   */
+  private createFormRefFormGroup(field: FormFieldConfig): FormGroup | null {
+    const formrefConfig = field.formrefConfig;
+    if (!formrefConfig?.formId) return null;
+
+    // Load the referenced form configuration
+    const referencedForm = this.formBuilderService.loadConfig(formrefConfig.formId);
+    if (!referencedForm) {
+      console.warn(`FormRef: Could not load form with ID "${formrefConfig.formId}"`);
+      return null;
+    }
+
+    // Store the resolved form config for rendering
+    this.resolvedFormRefs.set(field.name, referencedForm);
+
+    // Get existing values for the embedded fields
+    const existingValue = (field.value as { [key: string]: any }) || {};
+
+    // Create controls for each field in the referenced form
+    const group: { [key: string]: FormControl | FormArray | FormGroup } = {};
+    const prefix = formrefConfig.fieldPrefix || '';
+
+    for (const embeddedField of referencedForm.fields) {
+      // Skip info fields and formref fields (prevent infinite recursion)
+      if (embeddedField.type === 'info' || embeddedField.type === 'formref') {
+        continue;
+      }
+
+      const fieldName = prefix + embeddedField.name;
+      const fieldValue = existingValue[fieldName];
+
+      // Create control based on field type
+      if (embeddedField.type === 'table' && embeddedField.tableConfig) {
+        const fieldWithValue = { ...embeddedField, value: fieldValue, disabled: field.disabled };
+        group[fieldName] = this.createTableFormArray(fieldWithValue);
+      } else if (embeddedField.type === 'datagrid' && embeddedField.datagridConfig) {
+        const fieldWithValue = { ...embeddedField, value: fieldValue, disabled: field.disabled };
+        group[fieldName] = this.createDataGridFormGroup(fieldWithValue);
+      } else if (embeddedField.type === 'phone') {
+        const fieldWithValue = { ...embeddedField, value: fieldValue, disabled: field.disabled };
+        group[fieldName] = this.createPhoneFormGroup(fieldWithValue);
+      } else if (embeddedField.type === 'daterange') {
+        const fieldWithValue = { ...embeddedField, value: fieldValue, disabled: field.disabled };
+        group[fieldName] = this.createDateRangeFormGroup(fieldWithValue);
+      } else {
+        const validators = this.buildValidators(embeddedField.validations || []);
+        const defaultValue =
+          embeddedField.type === 'checkbox' && embeddedField.options?.length
+            ? fieldValue ?? []
+            : fieldValue ?? '';
+        group[fieldName] = new FormControl(
+          { value: defaultValue, disabled: field.disabled ?? embeddedField.disabled ?? false },
+          validators
+        );
+      }
+    }
+
+    return new FormGroup(group);
+  }
+
+  /**
+   * Get resolved form config for a formref field
+   */
+  getResolvedFormRef(fieldName: string): FormConfig | undefined {
+    return this.resolvedFormRefs.get(fieldName);
+  }
+
+  /**
+   * Get the FormGroup for a formref field
+   */
+  getFormRefFormGroup(fieldName: string): FormGroup | null {
+    const control = this.form.get(fieldName);
+    return control instanceof FormGroup ? control : null;
+  }
+
+  /**
+   * Get embedded fields for a formref field (with prefix applied to names)
+   */
+  getFormRefFields(field: FormFieldConfig): FormFieldConfig[] {
+    const resolvedForm = this.resolvedFormRefs.get(field.name);
+    if (!resolvedForm) return [];
+
+    const prefix = field.formrefConfig?.fieldPrefix || '';
+    return resolvedForm.fields
+      .filter((f) => f.type !== 'info' && f.type !== 'formref')
+      .map((f) => ({
+        ...f,
+        name: prefix + f.name,
+        disabled: field.disabled ?? f.disabled,
+      }));
+  }
+
+  /**
+   * Get sections from a referenced form
+   */
+  getFormRefSections(field: FormFieldConfig): FormSection[] {
+    if (!field.formrefConfig?.showSections) return [];
+    const resolvedForm = this.resolvedFormRefs.get(field.name);
+    return resolvedForm?.sections || [];
+  }
+
+  /**
+   * Check if formref field is valid
+   */
+  isFormRefValid(fieldName: string): boolean {
+    const formGroup = this.getFormRefFormGroup(fieldName);
+    if (!formGroup) return true;
+    return !formGroup.invalid;
+  }
+
+  /**
+   * Check if formref has errors (for display)
+   */
+  hasFormRefError(fieldName: string): boolean {
+    const formGroup = this.getFormRefFormGroup(fieldName);
+    if (!formGroup) return false;
+
+    // Check if any nested control is invalid and touched
+    for (const key of Object.keys(formGroup.controls)) {
+      const control = formGroup.get(key);
+      if (control?.invalid && control?.touched) {
+        return true;
+      }
+    }
+    return false;
   }
 
   /**
@@ -380,15 +525,16 @@ export class DynamicForm implements OnInit, OnDestroy {
       this.form.get(key)?.markAsTouched();
     });
 
-    // Mark table, datagrid, phone, and daterange fields as touched
+    // Mark table, datagrid, phone, daterange, and formref fields as touched
     this.markTableFieldsTouched();
     this.markDataGridFieldsTouched();
     this.markPhoneFieldsTouched();
     this.markDateRangeFieldsTouched();
+    this.markFormRefFieldsTouched();
 
     this.updateErrors();
 
-    // Check regular form validity AND table/datagrid/phone/daterange validity
+    // Check regular form validity AND table/datagrid/phone/daterange/formref validity
     let isValid = true;
     const currentConfig = this.config();
 
@@ -405,7 +551,10 @@ export class DynamicForm implements OnInit, OnDestroy {
       } else if (field.type === 'daterange' && !this.isDateRangeValid(field.name)) {
         isValid = false;
         break;
-      } else if (field.type !== 'table' && field.type !== 'datagrid' && field.type !== 'phone' && field.type !== 'daterange') {
+      } else if (field.type === 'formref' && !this.isFormRefValid(field.name)) {
+        isValid = false;
+        break;
+      } else if (field.type !== 'table' && field.type !== 'datagrid' && field.type !== 'phone' && field.type !== 'daterange' && field.type !== 'formref') {
         const control = this.form.get(field.name);
         if (control?.invalid) {
           isValid = false;
@@ -607,6 +756,10 @@ export class DynamicForm implements OnInit, OnDestroy {
         }
       } else if (field.type === 'daterange') {
         if (!this.isDateRangeValid(field.name)) {
+          return false;
+        }
+      } else if (field.type === 'formref') {
+        if (!this.isFormRefValid(field.name)) {
           return false;
         }
       } else {
@@ -1530,6 +1683,23 @@ export class DynamicForm implements OnInit, OnDestroy {
         if (dateRangeGroup) {
           dateRangeGroup.get('fromDate')?.markAsTouched();
           dateRangeGroup.get('toDate')?.markAsTouched();
+        }
+      }
+    });
+  }
+
+  /**
+   * Mark formref fields as touched (for form submission)
+   */
+  private markFormRefFieldsTouched(): void {
+    const currentConfig = this.config();
+    currentConfig.fields.forEach((field) => {
+      if (field.type === 'formref') {
+        const formRefGroup = this.getFormRefFormGroup(field.name);
+        if (formRefGroup) {
+          Object.keys(formRefGroup.controls).forEach((controlName) => {
+            formRefGroup.get(controlName)?.markAsTouched();
+          });
         }
       }
     });

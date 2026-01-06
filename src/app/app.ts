@@ -45,10 +45,6 @@ export class App implements OnInit {
     }
   }
 
-  onConfigChanged(config: FormConfig): void {
-    this.currentConfig.set(config);
-  }
-
   async shareForm(): Promise<void> {
     const config = this.currentConfig();
     if (!config || config.fields.length === 0) {

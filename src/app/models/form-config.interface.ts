@@ -1,7 +1,7 @@
 /**
  * Supported form field types
  */
-export type FieldType = 'text' | 'email' | 'number' | 'textarea' | 'select' | 'checkbox' | 'radio' | 'date' | 'daterange' | 'table' | 'info' | 'datagrid' | 'phone';
+export type FieldType = 'text' | 'email' | 'number' | 'textarea' | 'select' | 'checkbox' | 'radio' | 'date' | 'daterange' | 'table' | 'info' | 'datagrid' | 'phone' | 'formref';
 
 /**
  * Country code option for phone field
@@ -28,6 +28,15 @@ export interface DateRangeConfig {
   toLabel?: string;        // Label for "to" date input (default: 'To')
   separatorText?: string;  // Text between the two inputs (default: 'to')
   toDateOptional?: boolean; // If true, "to date" can be empty even with required validation (default: false)
+}
+
+/**
+ * Form reference field configuration - embeds fields from another form
+ */
+export interface FormRefConfig {
+  formId: string;           // ID of the form to embed
+  showSections?: boolean;   // Whether to show section headers from the embedded form (default: false)
+  fieldPrefix?: string;     // Optional prefix for embedded field names to avoid conflicts
 }
 
 /**
@@ -178,6 +187,7 @@ export interface FormFieldConfig {
   content?: string; // Markdown content for info field type
   phoneConfig?: PhoneConfig; // Configuration for phone field type
   daterangeConfig?: DateRangeConfig; // Configuration for daterange field type
+  formrefConfig?: FormRefConfig; // Configuration for formref field type
 }
 
 /**

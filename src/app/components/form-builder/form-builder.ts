@@ -1,4 +1,4 @@
-import { Component, output, signal, computed, input, effect } from '@angular/core';
+import { Component, output, signal, computed, input, effect, model, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import {
@@ -19,8 +19,20 @@ import {
   PhoneConfig,
   CountryCodeOption,
   DateRangeConfig,
+  FormRefConfig,
 } from '../../models/form-config.interface';
 import { FormBuilder as FormBuilderService } from '../../services/form-builder';
+
+/**
+ * Configuration options for toolbar buttons
+ */
+export interface ToolbarConfig {
+  showNewForm?: boolean;
+  showSave?: boolean;
+  showExport?: boolean;
+  showImport?: boolean;
+  showShare?: boolean;
+}
 
 @Component({
   selector: 'app-form-builder',
@@ -29,15 +41,35 @@ import { FormBuilder as FormBuilderService } from '../../services/form-builder';
   styleUrl: './form-builder.scss',
 })
 export class FormBuilder {
-  // Inputs
-  initialConfig = input<FormConfig | null>(null);
+  // Inject service using inject()
+  private formBuilderService = inject(FormBuilderService);
 
-  // Outputs
-  configChanged = output<FormConfig>();
+  // Two-way binding for config - the primary API for reusable usage
+  config = model<FormConfig | null>(null);
+
+  // Feature visibility inputs
+  showToolbar = input<boolean>(true);
+  showSavedConfigs = input<boolean>(true);
+  toolbarConfig = input<ToolbarConfig>({
+    showNewForm: true,
+    showSave: true,
+    showExport: true,
+    showImport: true,
+    showShare: true,
+  });
+
+  // Output events for parent to handle actions
+  saveRequested = output<FormConfig>();
+  newFormRequested = output<void>();
   shareRequested = output<void>();
+  exportRequested = output<FormConfig>();
+  importCompleted = output<FormConfig>();
 
-  // Current form configuration being edited
-  currentConfig!: ReturnType<typeof signal<FormConfig>>;
+  // Internal config signal for component state management
+  private internalConfig = signal<FormConfig>(this.formBuilderService.createBlankConfig());
+
+  // Computed to get the current config (from model or internal)
+  currentConfig = computed(() => this.config() ?? this.internalConfig());
 
   // Saved configurations
   savedConfigs = computed(() => this.formBuilderService.savedConfigs());
@@ -52,7 +84,7 @@ export class FormBuilder {
   message = signal<{ type: 'success' | 'error'; text: string } | null>(null);
 
   // Field types for dropdown
-  fieldTypes: FieldType[] = ['text', 'email', 'number', 'textarea', 'date', 'daterange', 'select', 'radio', 'checkbox', 'table', 'info', 'datagrid', 'phone'];
+  fieldTypes: FieldType[] = ['text', 'email', 'number', 'textarea', 'date', 'daterange', 'select', 'radio', 'checkbox', 'table', 'info', 'datagrid', 'phone', 'formref'];
 
   // Default country codes for phone field
   defaultCountryCodes: CountryCodeOption[] = [
@@ -89,26 +121,41 @@ export class FormBuilder {
   // Validation types
   validationTypes = ['required', 'email', 'minLength', 'maxLength', 'min', 'max', 'pattern'];
 
-  constructor(private formBuilderService: FormBuilderService) {
-    // Initialize with blank config, will be updated by effect if initialConfig is provided
-    this.currentConfig = signal<FormConfig>(this.formBuilderService.createBlankConfig());
-
-    // Use effect to initialize from input when component is created
+  constructor() {
+    // Sync model with internal state when model changes externally
     effect(() => {
-      const initial = this.initialConfig();
-      if (initial) {
-        this.currentConfig.set(initial);
+      const modelConfig = this.config();
+      if (modelConfig) {
+        this.internalConfig.set(modelConfig);
       }
     });
+  }
+
+  /**
+   * Helper to get toolbar button visibility
+   */
+  isToolbarButtonVisible(button: keyof ToolbarConfig): boolean {
+    const config = this.toolbarConfig();
+    return config[button] !== false;
   }
 
   /**
    * Create a new blank form
    */
   createNewForm(): void {
-    this.currentConfig.set(this.formBuilderService.createBlankConfig());
+    const newConfig = this.formBuilderService.createBlankConfig();
+    this.updateConfig(newConfig);
     this.selectedFieldIndex.set(null);
+    this.newFormRequested.emit();
     this.showMessage('success', 'New form created');
+  }
+
+  /**
+   * Update the config (internal and model)
+   */
+  private updateConfig(config: FormConfig): void {
+    this.internalConfig.set(config);
+    this.config.set(config);
   }
 
   /**
@@ -125,9 +172,8 @@ export class FormBuilder {
     };
 
     config.fields = [...config.fields, newField];
-    this.currentConfig.set(config);
+    this.updateConfig(config);
     this.selectedFieldIndex.set(config.fields.length - 1);
-    this.emitConfigChange();
   }
 
   /**
@@ -137,8 +183,7 @@ export class FormBuilder {
     const config = { ...this.currentConfig() };
     config.fields = [...config.fields];
     config.fields[index] = { ...field };
-    this.currentConfig.set(config);
-    this.emitConfigChange();
+    this.updateConfig(config);
   }
 
   /**
@@ -147,9 +192,8 @@ export class FormBuilder {
   removeField(index: number): void {
     const config = { ...this.currentConfig() };
     config.fields = config.fields.filter((_, i) => i !== index);
-    this.currentConfig.set(config);
+    this.updateConfig(config);
     this.selectedFieldIndex.set(null);
-    this.emitConfigChange();
   }
 
   /**
@@ -165,9 +209,8 @@ export class FormBuilder {
     ];
     // Update order
     config.fields.forEach((field, i) => (field.order = i));
-    this.currentConfig.set(config);
+    this.updateConfig(config);
     this.selectedFieldIndex.set(index - 1);
-    this.emitConfigChange();
   }
 
   /**
@@ -184,9 +227,8 @@ export class FormBuilder {
     ];
     // Update order
     newConfig.fields.forEach((field, i) => (field.order = i));
-    this.currentConfig.set(newConfig);
+    this.updateConfig(newConfig);
     this.selectedFieldIndex.set(index + 1);
-    this.emitConfigChange();
   }
 
   /**
@@ -201,8 +243,7 @@ export class FormBuilder {
       { type: 'required', message: 'This field is required' } as ValidationRule,
     ];
     config.fields[fieldIndex] = field;
-    this.currentConfig.set(config);
-    this.emitConfigChange();
+    this.updateConfig(config);
   }
 
   /**
@@ -215,8 +256,7 @@ export class FormBuilder {
     field.validations = [...(field.validations || [])];
     field.validations[validationIndex] = validation;
     config.fields[fieldIndex] = field;
-    this.currentConfig.set(config);
-    this.emitConfigChange();
+    this.updateConfig(config);
   }
 
   /**
@@ -228,8 +268,7 @@ export class FormBuilder {
     const field = { ...config.fields[fieldIndex] };
     field.validations = (field.validations || []).filter((_, i) => i !== validationIndex);
     config.fields[fieldIndex] = field;
-    this.currentConfig.set(config);
-    this.emitConfigChange();
+    this.updateConfig(config);
   }
 
   /**
@@ -243,6 +282,7 @@ export class FormBuilder {
     }
 
     this.formBuilderService.saveConfig(config);
+    this.saveRequested.emit(config);
     this.showMessage('success', 'Configuration saved successfully');
   }
 
@@ -252,9 +292,8 @@ export class FormBuilder {
   loadConfiguration(id: string): void {
     const config = this.formBuilderService.loadConfig(id);
     if (config) {
-      this.currentConfig.set(config);
+      this.updateConfig(config);
       this.selectedFieldIndex.set(null);
-      this.emitConfigChange();
       this.showMessage('success', 'Configuration loaded');
     }
   }
@@ -273,11 +312,13 @@ export class FormBuilder {
    * Export configuration as JSON
    */
   exportJson(): void {
-    const json = this.formBuilderService.exportConfig(this.currentConfig());
+    const config = this.currentConfig();
+    const json = this.formBuilderService.exportConfig(config);
     this.jsonEditorContent.set(json);
     this.jsonEditorMode.set('export');
     this.copyButtonText.set('Copy to Clipboard');
     this.showJsonEditor.set(true);
+    this.exportRequested.emit(config);
   }
 
   /**
@@ -309,10 +350,10 @@ export class FormBuilder {
   importJson(): void {
     const config = this.formBuilderService.importConfig(this.jsonEditorContent());
     if (config) {
-      this.currentConfig.set(config);
+      this.updateConfig(config);
       this.selectedFieldIndex.set(null);
       this.showJsonEditor.set(false);
-      this.emitConfigChange();
+      this.importCompleted.emit(config);
       this.showMessage('success', 'Configuration imported successfully');
     } else {
       this.showMessage('error', 'Invalid JSON format');
@@ -324,15 +365,7 @@ export class FormBuilder {
    */
   updateFormSettings(updates: Partial<FormConfig>): void {
     const config = { ...this.currentConfig(), ...updates };
-    this.currentConfig.set(config);
-    this.emitConfigChange();
-  }
-
-  /**
-   * Emit configuration change
-   */
-  private emitConfigChange(): void {
-    this.configChanged.emit(this.currentConfig());
+    this.updateConfig(config);
   }
 
   /**
@@ -446,6 +479,22 @@ export class FormBuilder {
       delete field.daterangeConfig;
     }
 
+    // Initialize formrefConfig when switching to formref type
+    if (type === 'formref' && !field.formrefConfig) {
+      field.formrefConfig = {
+        formId: '',
+        showSections: false,
+      };
+      // Formref fields don't have validations or options
+      delete field.validations;
+      delete field.options;
+    }
+
+    // Clear formrefConfig when switching away from formref type
+    if (type !== 'formref') {
+      delete field.formrefConfig;
+    }
+
     this.updateField(index, field);
   }
 
@@ -520,9 +569,8 @@ export class FormBuilder {
     };
 
     config.sections = [...sections, newSection];
-    this.currentConfig.set(config);
+    this.updateConfig(config);
     this.selectedSectionId.set(newSection.id);
-    this.emitConfigChange();
   }
 
   /**
@@ -533,8 +581,7 @@ export class FormBuilder {
     config.sections = (config.sections || []).map((section) =>
       section.id === id ? { ...section, ...updates } : section
     );
-    this.currentConfig.set(config);
-    this.emitConfigChange();
+    this.updateConfig(config);
   }
 
   /**
@@ -548,9 +595,8 @@ export class FormBuilder {
     config.fields = config.fields.map((field) =>
       field.sectionId === id ? { ...field, sectionId: undefined } : field
     );
-    this.currentConfig.set(config);
+    this.updateConfig(config);
     this.selectedSectionId.set(null);
-    this.emitConfigChange();
   }
 
   /**
@@ -565,8 +611,7 @@ export class FormBuilder {
     [sections[index - 1], sections[index]] = [sections[index], sections[index - 1]];
     sections.forEach((section, i) => (section.order = i));
     config.sections = sections;
-    this.currentConfig.set(config);
-    this.emitConfigChange();
+    this.updateConfig(config);
   }
 
   /**
@@ -581,8 +626,7 @@ export class FormBuilder {
     [sections[index], sections[index + 1]] = [sections[index + 1], sections[index]];
     sections.forEach((section, i) => (section.order = i));
     config.sections = sections;
-    this.currentConfig.set(config);
-    this.emitConfigChange();
+    this.updateConfig(config);
   }
 
   /**
@@ -1692,5 +1736,52 @@ export class FormBuilder {
    */
   updateDateRangeToDateOptional(fieldIndex: number, toDateOptional: boolean): void {
     this.updateDateRangeConfig(fieldIndex, { toDateOptional });
+  }
+
+  // ============================================
+  // Form Reference Field Methods
+  // ============================================
+
+  /**
+   * Update formref config
+   */
+  updateFormRefConfig(fieldIndex: number, updates: Partial<FormRefConfig>): void {
+    const field = this.currentConfig().fields[fieldIndex];
+    if (!field.formrefConfig) return;
+
+    const updatedField = {
+      ...field,
+      formrefConfig: { ...field.formrefConfig, ...updates },
+    };
+    this.updateField(fieldIndex, updatedField);
+  }
+
+  /**
+   * Update formref form ID
+   */
+  updateFormRefFormId(fieldIndex: number, formId: string): void {
+    this.updateFormRefConfig(fieldIndex, { formId });
+  }
+
+  /**
+   * Update formref show sections
+   */
+  updateFormRefShowSections(fieldIndex: number, showSections: boolean): void {
+    this.updateFormRefConfig(fieldIndex, { showSections });
+  }
+
+  /**
+   * Update formref field prefix
+   */
+  updateFormRefFieldPrefix(fieldIndex: number, fieldPrefix: string): void {
+    this.updateFormRefConfig(fieldIndex, { fieldPrefix: fieldPrefix || undefined });
+  }
+
+  /**
+   * Get available forms for formref selection (excluding current form to avoid recursion)
+   */
+  getAvailableFormsForFormRef(): FormConfig[] {
+    const currentId = this.currentConfig().id;
+    return this.savedConfigs().filter((config) => config.id !== currentId);
   }
 }

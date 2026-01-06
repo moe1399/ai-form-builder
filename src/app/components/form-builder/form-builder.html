@@ -7,19 +7,31 @@
   }
 
   <!-- Toolbar -->
-  <div class="toolbar">
-    <button class="btn btn-primary" (click)="createNewForm()">New Form</button>
-    <button class="btn btn-secondary" (click)="saveConfiguration()">Save</button>
-    <button class="btn btn-secondary" (click)="exportJson()">Export JSON</button>
-    <button class="btn btn-secondary" (click)="openImportJson()">Import JSON</button>
-    <button
-      class="btn btn-share"
-      (click)="shareRequested.emit()"
-      [disabled]="currentConfig().fields.length === 0"
-      title="Copy shareable URL to clipboard">
-      Share
-    </button>
-  </div>
+  @if (showToolbar()) {
+    <div class="toolbar">
+      @if (isToolbarButtonVisible('showNewForm')) {
+        <button class="btn btn-primary" (click)="createNewForm()">New Form</button>
+      }
+      @if (isToolbarButtonVisible('showSave')) {
+        <button class="btn btn-secondary" (click)="saveConfiguration()">Save</button>
+      }
+      @if (isToolbarButtonVisible('showExport')) {
+        <button class="btn btn-secondary" (click)="exportJson()">Export JSON</button>
+      }
+      @if (isToolbarButtonVisible('showImport')) {
+        <button class="btn btn-secondary" (click)="openImportJson()">Import JSON</button>
+      }
+      @if (isToolbarButtonVisible('showShare')) {
+        <button
+          class="btn btn-share"
+          (click)="shareRequested.emit()"
+          [disabled]="currentConfig().fields.length === 0"
+          title="Copy shareable URL to clipboard">
+          Share
+        </button>
+      }
+    </div>
+  }
 
   <div class="builder-layout">
     <!-- Left Panel: Form Settings & Fields List -->
@@ -128,21 +140,23 @@
       </div>
 
       <!-- Saved Configurations -->
-      <div class="panel-section">
-        <h3>Saved Forms</h3>
-        @if (savedConfigs().length === 0) {
-          <p class="empty-state">No saved forms</p>
-        }
-        @for (config of savedConfigs(); track config.id) {
-          <div class="saved-config-item">
-            <span class="config-name">{{ config.id }}</span>
-            <div class="config-actions">
-              <button class="btn-sm btn-secondary" (click)="loadConfiguration(config.id)">Load</button>
-              <button class="btn-sm btn-danger" (click)="deleteConfiguration(config.id)">Delete</button>
+      @if (showSavedConfigs()) {
+        <div class="panel-section">
+          <h3>Saved Forms</h3>
+          @if (savedConfigs().length === 0) {
+            <p class="empty-state">No saved forms</p>
+          }
+          @for (config of savedConfigs(); track config.id) {
+            <div class="saved-config-item">
+              <span class="config-name">{{ config.id }}</span>
+              <div class="config-actions">
+                <button class="btn-sm btn-secondary" (click)="loadConfiguration(config.id)">Load</button>
+                <button class="btn-sm btn-danger" (click)="deleteConfiguration(config.id)">Delete</button>
+              </div>
             </div>
-          </div>
-        }
-      </div>
+          }
+        </div>
+      }
     </div>
 
     <!-- Right Panel: Field/Section Editor -->
@@ -619,6 +633,53 @@
             </div>
           }
 
+          <!-- Form Reference Configuration (for formref fields) -->
+          @if (field.type === 'formref') {
+            <div class="formref-config-section">
+              <h4>Form Reference Configuration</h4>
+              <small class="form-hint">Embed fields from another saved form into this form</small>
+
+              <div class="form-group">
+                <label>Referenced Form</label>
+                <select
+                  [ngModel]="field.formrefConfig?.formId || ''"
+                  (ngModelChange)="updateFormRefFormId(fieldIndex, $event)">
+                  <option value="">-- Select a Form --</option>
+                  @for (config of getAvailableFormsForFormRef(); track config.id) {
+                    <option [value]="config.id">{{ config.id }}</option>
+                  }
+                </select>
+                <small class="form-hint">Select the saved form to embed</small>
+                @if (getAvailableFormsForFormRef().length === 0) {
+                  <small class="form-hint" style="color: #c00;">No saved forms available. Save a form first to embed it.</small>
+                }
+              </div>
+
+              <div class="form-group checkbox-group">
+                <label>
+                  <input
+                    type="checkbox"
+                    [ngModel]="field.formrefConfig?.showSections || false"
+                    (ngModelChange)="updateFormRefShowSections(fieldIndex, $event)"
+                  />
+                  Show section headers from embedded form
+                </label>
+                <small class="form-hint">If checked, section headers from the referenced form will be displayed</small>
+              </div>
+
+              <div class="form-group">
+                <label>Field Name Prefix (optional)</label>
+                <input
+                  type="text"
+                  [ngModel]="field.formrefConfig?.fieldPrefix || ''"
+                  (ngModelChange)="updateFormRefFieldPrefix(fieldIndex, $event)"
+                  placeholder="e.g., contact_"
+                />
+                <small class="form-hint">Prefix added to embedded field names to avoid conflicts (e.g., contact_email)</small>
+              </div>
+            </div>
+          }
+
           <!-- DataGrid Configuration (for datagrid fields) -->
           @if (field.type === 'datagrid') {
             <div class="datagrid-config-section">
@@ -973,8 +1034,8 @@
             </div>
           }
 
-          <!-- Validations (not for info type) -->
-          @if (field.type !== 'info') {
+          <!-- Validations (not for info or formref types) -->
+          @if (field.type !== 'info' && field.type !== 'formref') {
             <div class="validations-section">
               <h4>Validations</h4>
               <button class="btn-sm btn-primary" (click)="addValidation(fieldIndex)">+ Add Validation</button>

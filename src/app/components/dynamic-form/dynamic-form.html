@@ -640,6 +640,399 @@
               </div>
             }
           }
+          @case ('formref') {
+            @if (field.formrefConfig && getResolvedFormRef(field.name)) {
+              <div
+                data-formref-container
+                [formGroupName]="field.name"
+                [attr.data-formref-name]="field.name"
+                [attr.data-formref-form-id]="field.formrefConfig.formId"
+                [attr.data-formref-valid]="!hasFormRefError(field.name)"
+                [attr.data-formref-show-sections]="field.formrefConfig.showSections || false">
+
+                <!-- Render sections if showSections is enabled -->
+                @if (field.formrefConfig.showSections) {
+                  @for (section of getFormRefSections(field); track section.id) {
+                    <div
+                      data-formref-section
+                      [attr.data-formref-section-id]="section.id">
+                      <header data-formref-section-header>{{ section.title }}</header>
+                      @if (section.description) {
+                        <div data-formref-section-description>{{ section.description }}</div>
+                      }
+                      <!-- Fields in this section -->
+                      @for (embeddedField of getFormRefFields(field); track embeddedField.name) {
+                        @if (embeddedField.sectionId === section.id) {
+                          <div
+                            data-formref-field
+                            [attr.data-formref-field-name]="embeddedField.name"
+                            [attr.data-formref-field-type]="embeddedField.type"
+                            [attr.data-field-valid]="getFormRefFormGroup(field.name)?.get(embeddedField.name)?.valid !== false || !getFormRefFormGroup(field.name)?.get(embeddedField.name)?.touched"
+                            [attr.data-field-touched]="getFormRefFormGroup(field.name)?.get(embeddedField.name)?.touched"
+                            [attr.data-field-required]="embeddedField.validations && embeddedField.validations.length > 0 && embeddedField.validations[0].type === 'required'">
+                            <label
+                              [for]="embeddedField.name"
+                              data-formref-label>
+                              {{ embeddedField.label }}
+                              @if (embeddedField.validations && embeddedField.validations.length > 0 && embeddedField.validations[0].type === 'required') {
+                                <span data-required-indicator>*</span>
+                              }
+                            </label>
+                            <div data-formref-input-container>
+                              @switch (embeddedField.type) {
+                                @case ('text') {
+                                  <input
+                                    [id]="embeddedField.name"
+                                    [formControlName]="embeddedField.name"
+                                    type="text"
+                                    [placeholder]="embeddedField.placeholder || ''"
+                                    data-formref-input
+                                  />
+                                }
+                                @case ('email') {
+                                  <input
+                                    [id]="embeddedField.name"
+                                    [formControlName]="embeddedField.name"
+                                    type="email"
+                                    [placeholder]="embeddedField.placeholder || ''"
+                                    data-formref-input
+                                  />
+                                }
+                                @case ('number') {
+                                  <input
+                                    [id]="embeddedField.name"
+                                    [formControlName]="embeddedField.name"
+                                    type="number"
+                                    [placeholder]="embeddedField.placeholder || ''"
+                                    data-formref-input
+                                  />
+                                }
+                                @case ('textarea') {
+                                  <textarea
+                                    [id]="embeddedField.name"
+                                    [formControlName]="embeddedField.name"
+                                    [placeholder]="embeddedField.placeholder || ''"
+                                    data-formref-input
+                                    rows="4"
+                                  ></textarea>
+                                }
+                                @case ('date') {
+                                  <input
+                                    [id]="embeddedField.name"
+                                    [formControlName]="embeddedField.name"
+                                    type="date"
+                                    data-formref-input
+                                  />
+                                }
+                                @case ('select') {
+                                  <select
+                                    [id]="embeddedField.name"
+                                    [formControlName]="embeddedField.name"
+                                    data-formref-input>
+                                    @if (embeddedField.placeholder) {
+                                      <option value="" disabled>{{ embeddedField.placeholder }}</option>
+                                    }
+                                    @for (option of embeddedField.options; track option.value) {
+                                      <option [value]="option.value">{{ option.label }}</option>
+                                    }
+                                  </select>
+                                }
+                                @case ('radio') {
+                                  <div data-formref-radio-group>
+                                    @for (option of embeddedField.options; track option.value) {
+                                      <label data-formref-radio-option>
+                                        <input
+                                          type="radio"
+                                          [formControlName]="embeddedField.name"
+                                          [value]="option.value"
+                                          data-formref-radio-input
+                                        />
+                                        <span data-formref-radio-label>{{ option.label }}</span>
+                                      </label>
+                                    }
+                                  </div>
+                                }
+                                @case ('checkbox') {
+                                  @if (embeddedField.options && embeddedField.options.length > 0) {
+                                    <div data-formref-checkbox-group>
+                                      @for (option of embeddedField.options; track option.value) {
+                                        <label data-formref-checkbox-option>
+                                          <input
+                                            type="checkbox"
+                                            data-formref-checkbox-input
+                                          />
+                                          <span data-formref-checkbox-label>{{ option.label }}</span>
+                                        </label>
+                                      }
+                                    </div>
+                                  } @else {
+                                    <input
+                                      [id]="embeddedField.name"
+                                      [formControlName]="embeddedField.name"
+                                      type="checkbox"
+                                      data-formref-checkbox-single
+                                    />
+                                  }
+                                }
+                              }
+                            </div>
+                          </div>
+                        }
+                      }
+                    </div>
+                  }
+                  <!-- Fields without section -->
+                  @for (embeddedField of getFormRefFields(field); track embeddedField.name) {
+                    @if (!embeddedField.sectionId) {
+                      <div
+                        data-formref-field
+                        [attr.data-formref-field-name]="embeddedField.name"
+                        [attr.data-formref-field-type]="embeddedField.type"
+                        [attr.data-field-valid]="getFormRefFormGroup(field.name)?.get(embeddedField.name)?.valid !== false || !getFormRefFormGroup(field.name)?.get(embeddedField.name)?.touched"
+                        [attr.data-field-touched]="getFormRefFormGroup(field.name)?.get(embeddedField.name)?.touched"
+                        [attr.data-field-required]="embeddedField.validations && embeddedField.validations.length > 0 && embeddedField.validations[0].type === 'required'">
+                        <label
+                          [for]="embeddedField.name"
+                          data-formref-label>
+                          {{ embeddedField.label }}
+                          @if (embeddedField.validations && embeddedField.validations.length > 0 && embeddedField.validations[0].type === 'required') {
+                            <span data-required-indicator>*</span>
+                          }
+                        </label>
+                        <div data-formref-input-container>
+                          @switch (embeddedField.type) {
+                            @case ('text') {
+                              <input
+                                [id]="embeddedField.name"
+                                [formControlName]="embeddedField.name"
+                                type="text"
+                                [placeholder]="embeddedField.placeholder || ''"
+                                data-formref-input
+                              />
+                            }
+                            @case ('email') {
+                              <input
+                                [id]="embeddedField.name"
+                                [formControlName]="embeddedField.name"
+                                type="email"
+                                [placeholder]="embeddedField.placeholder || ''"
+                                data-formref-input
+                              />
+                            }
+                            @case ('number') {
+                              <input
+                                [id]="embeddedField.name"
+                                [formControlName]="embeddedField.name"
+                                type="number"
+                                [placeholder]="embeddedField.placeholder || ''"
+                                data-formref-input
+                              />
+                            }
+                            @case ('textarea') {
+                              <textarea
+                                [id]="embeddedField.name"
+                                [formControlName]="embeddedField.name"
+                                [placeholder]="embeddedField.placeholder || ''"
+                                data-formref-input
+                                rows="4"
+                              ></textarea>
+                            }
+                            @case ('date') {
+                              <input
+                                [id]="embeddedField.name"
+                                [formControlName]="embeddedField.name"
+                                type="date"
+                                data-formref-input
+                              />
+                            }
+                            @case ('select') {
+                              <select
+                                [id]="embeddedField.name"
+                                [formControlName]="embeddedField.name"
+                                data-formref-input>
+                                @if (embeddedField.placeholder) {
+                                  <option value="" disabled>{{ embeddedField.placeholder }}</option>
+                                }
+                                @for (option of embeddedField.options; track option.value) {
+                                  <option [value]="option.value">{{ option.label }}</option>
+                                }
+                              </select>
+                            }
+                            @case ('radio') {
+                              <div data-formref-radio-group>
+                                @for (option of embeddedField.options; track option.value) {
+                                  <label data-formref-radio-option>
+                                    <input
+                                      type="radio"
+                                      [formControlName]="embeddedField.name"
+                                      [value]="option.value"
+                                      data-formref-radio-input
+                                    />
+                                    <span data-formref-radio-label>{{ option.label }}</span>
+                                  </label>
+                                }
+                              </div>
+                            }
+                            @case ('checkbox') {
+                              @if (embeddedField.options && embeddedField.options.length > 0) {
+                                <div data-formref-checkbox-group>
+                                  @for (option of embeddedField.options; track option.value) {
+                                    <label data-formref-checkbox-option>
+                                      <input
+                                        type="checkbox"
+                                        data-formref-checkbox-input
+                                      />
+                                      <span data-formref-checkbox-label>{{ option.label }}</span>
+                                    </label>
+                                  }
+                                </div>
+                              } @else {
+                                <input
+                                  [id]="embeddedField.name"
+                                  [formControlName]="embeddedField.name"
+                                  type="checkbox"
+                                  data-formref-checkbox-single
+                                />
+                              }
+                            }
+                          }
+                        </div>
+                      </div>
+                    }
+                  }
+                } @else {
+                  <!-- Render fields without sections -->
+                  @for (embeddedField of getFormRefFields(field); track embeddedField.name) {
+                    <div
+                      data-formref-field
+                      [attr.data-formref-field-name]="embeddedField.name"
+                      [attr.data-formref-field-type]="embeddedField.type"
+                      [attr.data-field-valid]="getFormRefFormGroup(field.name)?.get(embeddedField.name)?.valid !== false || !getFormRefFormGroup(field.name)?.get(embeddedField.name)?.touched"
+                      [attr.data-field-touched]="getFormRefFormGroup(field.name)?.get(embeddedField.name)?.touched"
+                      [attr.data-field-required]="embeddedField.validations && embeddedField.validations.length > 0 && embeddedField.validations[0].type === 'required'">
+                      <label
+                        [for]="embeddedField.name"
+                        data-formref-label>
+                        {{ embeddedField.label }}
+                        @if (embeddedField.validations && embeddedField.validations.length > 0 && embeddedField.validations[0].type === 'required') {
+                          <span data-required-indicator>*</span>
+                        }
+                      </label>
+                      <div data-formref-input-container>
+                        @switch (embeddedField.type) {
+                          @case ('text') {
+                            <input
+                              [id]="embeddedField.name"
+                              [formControlName]="embeddedField.name"
+                              type="text"
+                              [placeholder]="embeddedField.placeholder || ''"
+                              data-formref-input
+                            />
+                          }
+                          @case ('email') {
+                            <input
+                              [id]="embeddedField.name"
+                              [formControlName]="embeddedField.name"
+                              type="email"
+                              [placeholder]="embeddedField.placeholder || ''"
+                              data-formref-input
+                            />
+                          }
+                          @case ('number') {
+                            <input
+                              [id]="embeddedField.name"
+                              [formControlName]="embeddedField.name"
+                              type="number"
+                              [placeholder]="embeddedField.placeholder || ''"
+                              data-formref-input
+                            />
+                          }
+                          @case ('textarea') {
+                            <textarea
+                              [id]="embeddedField.name"
+                              [formControlName]="embeddedField.name"
+                              [placeholder]="embeddedField.placeholder || ''"
+                              data-formref-input
+                              rows="4"
+                            ></textarea>
+                          }
+                          @case ('date') {
+                            <input
+                              [id]="embeddedField.name"
+                              [formControlName]="embeddedField.name"
+                              type="date"
+                              data-formref-input
+                            />
+                          }
+                          @case ('select') {
+                            <select
+                              [id]="embeddedField.name"
+                              [formControlName]="embeddedField.name"
+                              data-formref-input>
+                              @if (embeddedField.placeholder) {
+                                <option value="" disabled>{{ embeddedField.placeholder }}</option>
+                              }
+                              @for (option of embeddedField.options; track option.value) {
+                                <option [value]="option.value">{{ option.label }}</option>
+                              }
+                            </select>
+                          }
+                          @case ('radio') {
+                            <div data-formref-radio-group>
+                              @for (option of embeddedField.options; track option.value) {
+                                <label data-formref-radio-option>
+                                  <input
+                                    type="radio"
+                                    [formControlName]="embeddedField.name"
+                                    [value]="option.value"
+                                    data-formref-radio-input
+                                  />
+                                  <span data-formref-radio-label>{{ option.label }}</span>
+                                </label>
+                              }
+                            </div>
+                          }
+                          @case ('checkbox') {
+                            @if (embeddedField.options && embeddedField.options.length > 0) {
+                              <div data-formref-checkbox-group>
+                                @for (option of embeddedField.options; track option.value) {
+                                  <label data-formref-checkbox-option>
+                                    <input
+                                      type="checkbox"
+                                      data-formref-checkbox-input
+                                    />
+                                    <span data-formref-checkbox-label>{{ option.label }}</span>
+                                  </label>
+                                }
+                              </div>
+                            } @else {
+                              <input
+                                [id]="embeddedField.name"
+                                [formControlName]="embeddedField.name"
+                                type="checkbox"
+                                data-formref-checkbox-single
+                              />
+                            }
+                          }
+                        }
+                      </div>
+                    </div>
+                  }
+                }
+              </div>
+            } @else if (field.formrefConfig) {
+              <div data-formref-error>
+                Form "{{ field.formrefConfig.formId }}" not found
+              </div>
+            }
+            @if (hasFormRefError(field.name)) {
+              <div
+                [attr.data-error-for]="field.name"
+                data-validation-error>
+                Some fields in the embedded form have errors
+              </div>
+            }
+          }
         }
 
         @if (hasError(field.name)) {
