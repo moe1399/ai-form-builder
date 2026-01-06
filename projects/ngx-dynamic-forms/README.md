@@ -5,6 +5,7 @@ Dynamic form builder and renderer for Angular with a headless UI pattern.
 ## Features
 
 - **Headless UI Pattern**: Zero default styling, complete styling freedom via `data-*` attributes
+- **No Built-in Buttons**: You render your own submit/save buttons for full control
 - **14 Field Types**: text, email, number, textarea, date, daterange, select, radio, checkbox, table, datagrid, phone, info, formref
 - **Visual Form Builder**: Drag-drop field ordering, validation rules, sections
 - **JSON-driven**: Define forms via JSON configuration
@@ -25,16 +26,33 @@ npm install @moe1399/ngx-dynamic-forms
 
 ### Basic Form Renderer
 
+The DynamicForm component does not render submit/save buttons. You provide your own buttons via content projection and call the component methods:
+
 ```typescript
-import { Component } from '@angular/core';
+import { Component, viewChild } from '@angular/core';
 import { DynamicForm, FormConfig } from '@moe1399/ngx-dynamic-forms';
 
 @Component({
   selector: 'app-my-form',
   imports: [DynamicForm],
-  template: `<ngx-dynamic-form [config]="formConfig" (formSubmit)="onSubmit($event)" />`
+  template: `
+    <ngx-dynamic-form
+      #form
+      [config]="formConfig"
+      (formSubmit)="onSubmit($event)"
+      (valueChanges)="onValueChange($event)">
+      <!-- Your custom buttons -->
+      <div class="form-actions">
+        <button type="button" (click)="form.submitForm()" [disabled]="!form.valid">
+          {{ formConfig.submitLabel || 'Submit' }}
+        </button>
+      </div>
+    </ngx-dynamic-form>
+  `
 })
 export class MyFormComponent {
+  form = viewChild.required<DynamicForm>('form');
+
   formConfig: FormConfig = {
     id: 'contact-form',
     fields: [
@@ -46,6 +64,19 @@ export class MyFormComponent {
 
   onSubmit(data: any) {
     console.log('Form submitted:', data);
+  }
+
+  onValueChange(data: any) {
+    console.log('Form values changed:', data);
+  }
+
+  // Access form state programmatically
+  checkFormState() {
+    const formRef = this.form();
+    console.log('Current value:', formRef.value);
+    console.log('Is valid:', formRef.valid);
+    console.log('Is touched:', formRef.touched);
+    console.log('Is dirty:', formRef.dirty);
   }
 }
 ```
@@ -139,15 +170,30 @@ Or create custom styles using `data-*` attribute selectors:
 
 **Selector:** `ngx-dynamic-form`
 
+**Content Projection:** Place your submit/save buttons inside the component tags.
+
 | Input | Type | Description |
 |-------|------|-------------|
 | `config` | `FormConfig` | Form configuration |
 
 | Output | Type | Description |
 |--------|------|-------------|
-| `formSubmit` | `EventEmitter<object>` | Emitted on form submit |
-| `formSave` | `EventEmitter<object>` | Emitted on form save |
+| `formSubmit` | `EventEmitter<object>` | Emitted when submitForm() is called and form is valid |
+| `formSave` | `EventEmitter<object>` | Emitted when saveForm() is called |
 | `validationErrors` | `EventEmitter<FieldError[]>` | Emitted on validation changes |
+| `valueChanges` | `EventEmitter<object>` | Emitted when any form value changes |
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `value` | `object` | Current form values (read-only) |
+| `valid` | `boolean` | Whether form is valid (read-only) |
+| `touched` | `boolean` | Whether form has been interacted with (read-only) |
+| `dirty` | `boolean` | Whether form values have changed (read-only) |
+
+| Method | Description |
+|--------|-------------|
+| `submitForm()` | Validates and submits the form, emits `formSubmit` if valid |
+| `saveForm()` | Saves form data to local storage, emits `formSave` |
 
 ### NgxFormBuilder Component
 
@@ -173,9 +219,10 @@ interface FormConfig {
   id: string;
   fields: FormFieldConfig[];
   sections?: FormSection[];
-  submitLabel?: string;
-  saveLabel?: string;
-  showSaveButton?: boolean;
+  submitLabel?: string;    // For use by your custom buttons
+  saveLabel?: string;      // For use by your custom buttons
+  autoSave?: boolean;
+  autoSaveInterval?: number;
 }
 
 interface FormFieldConfig {
@@ -244,7 +291,6 @@ The headless UI exposes state via data attributes for CSS styling:
 | `data-field-touched` | true/false | Field interaction state |
 | `data-field-required` | true/false | Field is required |
 | `data-validation-error` | - | Error message container |
-| `data-action` | submit/save | Button action type |
 
 ## Demo
 

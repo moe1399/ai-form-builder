@@ -32,10 +32,39 @@ export class DynamicForm implements OnInit, OnDestroy {
   formSubmit = output<{ [key: string]: any }>();
   formSave = output<{ [key: string]: any }>();
   validationErrors = output<FieldError[]>();
+  valueChanges = output<{ [key: string]: any }>();
 
   // Component state
   form: FormGroup = new FormGroup({});
   errors: FieldError[] = [];
+
+  /**
+   * Get current form value (cleaned, with empty table rows filtered out)
+   */
+  get value(): { [key: string]: any } {
+    return this.getCleanedFormValue();
+  }
+
+  /**
+   * Get current form validity state
+   */
+  get valid(): boolean {
+    return this.isFormValidForSubmit();
+  }
+
+  /**
+   * Get current form touched state
+   */
+  get touched(): boolean {
+    return this.form.touched;
+  }
+
+  /**
+   * Get current form dirty state
+   */
+  get dirty(): boolean {
+    return this.form.dirty;
+  }
   activePopover: string | null = null;
   activeCellTooltip: { field: string; row: number; col: string } | null = null;
   private autoSaveTimer?: number;
@@ -113,9 +142,10 @@ export class DynamicForm implements OnInit, OnDestroy {
 
     this.form = new FormGroup(group);
 
-    // Listen to value changes for validation
+    // Listen to value changes for validation and emit changes
     this.form.valueChanges.subscribe(() => {
       this.updateErrors();
+      this.valueChanges.emit(this.getCleanedFormValue());
     });
   }
 

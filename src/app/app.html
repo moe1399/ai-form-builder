@@ -63,11 +63,30 @@
         </p>
 
         <ngx-dynamic-form
+          #dynamicForm
           [config]="currentConfig()!"
           (formSubmit)="onFormSubmit($event)"
           (formSave)="onFormSave($event)"
-          (validationErrors)="onValidationErrors($event)"
-        />
+          (validationErrors)="onValidationErrors($event)">
+          <!-- Custom buttons rendered by consuming application -->
+          <div data-form-actions>
+            @if (currentConfig()!.saveLabel) {
+              <button
+                type="button"
+                data-action="save"
+                (click)="dynamicForm.saveForm()">
+                {{ currentConfig()!.saveLabel }}
+              </button>
+            }
+            <button
+              type="button"
+              data-action="submit"
+              [attr.data-can-submit]="dynamicForm.valid"
+              (click)="dynamicForm.submitForm()">
+              {{ currentConfig()!.submitLabel || 'Submit' }}
+            </button>
+          </div>
+        </ngx-dynamic-form>
       </div>
 
       <!-- Data Attributes Info -->
@@ -83,7 +102,6 @@
           <li><code>data-field-touched</code> - Field interaction state</li>
           <li><code>data-field-required</code> - Whether field is required</li>
           <li><code>data-validation-error</code> - Error message container</li>
-          <li><code>data-action</code> - Button action type (submit/save)</li>
         </ul>
       </div>
     </div>

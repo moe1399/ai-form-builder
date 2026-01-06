@@ -1,7 +1,6 @@
 @if (isFormReady()) {
 <form
   [formGroup]="form"
-  (ngSubmit)="submitForm()"
   [attr.data-form-id]="config().id"
   [attr.data-form-valid]="isFormValidForSubmit()"
   [attr.data-form-dirty]="form.dirty"
@@ -1094,21 +1093,7 @@
     }
   </div>
 
-  <div data-form-section="actions">
-    @if (config().saveLabel) {
-      <button
-        type="button"
-        data-action="save"
-        (click)="saveForm()">
-        {{ config().saveLabel }}
-      </button>
-    }
-    <button
-      type="submit"
-      data-action="submit"
-      [attr.data-can-submit]="isFormValidForSubmit()">
-      {{ config().submitLabel || 'Submit' }}
-    </button>
-  </div>
+  <!-- Content projection for custom buttons/actions -->
+  <ng-content></ng-content>
 </form>
 }

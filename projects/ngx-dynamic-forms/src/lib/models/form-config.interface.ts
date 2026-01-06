@@ -192,12 +192,18 @@ export interface FormFieldConfig {
 
 /**
  * Complete form configuration
+ *
+ * Note: DynamicForm does not render submit/save buttons.
+ * The consuming application is responsible for rendering buttons
+ * and calling the component's submitForm() or saveForm() methods.
  */
 export interface FormConfig {
   id: string;
   fields: FormFieldConfig[];
   sections?: FormSection[];
+  /** Label for submit button (for use by consuming application) */
   submitLabel?: string;
+  /** Label for save button (for use by consuming application) */
   saveLabel?: string;
   autoSave?: boolean;
   autoSaveInterval?: number; // milliseconds
