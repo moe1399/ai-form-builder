@@ -1,0 +1,1129 @@
+<div class="form-builder">
+  <!-- Message Alert -->
+  @if (message()) {
+    <div class="alert" [class.alert-success]="message()!.type === 'success'" [class.alert-error]="message()!.type === 'error'">
+      {{ message()!.text }}
+    </div>
+  }
+
+  <!-- Toolbar -->
+  @if (showToolbar()) {
+    <div class="toolbar">
+      @if (isToolbarButtonVisible('showNewForm')) {
+        <button class="btn btn-primary" (click)="createNewForm()">New Form</button>
+      }
+      @if (isToolbarButtonVisible('showSave')) {
+        <button class="btn btn-secondary" (click)="saveConfiguration()">Save</button>
+      }
+      @if (isToolbarButtonVisible('showExport')) {
+        <button class="btn btn-secondary" (click)="exportJson()">Export JSON</button>
+      }
+      @if (isToolbarButtonVisible('showImport')) {
+        <button class="btn btn-secondary" (click)="openImportJson()">Import JSON</button>
+      }
+      @if (isToolbarButtonVisible('showShare')) {
+        <button
+          class="btn btn-share"
+          (click)="shareRequested.emit()"
+          [disabled]="currentConfig().fields.length === 0"
+          title="Copy shareable URL to clipboard">
+          Share
+        </button>
+      }
+    </div>
+  }
+
+  <div class="builder-layout">
+    <!-- Left Panel: Form Settings & Fields List -->
+    <div class="left-panel">
+      <!-- Form Settings -->
+      <div class="panel-section">
+        <h3>Form Settings</h3>
+        <div class="form-group">
+          <label>Form ID</label>
+          <input
+            type="text"
+            [ngModel]="currentConfig().id"
+            (ngModelChange)="updateFormSettings({ id: $event })"
+            placeholder="form-id"
+          />
+        </div>
+        <div class="form-group">
+          <label>Submit Label</label>
+          <input
+            type="text"
+            [ngModel]="currentConfig().submitLabel"
+            (ngModelChange)="updateFormSettings({ submitLabel: $event })"
+            placeholder="Submit"
+          />
+        </div>
+        <div class="form-group">
+          <label>Save Label (optional)</label>
+          <input
+            type="text"
+            [ngModel]="currentConfig().saveLabel"
+            (ngModelChange)="updateFormSettings({ saveLabel: $event })"
+            placeholder="Save Draft"
+          />
+        </div>
+        <div class="form-group">
+          <label>
+            <input
+              type="checkbox"
+              [ngModel]="currentConfig().autoSave"
+              (ngModelChange)="updateFormSettings({ autoSave: $event })"
+            />
+            Enable Auto-Save
+          </label>
+        </div>
+        @if (currentConfig().autoSave) {
+          <div class="form-group">
+            <label>Auto-Save Interval (ms)</label>
+            <input
+              type="number"
+              [ngModel]="currentConfig().autoSaveInterval"
+              (ngModelChange)="updateFormSettings({ autoSaveInterval: $event })"
+              placeholder="5000"
+            />
+          </div>
+        }
+      </div>
+
+      <!-- Sections List -->
+      <div class="panel-section">
+        <h3>Sections</h3>
+        <button class="btn btn-sm btn-primary" (click)="addSection()">+ Add Section</button>
+        <div class="sections-list">
+          @for (section of getSortedSections(); track section.id) {
+            <div
+              class="section-item"
+              [class.selected]="selectedSectionId() === section.id"
+              (click)="selectSection(section.id)">
+              <div class="section-info">
+                <strong>{{ section.title }}</strong>
+              </div>
+              <div class="section-actions">
+                <button class="btn-icon" (click)="moveSectionUp(section.id); $event.stopPropagation()" title="Move Up">↑</button>
+                <button class="btn-icon" (click)="moveSectionDown(section.id); $event.stopPropagation()" title="Move Down">↓</button>
+                <button class="btn-icon btn-danger" (click)="removeSection(section.id); $event.stopPropagation()" title="Delete">×</button>
+              </div>
+            </div>
+          }
+          @if (getSortedSections().length === 0) {
+            <p class="empty-state">No sections. Fields will render ungrouped.</p>
+          }
+        </div>
+      </div>
+
+      <!-- Fields List -->
+      <div class="panel-section">
+        <h3>Fields</h3>
+        <button class="btn btn-sm btn-primary" (click)="addField()">+ Add Field</button>
+        <div class="fields-list">
+          @for (field of currentConfig().fields; track field.name; let i = $index) {
+            <div
+              class="field-item"
+              [class.selected]="selectedFieldIndex() === i"
+              (click)="selectField(i)">
+              <div class="field-info">
+                <strong>{{ field.label || field.name }}</strong>
+                <small>({{ field.type }})</small>
+              </div>
+              <div class="field-actions">
+                <button class="btn-icon" (click)="moveFieldUp(i); $event.stopPropagation()" title="Move Up">↑</button>
+                <button class="btn-icon" (click)="moveFieldDown(i); $event.stopPropagation()" title="Move Down">↓</button>
+                <button class="btn-icon btn-danger" (click)="removeField(i); $event.stopPropagation()" title="Delete">×</button>
+              </div>
+            </div>
+          }
+        </div>
+      </div>
+
+      <!-- Saved Configurations -->
+      @if (showSavedConfigs()) {
+        <div class="panel-section">
+          <h3>Saved Forms</h3>
+          @if (savedConfigs().length === 0) {
+            <p class="empty-state">No saved forms</p>
+          }
+          @for (config of savedConfigs(); track config.id) {
+            <div class="saved-config-item">
+              <span class="config-name">{{ config.id }}</span>
+              <div class="config-actions">
+                <button class="btn-sm btn-secondary" (click)="loadConfiguration(config.id)">Load</button>
+                <button class="btn-sm btn-danger" (click)="deleteConfiguration(config.id)">Delete</button>
+              </div>
+            </div>
+          }
+        </div>
+      }
+    </div>
+
+    <!-- Right Panel: Field/Section Editor -->
+    <div class="right-panel">
+      <!-- Section Editor -->
+      @if (selectedSectionId() !== null && getSelectedSection()) {
+        <div class="section-editor">
+          <h3>Edit Section</h3>
+          @let section = getSelectedSection()!;
+
+          <div class="form-group">
+            <label>Section ID</label>
+            <input
+              type="text"
+              [value]="section.id"
+              disabled
+            />
+            <small class="form-hint">Auto-generated, read-only</small>
+          </div>
+
+          <div class="form-group">
+            <label>Title</label>
+            <input
+              type="text"
+              [ngModel]="section.title"
+              (ngModelChange)="updateSectionTitle(section.id, $event)"
+            />
+          </div>
+
+          <div class="form-group">
+            <label>Description (optional)</label>
+            <textarea
+              rows="3"
+              [ngModel]="section.description"
+              (ngModelChange)="updateSectionDescription(section.id, $event)"
+              placeholder="Description text appears below the section header"
+            ></textarea>
+          </div>
+
+          <div class="form-group">
+            <label>Anchor ID (optional)</label>
+            <input
+              type="text"
+              [ngModel]="section.anchorId"
+              (ngModelChange)="updateSectionAnchorId(section.id, $event)"
+              placeholder="Leave empty to auto-generate from title"
+            />
+            <small class="form-hint">Custom anchor for navigation links (e.g., #school-info)</small>
+          </div>
+        </div>
+      }
+      <!-- Field Editor -->
+      @else if (selectedFieldIndex() !== null && getSelectedField()) {
+        <div class="field-editor">
+          <h3>Edit Field</h3>
+          @let field = getSelectedField()!;
+          @let fieldIndex = selectedFieldIndex()!;
+
+          <div class="form-group">
+            <label>Field Name (ID)</label>
+            <input
+              type="text"
+              [ngModel]="field.name"
+              (ngModelChange)="updateFieldName(fieldIndex, $event)"
+            />
+          </div>
+
+          <div class="form-group">
+            <label>Label</label>
+            <input
+              type="text"
+              [ngModel]="field.label"
+              (ngModelChange)="updateFieldLabel(fieldIndex, $event)"
+            />
+          </div>
+
+          <div class="form-group">
+            <label>Field Type</label>
+            <select
+              [ngModel]="field.type"
+              (ngModelChange)="updateFieldType(fieldIndex, $event)">
+              @for (type of fieldTypes; track type) {
+                <option [value]="type">{{ type }}</option>
+              }
+            </select>
+          </div>
+
+          <!-- Info block content (only for info type) -->
+          @if (field.type === 'info') {
+            <div class="form-group">
+              <label>Content (Markdown supported)</label>
+              <textarea
+                rows="6"
+                [ngModel]="field.content"
+                (ngModelChange)="updateFieldContent(fieldIndex, $event)"
+                placeholder="Enter information text. Supports **bold**, *italic*, and [links](url)"
+              ></textarea>
+              <small class="form-hint">Supports: **bold**, *italic*, [link text](url), line breaks</small>
+            </div>
+          }
+
+          <!-- Placeholder (not for info type) -->
+          @if (field.type !== 'info') {
+            <div class="form-group">
+              <label>Placeholder</label>
+              <input
+                type="text"
+                [ngModel]="field.placeholder"
+                (ngModelChange)="updateFieldPlaceholder(fieldIndex, $event)"
+              />
+            </div>
+
+            <div class="form-group">
+              <label>Description (help text)</label>
+              <textarea
+                rows="2"
+                [ngModel]="field.description"
+                (ngModelChange)="updateFieldDescription(fieldIndex, $event)"
+                placeholder="Optional help text shown via info icon"
+              ></textarea>
+            </div>
+          }
+
+          <!-- Inline Group Settings -->
+          <div class="form-group">
+            <label>Inline Group</label>
+            <input
+              type="text"
+              [ngModel]="field.inlineGroup"
+              (ngModelChange)="updateFieldInlineGroup(fieldIndex, $event)"
+              placeholder="e.g. name-row, address-row"
+            />
+            <small class="form-hint">Fields with the same group name appear on the same row</small>
+          </div>
+
+          <div class="form-group">
+            <label>Width (1-4)</label>
+            <select
+              [ngModel]="field.width || 1"
+              (ngModelChange)="updateFieldWidth(fieldIndex, $event)">
+              <option [value]="1">1 (default)</option>
+              <option [value]="2">2 (double)</option>
+              <option [value]="3">3 (triple)</option>
+              <option [value]="4">4 (quadruple)</option>
+            </select>
+            <small class="form-hint">Relative width within inline group</small>
+          </div>
+
+          <!-- Section Assignment -->
+          <div class="form-group">
+            <label>Section</label>
+            <select
+              [ngModel]="field.sectionId || ''"
+              (ngModelChange)="updateFieldSectionId(fieldIndex, $event)">
+              <option value="">-- No Section --</option>
+              @for (section of getSortedSections(); track section.id) {
+                <option [value]="section.id">{{ section.title }}</option>
+              }
+            </select>
+            <small class="form-hint">Assign field to a section</small>
+          </div>
+
+          <div class="form-group">
+            <label>
+              <input
+                type="checkbox"
+                [ngModel]="field.disabled"
+                (ngModelChange)="updateFieldDisabled(fieldIndex, $event)"
+              />
+              Disabled
+            </label>
+          </div>
+
+          <!-- Options (for select, radio, checkbox fields) -->
+          @if (field.type === 'select' || field.type === 'radio' || field.type === 'checkbox') {
+            <div class="options-section">
+              <h4>Options</h4>
+              @if (field.type === 'radio') {
+                <small class="form-hint">Radio buttons allow single selection (mutually exclusive)</small>
+              }
+              @if (field.type === 'checkbox') {
+                <small class="form-hint">Checkboxes allow multiple selections</small>
+              }
+              <button class="btn-sm btn-primary" (click)="addOption(fieldIndex)">+ Add Option</button>
+
+              @for (option of field.options; track $index; let oi = $index) {
+                <div class="option-item">
+                  <div class="form-group">
+                    <label>Label</label>
+                    <input
+                      type="text"
+                      [ngModel]="option.label"
+                      (ngModelChange)="updateOptionLabel(fieldIndex, oi, $event)"
+                      placeholder="Display text"
+                    />
+                  </div>
+                  <div class="form-group">
+                    <label>Value</label>
+                    <input
+                      type="text"
+                      [ngModel]="option.value"
+                      (ngModelChange)="updateOptionValue(fieldIndex, oi, $event)"
+                      placeholder="Stored value"
+                    />
+                  </div>
+                  <button class="btn-sm btn-danger" (click)="removeOption(fieldIndex, oi)">Remove</button>
+                </div>
+              }
+
+              @if (!field.options || field.options.length === 0) {
+                <p class="empty-state">No options. Add at least one option.</p>
+              }
+            </div>
+          }
+
+          <!-- Table Configuration (for table fields) -->
+          @if (field.type === 'table') {
+            <div class="table-config-section">
+              <h4>Table Configuration</h4>
+
+              <!-- Row Mode -->
+              <div class="form-group">
+                <label>Row Mode</label>
+                <select
+                  [ngModel]="field.tableConfig?.rowMode || 'fixed'"
+                  (ngModelChange)="updateTableRowMode(fieldIndex, $event)">
+                  <option value="fixed">Fixed (set number of rows)</option>
+                  <option value="dynamic">Dynamic (add/remove rows)</option>
+                </select>
+              </div>
+
+              <!-- Fixed Mode Settings -->
+              @if (field.tableConfig?.rowMode === 'fixed') {
+                <div class="form-group">
+                  <label>Number of Rows</label>
+                  <input
+                    type="number"
+                    min="1"
+                    max="20"
+                    [ngModel]="field.tableConfig?.fixedRowCount || 3"
+                    (ngModelChange)="updateTableFixedRowCount(fieldIndex, $event)"
+                  />
+                </div>
+              }
+
+              <!-- Dynamic Mode Settings -->
+              @if (field.tableConfig?.rowMode === 'dynamic') {
+                <div class="form-group">
+                  <label>Minimum Rows</label>
+                  <input
+                    type="number"
+                    min="0"
+                    max="10"
+                    [ngModel]="field.tableConfig?.minRows || 0"
+                    (ngModelChange)="updateTableMinRows(fieldIndex, $event)"
+                  />
+                </div>
+                <div class="form-group">
+                  <label>Maximum Rows</label>
+                  <input
+                    type="number"
+                    min="1"
+                    max="50"
+                    [ngModel]="field.tableConfig?.maxRows || 10"
+                    (ngModelChange)="updateTableMaxRows(fieldIndex, $event)"
+                  />
+                </div>
+                <div class="form-group">
+                  <label>Add Row Button Text</label>
+                  <input
+                    type="text"
+                    [ngModel]="field.tableConfig?.addRowLabel || ''"
+                    (ngModelChange)="updateTableAddRowLabel(fieldIndex, $event)"
+                    placeholder="Add row"
+                  />
+                </div>
+              }
+
+              <!-- Columns -->
+              <div class="columns-section">
+                <h5>Columns</h5>
+                <button class="btn-sm btn-primary" (click)="addTableColumn(fieldIndex)">+ Add Column</button>
+
+                @for (column of field.tableConfig?.columns; track $index; let ci = $index) {
+                  <div class="column-item">
+                    <div class="column-header">
+                      <strong>{{ column.label }}</strong>
+                      <div class="column-actions">
+                        <button class="btn-icon" (click)="moveTableColumnUp(fieldIndex, ci)" title="Move Left">←</button>
+                        <button class="btn-icon" (click)="moveTableColumnDown(fieldIndex, ci)" title="Move Right">→</button>
+                        <button
+                          class="btn-icon btn-danger"
+                          (click)="removeTableColumn(fieldIndex, ci)"
+                          [disabled]="field.tableConfig?.columns?.length === 1"
+                          title="Delete">×</button>
+                      </div>
+                    </div>
+
+                    <div class="form-group">
+                      <label>Column Name (ID)</label>
+                      <input
+                        type="text"
+                        [ngModel]="column.name"
+                        (ngModelChange)="updateColumnName(fieldIndex, ci, $event)"
+                      />
+                    </div>
+
+                    <div class="form-group">
+                      <label>Column Label</label>
+                      <input
+                        type="text"
+                        [ngModel]="column.label"
+                        (ngModelChange)="updateColumnLabel(fieldIndex, ci, $event)"
+                      />
+                    </div>
+
+                    <div class="form-group">
+                      <label>Column Type</label>
+                      <select
+                        [ngModel]="column.type"
+                        (ngModelChange)="updateColumnType(fieldIndex, ci, $event)">
+                        @for (type of tableColumnTypes; track type) {
+                          <option [value]="type">{{ type }}</option>
+                        }
+                      </select>
+                    </div>
+
+                    <div class="form-group">
+                      <label>Placeholder</label>
+                      <input
+                        type="text"
+                        [ngModel]="column.placeholder"
+                        (ngModelChange)="updateColumnPlaceholder(fieldIndex, ci, $event)"
+                      />
+                    </div>
+
+                    <div class="form-group">
+                      <label>Width (1-4)</label>
+                      <select
+                        [ngModel]="column.width || 1"
+                        (ngModelChange)="updateColumnWidth(fieldIndex, ci, $event)">
+                        <option [value]="1">1 (default)</option>
+                        <option [value]="2">2 (wider)</option>
+                        <option [value]="3">3 (wide)</option>
+                        <option [value]="4">4 (widest)</option>
+                      </select>
+                    </div>
+
+                    <!-- Column Options (for select type) -->
+                    @if (column.type === 'select') {
+                      <div class="column-options">
+                        <label>Options</label>
+                        <button class="btn-sm btn-secondary" (click)="addColumnOption(fieldIndex, ci)">+ Add Option</button>
+
+                        @for (option of column.options; track $index; let oi = $index) {
+                          <div class="option-row">
+                            <input
+                              type="text"
+                              [ngModel]="option.label"
+                              (ngModelChange)="updateColumnOptionLabel(fieldIndex, ci, oi, $event)"
+                              placeholder="Label"
+                            />
+                            <input
+                              type="text"
+                              [ngModel]="option.value"
+                              (ngModelChange)="updateColumnOptionValue(fieldIndex, ci, oi, $event)"
+                              placeholder="Value"
+                            />
+                            <button class="btn-icon btn-danger" (click)="removeColumnOption(fieldIndex, ci, oi)">×</button>
+                          </div>
+                        }
+                      </div>
+                    }
+
+                    <!-- Column Validations -->
+                    <div class="column-validations">
+                      <label>Validations</label>
+                      <button class="btn-sm btn-secondary" (click)="addColumnValidation(fieldIndex, ci)">+ Add Validation</button>
+
+                      @for (validation of column.validations; track $index; let vi = $index) {
+                        <div class="validation-row">
+                          <select
+                            [ngModel]="validation.type"
+                            (ngModelChange)="updateColumnValidationType(fieldIndex, ci, vi, $event)">
+                            @for (vType of validationTypes; track vType) {
+                              <option [value]="vType">{{ vType }}</option>
+                            }
+                          </select>
+
+                          @if (validation.type === 'minLength' || validation.type === 'maxLength' || validation.type === 'min' || validation.type === 'max') {
+                            <input
+                              type="number"
+                              [ngModel]="validation.value"
+                              (ngModelChange)="updateColumnValidationValue(fieldIndex, ci, vi, $event)"
+                              placeholder="Value"
+                            />
+                          }
+
+                          @if (validation.type === 'pattern') {
+                            <input
+                              type="text"
+                              [ngModel]="validation.value"
+                              (ngModelChange)="updateColumnValidationValue(fieldIndex, ci, vi, $event)"
+                              placeholder="Regex pattern"
+                            />
+                          }
+
+                          <input
+                            type="text"
+                            [ngModel]="validation.message"
+                            (ngModelChange)="updateColumnValidationMessage(fieldIndex, ci, vi, $event)"
+                            placeholder="Error message"
+                          />
+
+                          <button class="btn-icon btn-danger" (click)="removeColumnValidation(fieldIndex, ci, vi)">×</button>
+                        </div>
+                      }
+                    </div>
+                  </div>
+                }
+              </div>
+            </div>
+          }
+
+          <!-- Date Range Configuration (for daterange fields) -->
+          @if (field.type === 'daterange') {
+            <div class="daterange-config-section">
+              <h4>Date Range Configuration</h4>
+
+              <div class="form-group">
+                <label>From Date Label</label>
+                <input
+                  type="text"
+                  [ngModel]="field.daterangeConfig?.fromLabel || ''"
+                  (ngModelChange)="updateDateRangeFromLabel(fieldIndex, $event)"
+                  placeholder="e.g., Start Date"
+                />
+                <small class="form-hint">Optional label shown above the from date input</small>
+              </div>
+
+              <div class="form-group">
+                <label>To Date Label</label>
+                <input
+                  type="text"
+                  [ngModel]="field.daterangeConfig?.toLabel || ''"
+                  (ngModelChange)="updateDateRangeToLabel(fieldIndex, $event)"
+                  placeholder="e.g., End Date"
+                />
+                <small class="form-hint">Optional label shown above the to date input</small>
+              </div>
+
+              <div class="form-group">
+                <label>Separator Text</label>
+                <input
+                  type="text"
+                  [ngModel]="field.daterangeConfig?.separatorText || 'to'"
+                  (ngModelChange)="updateDateRangeSeparator(fieldIndex, $event)"
+                  placeholder="to"
+                />
+                <small class="form-hint">Text displayed between the two date inputs</small>
+              </div>
+
+              <div class="form-group checkbox-group">
+                <label>
+                  <input
+                    type="checkbox"
+                    [ngModel]="field.daterangeConfig?.toDateOptional || false"
+                    (ngModelChange)="updateDateRangeToDateOptional(fieldIndex, $event)"
+                  />
+                  To date is optional
+                </label>
+                <small class="form-hint">If checked, the "to date" can be empty even with required validation</small>
+              </div>
+            </div>
+          }
+
+          <!-- Form Reference Configuration (for formref fields) -->
+          @if (field.type === 'formref') {
+            <div class="formref-config-section">
+              <h4>Form Reference Configuration</h4>
+              <small class="form-hint">Embed fields from another saved form into this form</small>
+
+              <div class="form-group">
+                <label>Referenced Form</label>
+                <select
+                  [ngModel]="field.formrefConfig?.formId || ''"
+                  (ngModelChange)="updateFormRefFormId(fieldIndex, $event)">
+                  <option value="">-- Select a Form --</option>
+                  @for (config of getAvailableFormsForFormRef(); track config.id) {
+                    <option [value]="config.id">{{ config.id }}</option>
+                  }
+                </select>
+                <small class="form-hint">Select the saved form to embed</small>
+                @if (getAvailableFormsForFormRef().length === 0) {
+                  <small class="form-hint" style="color: #c00;">No saved forms available. Save a form first to embed it.</small>
+                }
+              </div>
+
+              <div class="form-group checkbox-group">
+                <label>
+                  <input
+                    type="checkbox"
+                    [ngModel]="field.formrefConfig?.showSections || false"
+                    (ngModelChange)="updateFormRefShowSections(fieldIndex, $event)"
+                  />
+                  Show section headers from embedded form
+                </label>
+                <small class="form-hint">If checked, section headers from the referenced form will be displayed</small>
+              </div>
+
+              <div class="form-group">
+                <label>Field Name Prefix (optional)</label>
+                <input
+                  type="text"
+                  [ngModel]="field.formrefConfig?.fieldPrefix || ''"
+                  (ngModelChange)="updateFormRefFieldPrefix(fieldIndex, $event)"
+                  placeholder="e.g., contact_"
+                />
+                <small class="form-hint">Prefix added to embedded field names to avoid conflicts (e.g., contact_email)</small>
+              </div>
+            </div>
+          }
+
+          <!-- DataGrid Configuration (for datagrid fields) -->
+          @if (field.type === 'datagrid') {
+            <div class="datagrid-config-section">
+              <h4>DataGrid Configuration</h4>
+
+              <!-- Row Label Header -->
+              <div class="form-group">
+                <label>Row Label Header</label>
+                <input
+                  type="text"
+                  [ngModel]="field.datagridConfig?.rowLabelHeader || ''"
+                  (ngModelChange)="updateDataGridRowLabelHeader(fieldIndex, $event)"
+                  placeholder="e.g., Year Level"
+                />
+                <small class="form-hint">Header text for the row labels column</small>
+              </div>
+
+              <!-- Totals Configuration -->
+              <div class="totals-config">
+                <h5>Totals</h5>
+                <div class="form-group checkbox-group">
+                  <label>
+                    <input
+                      type="checkbox"
+                      [ngModel]="field.datagridConfig?.totals?.showRowTotals"
+                      (ngModelChange)="updateDataGridShowRowTotals(fieldIndex, $event)"
+                    />
+                    Show Row Totals
+                  </label>
+                  @if (field.datagridConfig?.totals?.showRowTotals) {
+                    <input
+                      type="text"
+                      [ngModel]="field.datagridConfig?.totals?.rowTotalLabel || ''"
+                      (ngModelChange)="updateDataGridRowTotalLabel(fieldIndex, $event)"
+                      placeholder="Total"
+                      class="totals-label-input"
+                    />
+                  }
+                </div>
+                <div class="form-group checkbox-group">
+                  <label>
+                    <input
+                      type="checkbox"
+                      [ngModel]="field.datagridConfig?.totals?.showColumnTotals"
+                      (ngModelChange)="updateDataGridShowColumnTotals(fieldIndex, $event)"
+                    />
+                    Show Column Totals
+                  </label>
+                  @if (field.datagridConfig?.totals?.showColumnTotals) {
+                    <input
+                      type="text"
+                      [ngModel]="field.datagridConfig?.totals?.columnTotalLabel || ''"
+                      (ngModelChange)="updateDataGridColumnTotalLabel(fieldIndex, $event)"
+                      placeholder="Total"
+                      class="totals-label-input"
+                    />
+                  }
+                </div>
+              </div>
+
+              <!-- Row Labels -->
+              <div class="row-labels-section">
+                <h5>Row Labels</h5>
+                <button class="btn-sm btn-primary" (click)="addDataGridRowLabel(fieldIndex)">+ Add Row</button>
+
+                @for (rowLabel of field.datagridConfig?.rowLabels; track $index; let ri = $index) {
+                  <div class="row-label-item">
+                    <div class="row-label-header">
+                      <strong>{{ rowLabel.label }}</strong>
+                      <div class="row-label-actions">
+                        <button class="btn-icon" (click)="moveDataGridRowLabelUp(fieldIndex, ri)" title="Move Up">↑</button>
+                        <button class="btn-icon" (click)="moveDataGridRowLabelDown(fieldIndex, ri)" title="Move Down">↓</button>
+                        <button
+                          class="btn-icon btn-danger"
+                          (click)="removeDataGridRowLabel(fieldIndex, ri)"
+                          [disabled]="field.datagridConfig?.rowLabels?.length === 1"
+                          title="Delete">×</button>
+                      </div>
+                    </div>
+
+                    <div class="form-group">
+                      <label>Row ID</label>
+                      <input
+                        type="text"
+                        [ngModel]="rowLabel.id"
+                        (ngModelChange)="updateDataGridRowLabelId(fieldIndex, ri, $event)"
+                      />
+                    </div>
+
+                    <div class="form-group">
+                      <label>Row Label</label>
+                      <input
+                        type="text"
+                        [ngModel]="rowLabel.label"
+                        (ngModelChange)="updateDataGridRowLabelText(fieldIndex, ri, $event)"
+                      />
+                    </div>
+                  </div>
+                }
+              </div>
+
+              <!-- Column Groups -->
+              <div class="column-groups-section">
+                <h5>Column Groups (Optional)</h5>
+                <small class="form-hint">Group related columns under a shared header</small>
+                <button class="btn-sm btn-primary" (click)="addDataGridColumnGroup(fieldIndex)">+ Add Group</button>
+
+                @for (group of field.datagridConfig?.columnGroups; track $index; let gi = $index) {
+                  <div class="column-group-item">
+                    <div class="column-group-header">
+                      <strong>{{ group.label }}</strong>
+                      <button
+                        class="btn-icon btn-danger"
+                        (click)="removeDataGridColumnGroup(fieldIndex, gi)"
+                        title="Delete">×</button>
+                    </div>
+
+                    <div class="form-group">
+                      <label>Group ID</label>
+                      <input
+                        type="text"
+                        [ngModel]="group.id"
+                        (ngModelChange)="updateDataGridColumnGroupId(fieldIndex, gi, $event)"
+                      />
+                    </div>
+
+                    <div class="form-group">
+                      <label>Group Label</label>
+                      <input
+                        type="text"
+                        [ngModel]="group.label"
+                        (ngModelChange)="updateDataGridColumnGroupLabel(fieldIndex, gi, $event)"
+                      />
+                    </div>
+
+                    <div class="form-group">
+                      <label>Columns in Group</label>
+                      <div class="column-checkboxes">
+                        @for (column of field.datagridConfig?.columns; track column.name) {
+                          <label class="checkbox-label">
+                            <input
+                              type="checkbox"
+                              [checked]="isDataGridColumnInGroup(fieldIndex, gi, column.name)"
+                              (change)="toggleDataGridColumnInGroup(fieldIndex, gi, column.name)"
+                            />
+                            {{ column.label }}
+                          </label>
+                        }
+                      </div>
+                    </div>
+                  </div>
+                }
+              </div>
+
+              <!-- Columns -->
+              <div class="columns-section">
+                <h5>Columns</h5>
+                <button class="btn-sm btn-primary" (click)="addDataGridColumn(fieldIndex)">+ Add Column</button>
+
+                @for (column of field.datagridConfig?.columns; track $index; let ci = $index) {
+                  <div class="column-item">
+                    <div class="column-header">
+                      <strong>{{ column.label }}</strong>
+                      @if (column.computed) {
+                        <span class="computed-badge">Computed</span>
+                      }
+                      <div class="column-actions">
+                        <button class="btn-icon" (click)="moveDataGridColumnUp(fieldIndex, ci)" title="Move Left">←</button>
+                        <button class="btn-icon" (click)="moveDataGridColumnDown(fieldIndex, ci)" title="Move Right">→</button>
+                        <button
+                          class="btn-icon btn-danger"
+                          (click)="removeDataGridColumn(fieldIndex, ci)"
+                          [disabled]="field.datagridConfig?.columns?.length === 1"
+                          title="Delete">×</button>
+                      </div>
+                    </div>
+
+                    <div class="form-group">
+                      <label>Column Name (ID)</label>
+                      <input
+                        type="text"
+                        [ngModel]="column.name"
+                        (ngModelChange)="updateDataGridColumnName(fieldIndex, ci, $event)"
+                      />
+                    </div>
+
+                    <div class="form-group">
+                      <label>Column Label</label>
+                      <input
+                        type="text"
+                        [ngModel]="column.label"
+                        (ngModelChange)="updateDataGridColumnLabel(fieldIndex, ci, $event)"
+                      />
+                    </div>
+
+                    <div class="form-group">
+                      <label>Column Type</label>
+                      <select
+                        [ngModel]="column.type"
+                        (ngModelChange)="updateDataGridColumnType(fieldIndex, ci, $event)">
+                        @for (type of datagridColumnTypes; track type) {
+                          <option [value]="type">{{ type }}</option>
+                        }
+                      </select>
+                    </div>
+
+                    <!-- Computed Column -->
+                    <div class="form-group">
+                      <label>
+                        <input
+                          type="checkbox"
+                          [ngModel]="column.computed"
+                          (ngModelChange)="updateDataGridColumnComputed(fieldIndex, ci, $event)"
+                        />
+                        Computed (read-only, calculated)
+                      </label>
+                    </div>
+
+                    @if (column.computed) {
+                      <div class="form-group">
+                        <label>Formula Expression</label>
+                        <input
+                          type="text"
+                          [ngModel]="column.formula?.expression || ''"
+                          (ngModelChange)="updateDataGridColumnFormula(fieldIndex, ci, $event)"
+                          placeholder="e.g., students * 0.5"
+                        />
+                        <small class="form-hint">Use column names as variables (e.g., col1 + col2)</small>
+                      </div>
+                    }
+
+                    @if (!column.computed) {
+                      <div class="form-group">
+                        <label>Placeholder</label>
+                        <input
+                          type="text"
+                          [ngModel]="column.placeholder"
+                          (ngModelChange)="updateDataGridColumnPlaceholder(fieldIndex, ci, $event)"
+                        />
+                      </div>
+                    }
+
+                    <div class="form-group">
+                      <label>Width (1-4)</label>
+                      <select
+                        [ngModel]="column.width || 1"
+                        (ngModelChange)="updateDataGridColumnWidth(fieldIndex, ci, $event)">
+                        <option [value]="1">1 (default)</option>
+                        <option [value]="2">2 (wider)</option>
+                        <option [value]="3">3 (wide)</option>
+                        <option [value]="4">4 (widest)</option>
+                      </select>
+                    </div>
+
+                    <!-- Totals Inclusion -->
+                    @if (column.type === 'number') {
+                      <div class="form-group checkbox-group">
+                        <label>
+                          <input
+                            type="checkbox"
+                            [ngModel]="column.showInColumnTotal !== false"
+                            (ngModelChange)="updateDataGridColumnShowInColumnTotal(fieldIndex, ci, $event)"
+                          />
+                          Include in Column Total
+                        </label>
+                        <label>
+                          <input
+                            type="checkbox"
+                            [ngModel]="column.showInRowTotal !== false"
+                            (ngModelChange)="updateDataGridColumnShowInRowTotal(fieldIndex, ci, $event)"
+                          />
+                          Include in Row Total
+                        </label>
+                      </div>
+                    }
+
+                    <!-- Column Options (for select type) -->
+                    @if (column.type === 'select') {
+                      <div class="column-options">
+                        <label>Options</label>
+                        <button class="btn-sm btn-secondary" (click)="addDataGridColumnOption(fieldIndex, ci)">+ Add Option</button>
+
+                        @for (option of column.options; track $index; let oi = $index) {
+                          <div class="option-row">
+                            <input
+                              type="text"
+                              [ngModel]="option.label"
+                              (ngModelChange)="updateDataGridColumnOptionLabel(fieldIndex, ci, oi, $event)"
+                              placeholder="Label"
+                            />
+                            <input
+                              type="text"
+                              [ngModel]="option.value"
+                              (ngModelChange)="updateDataGridColumnOptionValue(fieldIndex, ci, oi, $event)"
+                              placeholder="Value"
+                            />
+                            <button class="btn-icon btn-danger" (click)="removeDataGridColumnOption(fieldIndex, ci, oi)">×</button>
+                          </div>
+                        }
+                      </div>
+                    }
+
+                    <!-- Column Validations (not for computed columns) -->
+                    @if (!column.computed) {
+                      <div class="column-validations">
+                        <label>Validations</label>
+                        <button class="btn-sm btn-secondary" (click)="addDataGridColumnValidation(fieldIndex, ci)">+ Add Validation</button>
+
+                        @for (validation of column.validations; track $index; let vi = $index) {
+                          <div class="validation-row">
+                            <select
+                              [ngModel]="validation.type"
+                              (ngModelChange)="updateDataGridColumnValidationType(fieldIndex, ci, vi, $event)">
+                              @for (vType of validationTypes; track vType) {
+                                <option [value]="vType">{{ vType }}</option>
+                              }
+                            </select>
+
+                            @if (validation.type === 'minLength' || validation.type === 'maxLength' || validation.type === 'min' || validation.type === 'max') {
+                              <input
+                                type="number"
+                                [ngModel]="validation.value"
+                                (ngModelChange)="updateDataGridColumnValidationValue(fieldIndex, ci, vi, $event)"
+                                placeholder="Value"
+                              />
+                            }
+
+                            @if (validation.type === 'pattern') {
+                              <input
+                                type="text"
+                                [ngModel]="validation.value"
+                                (ngModelChange)="updateDataGridColumnValidationValue(fieldIndex, ci, vi, $event)"
+                                placeholder="Regex pattern"
+                              />
+                            }
+
+                            <input
+                              type="text"
+                              [ngModel]="validation.message"
+                              (ngModelChange)="updateDataGridColumnValidationMessage(fieldIndex, ci, vi, $event)"
+                              placeholder="Error message"
+                            />
+
+                            <button class="btn-icon btn-danger" (click)="removeDataGridColumnValidation(fieldIndex, ci, vi)">×</button>
+                          </div>
+                        }
+                      </div>
+                    }
+                  </div>
+                }
+              </div>
+            </div>
+          }
+
+          <!-- Validations (not for info or formref types) -->
+          @if (field.type !== 'info' && field.type !== 'formref') {
+            <div class="validations-section">
+              <h4>Validations</h4>
+              <button class="btn-sm btn-primary" (click)="addValidation(fieldIndex)">+ Add Validation</button>
+
+              @for (validation of field.validations; track $index; let vi = $index) {
+                <div class="validation-item">
+                  <div class="form-group">
+                    <label>Type</label>
+                    <select
+                      [ngModel]="validation.type"
+                      (ngModelChange)="updateValidationType(fieldIndex, vi, $event)">
+                      @for (vType of validationTypes; track vType) {
+                        <option [value]="vType">{{ vType }}</option>
+                      }
+                    </select>
+                  </div>
+
+                  @if (validation.type === 'minLength' || validation.type === 'maxLength' || validation.type === 'min' || validation.type === 'max') {
+                    <div class="form-group">
+                      <label>Value</label>
+                      <input
+                        type="number"
+                        [ngModel]="validation.value"
+                        (ngModelChange)="updateValidationValue(fieldIndex, vi, $event)"
+                      />
+                    </div>
+                  }
+
+                  @if (validation.type === 'pattern') {
+                    <div class="form-group">
+                      <label>Pattern (regex)</label>
+                      <input
+                        type="text"
+                        [ngModel]="validation.value"
+                        (ngModelChange)="updateValidationValue(fieldIndex, vi, $event)"
+                      />
+                    </div>
+                  }
+
+                  <div class="form-group">
+                    <label>Error Message</label>
+                    <input
+                      type="text"
+                      [ngModel]="validation.message"
+                      (ngModelChange)="updateValidationMessage(fieldIndex, vi, $event)"
+                    />
+                  </div>
+
+                  <button class="btn-sm btn-danger" (click)="removeValidation(fieldIndex, vi)">Remove</button>
+                </div>
+              }
+            </div>
+          }
+        </div>
+      } @else {
+        <div class="empty-editor">
+          <p>Select a section or field to edit, or add new ones to get started</p>
+        </div>
+      }
+    </div>
+  </div>
+
+  <!-- JSON Editor Modal -->
+  @if (showJsonEditor()) {
+    <div class="modal-overlay" (click)="showJsonEditor.set(false)">
+      <div class="modal" (click)="$event.stopPropagation()">
+        <div class="modal-header">
+          <h3>{{ jsonEditorMode() === 'export' ? 'Export JSON' : 'Import JSON' }}</h3>
+          <button class="btn-close" (click)="showJsonEditor.set(false)">×</button>
+        </div>
+        <div class="modal-body">
+          <textarea
+            [(ngModel)]="jsonEditorContent"
+            rows="20"
+            [placeholder]="jsonEditorMode() === 'export' ? '' : 'Paste JSON configuration here...'"
+            [readonly]="jsonEditorMode() === 'export'"
+          ></textarea>
+        </div>
+        <div class="modal-footer">
+          @if (jsonEditorMode() === 'export') {
+            <button class="btn btn-secondary" (click)="showJsonEditor.set(false)">Close</button>
+            <button class="btn btn-primary" (click)="copyJsonToClipboard()">{{ copyButtonText() }}</button>
+          } @else {
+            <button class="btn btn-secondary" (click)="showJsonEditor.set(false)">Cancel</button>
+            <button class="btn btn-primary" (click)="importJson()">Import</button>
+          }
+        </div>
+      </div>
+    </div>
+  }
+</div>

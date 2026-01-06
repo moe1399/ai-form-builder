@@ -1,0 +1,29 @@
+{
+  "name": "@moe1399/ngx-dynamic-forms",
+  "version": "0.1.0",
+  "description": "Dynamic form builder and renderer for Angular with headless UI pattern",
+  "keywords": [
+    "angular",
+    "forms",
+    "dynamic-forms",
+    "form-builder",
+    "headless-ui",
+    "reactive-forms"
+  ],
+  "license": "MIT",
+  "peerDependencies": {
+    "@angular/common": "^21.0.0",
+    "@angular/core": "^21.0.0",
+    "@angular/forms": "^21.0.0",
+    "pako": "^2.1.0"
+  },
+  "peerDependenciesMeta": {
+    "pako": {
+      "optional": true
+    }
+  },
+  "dependencies": {
+    "tslib": "^2.3.0"
+  },
+  "sideEffects": false
+}

@@ -7,6 +7,11 @@
     "noImplicitOverride": true,
     "noPropertyAccessFromIndexSignature": true,
     "noImplicitReturns": true,
+    "paths": {
+      "ngx-dynamic-forms": [
+        "./dist/ngx-dynamic-forms"
+      ]
+    },
     "noFallthroughCasesInSwitch": true,
     "skipLibCheck": true,
     "isolatedModules": true,
@@ -28,6 +33,12 @@
     },
     {
       "path": "./tsconfig.spec.json"
+    },
+    {
+      "path": "./projects/ngx-dynamic-forms/tsconfig.lib.json"
+    },
+    {
+      "path": "./projects/ngx-dynamic-forms/tsconfig.spec.json"
     }
   ]
 }

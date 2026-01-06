@@ -78,6 +78,32 @@
           "builder": "@angular/build:unit-test"
         }
       }
+    },
+    "ngx-dynamic-forms": {
+      "projectType": "library",
+      "root": "projects/ngx-dynamic-forms",
+      "sourceRoot": "projects/ngx-dynamic-forms/src",
+      "prefix": "ngx",
+      "architect": {
+        "build": {
+          "builder": "@angular/build:ng-packagr",
+          "configurations": {
+            "production": {
+              "tsConfig": "projects/ngx-dynamic-forms/tsconfig.lib.prod.json"
+            },
+            "development": {
+              "tsConfig": "projects/ngx-dynamic-forms/tsconfig.lib.json"
+            }
+          },
+          "defaultConfiguration": "production"
+        },
+        "test": {
+          "builder": "@angular/build:unit-test",
+          "options": {
+            "tsConfig": "projects/ngx-dynamic-forms/tsconfig.spec.json"
+          }
+        }
+      }
     }
   }
 }

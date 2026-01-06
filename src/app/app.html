@@ -39,7 +39,7 @@
         </ul>
       </div>
 
-      <app-form-builder
+      <ngx-form-builder
         [(config)]="currentConfig"
         (shareRequested)="shareForm()" />
     </div>
@@ -62,7 +62,7 @@
           This form uses a headless component styled with data-* attributes.
         </p>
 
-        <app-dynamic-form
+        <ngx-dynamic-form
           [config]="currentConfig()!"
           (formSubmit)="onFormSubmit($event)"
           (formSave)="onFormSave($event)"

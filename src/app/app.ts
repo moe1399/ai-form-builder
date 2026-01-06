@@ -1,13 +1,10 @@
 import { Component, inject, OnInit, signal } from '@angular/core';
 import { RouterOutlet } from '@angular/router';
-import { DynamicForm } from './components/dynamic-form/dynamic-form';
-import { FormBuilder } from './components/form-builder/form-builder';
-import { FormConfig } from './models/form-config.interface';
-import { UrlSchemaService } from './services/url-schema';
+import { DynamicForm, NgxFormBuilder, FormConfig, UrlSchemaService } from 'ngx-dynamic-forms';
 
 @Component({
   selector: 'app-root',
-  imports: [RouterOutlet, DynamicForm, FormBuilder],
+  imports: [RouterOutlet, DynamicForm, NgxFormBuilder],
   templateUrl: './app.html',
   styleUrl: './app.scss',
 })
