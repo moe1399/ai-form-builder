@@ -7,7 +7,7 @@
   },
   "newProjectRoot": "projects",
   "projects": {
-    "ai-form-builder": {
+    "ngx-dynamic-forms-demo": {
       "projectType": "application",
       "schematics": {
         "@schematics/angular:component": {
@@ -66,10 +66,10 @@
           },
           "configurations": {
             "production": {
-              "buildTarget": "ai-form-builder:build:production"
+              "buildTarget": "ngx-dynamic-forms-demo:build:production"
             },
             "development": {
-              "buildTarget": "ai-form-builder:build:development"
+              "buildTarget": "ngx-dynamic-forms-demo:build:development"
             }
           },
           "defaultConfiguration": "development"
