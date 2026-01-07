@@ -151,12 +151,13 @@ export class DynamicForm implements OnInit, OnDestroy {
           group[field.name] = formRefGroup;
         }
       } else {
-        const validators = this.buildValidators(field.validations || []);
+        // Skip validators for archived fields
+        const validators = field.archived ? [] : this.buildValidators(field.validations || []);
         // Initialize checkbox fields with options as arrays
         const defaultValue =
           field.type === 'checkbox' && field.options?.length ? field.value ?? [] : field.value ?? '';
         group[field.name] = new FormControl(
-          { value: defaultValue, disabled: field.disabled ?? false },
+          { value: defaultValue, disabled: field.disabled ?? field.archived ?? false },
           validators
         );
       }
@@ -206,9 +207,10 @@ export class DynamicForm implements OnInit, OnDestroy {
     const controls: { [key: string]: FormControl } = {};
 
     tableConfig.columns.forEach((column) => {
-      const validators = this.buildValidators(column.validations || []);
+      // Skip validators for archived fields
+      const validators = field.archived ? [] : this.buildValidators(column.validations || []);
       controls[column.name] = new FormControl(
-        { value: rowData[column.name] ?? '', disabled: field.disabled ?? false },
+        { value: rowData[column.name] ?? '', disabled: field.disabled ?? field.archived ?? false },
         validators
       );
     });
@@ -230,20 +232,24 @@ export class DynamicForm implements OnInit, OnDestroy {
       phoneConfig?.defaultCountryCode ||
       (phoneConfig?.countryCodes?.[0]?.code ?? '');
 
-    // Build validators for the phone number
+    // Build validators for the phone number (skip for archived fields)
     const numberValidators: any[] = [];
-    if (field.validations?.some((v) => v.type === 'required')) {
-      numberValidators.push(Validators.required);
+    if (!field.archived) {
+      if (field.validations?.some((v) => v.type === 'required')) {
+        numberValidators.push(Validators.required);
+      }
+      // Add pattern validator for numbers only
+      numberValidators.push(Validators.pattern(/^\d*$/));
     }
-    // Add pattern validator for numbers only
-    numberValidators.push(Validators.pattern(/^\d*$/));
+
+    const isDisabled = field.disabled ?? field.archived ?? false;
 
     return new FormGroup({
       countryCode: new FormControl(
-        { value: defaultCountryCode, disabled: field.disabled ?? false }
+        { value: defaultCountryCode, disabled: isDisabled }
       ),
       number: new FormControl(
-        { value: existingValue.number ?? '', disabled: field.disabled ?? false },
+        { value: existingValue.number ?? '', disabled: isDisabled },
         numberValidators
       ),
     });
@@ -257,26 +263,28 @@ export class DynamicForm implements OnInit, OnDestroy {
     const existingValue = (field.value as { fromDate?: string; toDate?: string }) || {};
     const isRequired = field.validations?.some((v) => v.type === 'required');
     const toDateOptional = field.daterangeConfig?.toDateOptional ?? false;
+    const isDisabled = field.disabled ?? field.archived ?? false;
 
-    // Build validators for fromDate
+    // Build validators (skip for archived fields)
     const fromValidators: any[] = [];
-    if (isRequired) {
-      fromValidators.push(Validators.required);
-    }
-
-    // Build validators for toDate (skip required if toDateOptional is true)
     const toValidators: any[] = [];
-    if (isRequired && !toDateOptional) {
-      toValidators.push(Validators.required);
+    if (!field.archived) {
+      if (isRequired) {
+        fromValidators.push(Validators.required);
+      }
+      // Build validators for toDate (skip required if toDateOptional is true)
+      if (isRequired && !toDateOptional) {
+        toValidators.push(Validators.required);
+      }
     }
 
     return new FormGroup({
       fromDate: new FormControl(
-        { value: existingValue.fromDate ?? '', disabled: field.disabled ?? false },
+        { value: existingValue.fromDate ?? '', disabled: isDisabled },
         fromValidators
       ),
       toDate: new FormControl(
-        { value: existingValue.toDate ?? '', disabled: field.disabled ?? false },
+        { value: existingValue.toDate ?? '', disabled: isDisabled },
         toValidators
       ),
     });
@@ -317,27 +325,29 @@ export class DynamicForm implements OnInit, OnDestroy {
       const fieldName = prefix + embeddedField.name;
       const fieldValue = existingValue[fieldName];
 
-      // Create control based on field type
+      // Create control based on field type (inherit archived status from parent formref)
       if (embeddedField.type === 'table' && embeddedField.tableConfig) {
-        const fieldWithValue = { ...embeddedField, value: fieldValue, disabled: field.disabled };
+        const fieldWithValue = { ...embeddedField, value: fieldValue, disabled: field.disabled, archived: field.archived };
         group[fieldName] = this.createTableFormArray(fieldWithValue);
       } else if (embeddedField.type === 'datagrid' && embeddedField.datagridConfig) {
-        const fieldWithValue = { ...embeddedField, value: fieldValue, disabled: field.disabled };
+        const fieldWithValue = { ...embeddedField, value: fieldValue, disabled: field.disabled, archived: field.archived };
         group[fieldName] = this.createDataGridFormGroup(fieldWithValue);
       } else if (embeddedField.type === 'phone') {
-        const fieldWithValue = { ...embeddedField, value: fieldValue, disabled: field.disabled };
+        const fieldWithValue = { ...embeddedField, value: fieldValue, disabled: field.disabled, archived: field.archived };
         group[fieldName] = this.createPhoneFormGroup(fieldWithValue);
       } else if (embeddedField.type === 'daterange') {
-        const fieldWithValue = { ...embeddedField, value: fieldValue, disabled: field.disabled };
+        const fieldWithValue = { ...embeddedField, value: fieldValue, disabled: field.disabled, archived: field.archived };
         group[fieldName] = this.createDateRangeFormGroup(fieldWithValue);
       } else {
-        const validators = this.buildValidators(embeddedField.validations || []);
+        // Skip validators for archived fields
+        const isArchived = field.archived ?? false;
+        const validators = isArchived ? [] : this.buildValidators(embeddedField.validations || []);
         const defaultValue =
           embeddedField.type === 'checkbox' && embeddedField.options?.length
             ? fieldValue ?? []
             : fieldValue ?? '';
         group[fieldName] = new FormControl(
-          { value: defaultValue, disabled: field.disabled ?? embeddedField.disabled ?? false },
+          { value: defaultValue, disabled: field.disabled ?? field.archived ?? embeddedField.disabled ?? false },
           validators
         );
       }
@@ -421,6 +431,7 @@ export class DynamicForm implements OnInit, OnDestroy {
     const datagridConfig = field.datagridConfig!;
     const existingValue = (field.value as { [key: string]: any }) || {};
     const group: { [key: string]: FormGroup } = {};
+    const isDisabled = field.disabled ?? field.archived ?? false;
 
     // Create a FormGroup for each row label
     datagridConfig.rowLabels.forEach((rowLabel) => {
@@ -433,9 +444,10 @@ export class DynamicForm implements OnInit, OnDestroy {
           return;
         }
 
-        const validators = this.buildValidators(column.validations || []);
+        // Skip validators for archived fields
+        const validators = field.archived ? [] : this.buildValidators(column.validations || []);
         rowControls[column.name] = new FormControl(
-          { value: rowData[column.name] ?? '', disabled: field.disabled ?? false },
+          { value: rowData[column.name] ?? '', disabled: isDisabled },
           validators
         );
       });
@@ -496,6 +508,9 @@ export class DynamicForm implements OnInit, OnDestroy {
     const currentConfig = this.config();
 
     currentConfig.fields.forEach((field) => {
+      // Skip archived fields - they should not show validation errors
+      if (field.archived) return;
+
       const control = this.form.get(field.name);
       if (control?.invalid && control.touched) {
         const fieldErrors = this.getFieldErrors(field, control);
@@ -620,6 +635,69 @@ export class DynamicForm implements OnInit, OnDestroy {
   }
 
   /**
+   * Check if an archived field should be visible (only if it has data)
+   * Non-archived fields are always visible
+   */
+  isArchivedFieldVisible(field: FormFieldConfig): boolean {
+    if (!field.archived) return true;
+
+    const control = this.form.get(field.name);
+    if (!control) return false;
+
+    const value = control.value;
+
+    // Check based on field type
+    switch (field.type) {
+      case 'table':
+        // Check if any rows have data
+        return (
+          Array.isArray(value) &&
+          value.some((row) =>
+            Object.values(row).some((v) => v !== '' && v !== null && v !== undefined)
+          )
+        );
+
+      case 'datagrid':
+        // Check if any cells have data
+        if (!value || typeof value !== 'object') return false;
+        return Object.values(value).some(
+          (row) =>
+            row &&
+            typeof row === 'object' &&
+            Object.values(row).some((v) => v !== '' && v !== null && v !== undefined)
+        );
+
+      case 'phone':
+        // Check if phone number has value
+        return value && (value.number || value.countryCode);
+
+      case 'daterange':
+        // Check if either date has value
+        return value && (value.fromDate || value.toDate);
+
+      case 'checkbox':
+        // For checkbox groups, check if array has items; for single, check boolean
+        if (Array.isArray(value)) return value.length > 0;
+        return !!value;
+
+      case 'formref':
+        // Check if any embedded field has data
+        if (!value || typeof value !== 'object') return false;
+        return Object.values(value).some((v) => {
+          if (Array.isArray(v)) return v.length > 0;
+          if (v && typeof v === 'object') {
+            return Object.values(v).some((subV) => subV !== '' && subV !== null && subV !== undefined);
+          }
+          return v !== '' && v !== null && v !== undefined;
+        });
+
+      default:
+        // For simple fields, check if value is non-empty
+        return value !== '' && value !== null && value !== undefined;
+    }
+  }
+
+  /**
    * Submit form
    */
   submitForm(): void {
@@ -642,6 +720,9 @@ export class DynamicForm implements OnInit, OnDestroy {
     const currentConfig = this.config();
 
     for (const field of currentConfig.fields) {
+      // Skip archived fields - they don't participate in validation
+      if (field.archived) continue;
+
       if (field.type === 'table' && !this.isTableValid(field.name)) {
         isValid = false;
         break;
@@ -845,6 +926,9 @@ export class DynamicForm implements OnInit, OnDestroy {
     const currentConfig = this.config();
 
     for (const field of currentConfig.fields) {
+      // Skip archived fields - they don't participate in validation
+      if (field.archived) continue;
+
       if (field.type === 'table') {
         if (!this.isTableValid(field.name)) {
           return false;

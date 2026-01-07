@@ -201,6 +201,7 @@ export interface FormFieldConfig {
   validations?: ValidationRule[];
   options?: { label: string; value: any }[]; // For select, radio, checkbox
   disabled?: boolean;
+  archived?: boolean; // Archived fields are read-only, skip validation, and only visible if they contain data
   cssClass?: string;
   order?: number;
   inlineGroup?: string; // Fields with same group name render on same row

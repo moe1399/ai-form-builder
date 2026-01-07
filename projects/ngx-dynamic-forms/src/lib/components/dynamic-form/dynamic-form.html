@@ -14,6 +14,7 @@
       <div
         [attr.data-field-name]="field.name"
         [attr.data-field-type]="field.type"
+        [attr.data-field-archived]="field.archived || false"
         data-info-block
         [ngClass]="field.cssClass">
         <div
@@ -26,6 +27,7 @@
       <div
         [attr.data-field-name]="field.name"
         [attr.data-field-type]="field.type"
+        [attr.data-field-archived]="field.archived || false"
         [attr.data-field-valid]="!hasError(field.name)"
         [attr.data-field-touched]="form.get(field.name)?.touched"
         [attr.data-field-dirty]="form.get(field.name)?.dirty"
@@ -1055,7 +1057,9 @@
         data-field-row
         [attr.data-inline-group]="isInlineGroup(group) ? group[0].inlineGroup : null">
         @for (field of group; track field.name) {
-          <ng-container *ngTemplateOutlet="fieldTemplate; context: { $implicit: field }"></ng-container>
+          @if (!field.archived || isArchivedFieldVisible(field)) {
+            <ng-container *ngTemplateOutlet="fieldTemplate; context: { $implicit: field }"></ng-container>
+          }
         }
       </div>
     }
@@ -1074,7 +1078,9 @@
             data-field-row
             [attr.data-inline-group]="isInlineGroup(group) ? group[0].inlineGroup : null">
             @for (field of group; track field.name) {
-              <ng-container *ngTemplateOutlet="fieldTemplate; context: { $implicit: field }"></ng-container>
+              @if (!field.archived || isArchivedFieldVisible(field)) {
+                <ng-container *ngTemplateOutlet="fieldTemplate; context: { $implicit: field }"></ng-container>
+              }
             }
           </div>
         }
@@ -1088,7 +1094,9 @@
           data-field-row
           [attr.data-inline-group]="isInlineGroup(group) ? group[0].inlineGroup : null">
           @for (field of group; track field.name) {
-            <ng-container *ngTemplateOutlet="fieldTemplate; context: { $implicit: field }"></ng-container>
+            @if (!field.archived || isArchivedFieldVisible(field)) {
+              <ng-container *ngTemplateOutlet="fieldTemplate; context: { $implicit: field }"></ng-container>
+            }
           }
         </div>
       }
