@@ -285,6 +285,20 @@
         <h2>Changelog</h2>
 
         <section class="version">
+          <h3>v0.3.0 <span class="date">(2026-01-07)</span></h3>
+          <h4>New Features</h4>
+          <ul>
+            <li>Added async/API validation support for form fields</li>
+            <li>Added <code>asyncValidation</code> config option with validator function, trigger, and debounce</li>
+            <li>Added <code>validating</code> getter to check if async validation is in progress</li>
+            <li>Added <code>setErrors()</code> method to set external validation errors from API responses</li>
+            <li>Added <code>clearErrors()</code> and <code>clearFieldError()</code> methods</li>
+            <li>Added <code>validateAllAsync()</code> method to run all async validations</li>
+            <li>Added <code>data-form-validating</code> and <code>data-field-validating</code> attributes</li>
+          </ul>
+        </section>
+
+        <section class="version">
           <h3>v0.2.0 <span class="date">(2026-01-07)</span></h3>
           <h4>Breaking Changes</h4>
           <ul>

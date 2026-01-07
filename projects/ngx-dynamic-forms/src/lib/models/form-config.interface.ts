@@ -165,6 +165,30 @@ export interface ValidationRule {
 }
 
 /**
+ * Result of async validation
+ */
+export interface AsyncValidationResult {
+  valid: boolean;
+  message?: string;  // Error message if invalid
+}
+
+/**
+ * Async validation configuration for a field
+ */
+export interface AsyncValidationConfig {
+  /**
+   * Validator function that returns a promise with the validation result.
+   * @param value - The current field value
+   * @param formValues - All current form values (for contextual validation)
+   */
+  validator: (value: any, formValues: Record<string, any>) => Promise<AsyncValidationResult>;
+  /** When to trigger validation: 'blur' (default) or 'change' */
+  trigger?: 'blur' | 'change';
+  /** Debounce time in milliseconds (default: 300) */
+  debounceMs?: number;
+}
+
+/**
  * Field configuration for dynamic form
  */
 export interface FormFieldConfig {
@@ -188,6 +212,7 @@ export interface FormFieldConfig {
   phoneConfig?: PhoneConfig; // Configuration for phone field type
   daterangeConfig?: DateRangeConfig; // Configuration for daterange field type
   formrefConfig?: FormRefConfig; // Configuration for formref field type
+  asyncValidation?: AsyncValidationConfig; // Async/API validation configuration
 }
 
 /**

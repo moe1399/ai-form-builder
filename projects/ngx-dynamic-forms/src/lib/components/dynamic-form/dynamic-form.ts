@@ -1,6 +1,8 @@
 import { Component, input, output, OnInit, OnDestroy, effect, inject } from '@angular/core';
 import { FormGroup, FormControl, FormArray, Validators, ReactiveFormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
+import { Subject, fromEvent, merge } from 'rxjs';
+import { debounceTime, distinctUntilChanged, takeUntil, filter, switchMap } from 'rxjs/operators';
 import {
   FormConfig,
   FormFieldConfig,
@@ -10,6 +12,7 @@ import {
   TableColumnConfig,
   DataGridColumnConfig,
   DataGridColumnGroup,
+  AsyncValidationConfig,
 } from '../../models/form-config.interface';
 import { FormStorage } from '../../services/form-storage.service';
 import { FormBuilderService } from '../../services/form-builder.service';
@@ -38,6 +41,12 @@ export class DynamicForm implements OnInit, OnDestroy {
   form: FormGroup = new FormGroup({});
   errors: FieldError[] = [];
 
+  // Async validation state
+  private validatingFields = new Set<string>();
+  private externalErrors = new Map<string, string>();
+  private asyncValidationSubjects = new Map<string, Subject<any>>();
+  private destroy$ = new Subject<void>();
+
   /**
    * Get current form value (cleaned, with empty table rows filtered out)
    */
@@ -47,8 +56,11 @@ export class DynamicForm implements OnInit, OnDestroy {
 
   /**
    * Get current form validity state
+   * Returns false if form is invalid, has external errors, or is validating
    */
   get valid(): boolean {
+    if (this.validating) return false;
+    if (this.externalErrors.size > 0) return false;
     return this.isFormValidForSubmit();
   }
 
@@ -65,6 +77,14 @@ export class DynamicForm implements OnInit, OnDestroy {
   get dirty(): boolean {
     return this.form.dirty;
   }
+
+  /**
+   * Check if any field is currently being async validated
+   */
+  get validating(): boolean {
+    return this.validatingFields.size > 0;
+  }
+
   activePopover: string | null = null;
   activeCellTooltip: { field: string; row: number; col: string } | null = null;
   private autoSaveTimer?: number;
@@ -90,6 +110,8 @@ export class DynamicForm implements OnInit, OnDestroy {
 
   ngOnDestroy(): void {
     this.clearAutoSave();
+    this.destroy$.next();
+    this.destroy$.complete();
   }
 
   /**
@@ -147,6 +169,9 @@ export class DynamicForm implements OnInit, OnDestroy {
       this.updateErrors();
       this.valueChanges.emit(this.getCleanedFormValue());
     });
+
+    // Set up async validation for fields that have it configured
+    this.setupAsyncValidation();
   }
 
   /**
@@ -476,6 +501,15 @@ export class DynamicForm implements OnInit, OnDestroy {
         const fieldErrors = this.getFieldErrors(field, control);
         errors.push(...fieldErrors);
       }
+
+      // Include external errors (from setErrors or async validation)
+      const externalError = this.externalErrors.get(field.name);
+      if (externalError) {
+        // Avoid duplicate errors
+        if (!errors.some(e => e.field === field.name && e.message === externalError)) {
+          errors.push({ field: field.name, message: externalError });
+        }
+      }
     });
 
     this.errors = errors;
@@ -542,6 +576,47 @@ export class DynamicForm implements OnInit, OnDestroy {
     const currentConfig = this.config();
     this.formStorage.saveForm(currentConfig.id, this.form.value, false);
     this.formSave.emit(this.form.value);
+  }
+
+  /**
+   * Set external validation errors (e.g., from API response)
+   * @param errors Array of field errors to display
+   */
+  setErrors(errors: FieldError[]): void {
+    this.externalErrors.clear();
+    for (const error of errors) {
+      this.externalErrors.set(error.field, error.message);
+      // Mark the field as touched so error displays
+      const control = this.form.get(error.field);
+      if (control) {
+        control.markAsTouched();
+      }
+    }
+    this.updateErrors();
+  }
+
+  /**
+   * Clear all external validation errors
+   */
+  clearErrors(): void {
+    this.externalErrors.clear();
+    this.updateErrors();
+  }
+
+  /**
+   * Clear external error for a specific field
+   * @param fieldName Name of the field to clear error for
+   */
+  clearFieldError(fieldName: string): void {
+    this.externalErrors.delete(fieldName);
+    this.updateErrors();
+  }
+
+  /**
+   * Check if a specific field is currently being async validated
+   */
+  isFieldValidating(fieldName: string): boolean {
+    return this.validatingFields.has(fieldName);
   }
 
   /**
@@ -805,6 +880,11 @@ export class DynamicForm implements OnInit, OnDestroy {
    * Check if field has error
    */
   hasError(fieldName: string): boolean {
+    // Check for external errors first
+    if (this.externalErrors.has(fieldName)) {
+      return true;
+    }
+
     const field = this.getField(fieldName);
 
     // For table fields, use the special table validation that excludes empty rows
@@ -837,6 +917,12 @@ export class DynamicForm implements OnInit, OnDestroy {
    * Get error message for field
    */
   getErrorMessage(fieldName: string): string {
+    // Check external errors first (takes precedence)
+    const externalError = this.externalErrors.get(fieldName);
+    if (externalError) {
+      return externalError;
+    }
+
     const fieldError = this.errors.find((e) => e.field === fieldName);
     return fieldError?.message || '';
   }
@@ -1731,5 +1817,165 @@ export class DynamicForm implements OnInit, OnDestroy {
         }
       }
     });
+  }
+
+  // ============================================
+  // Async Validation Methods
+  // ============================================
+
+  /**
+   * Set up async validation for all fields that have asyncValidation config
+   */
+  private setupAsyncValidation(): void {
+    const currentConfig = this.config();
+
+    currentConfig.fields.forEach((field) => {
+      if (field.asyncValidation) {
+        this.setupFieldAsyncValidation(field);
+      }
+    });
+  }
+
+  /**
+   * Set up async validation for a single field
+   */
+  private setupFieldAsyncValidation(field: FormFieldConfig): void {
+    const asyncConfig = field.asyncValidation;
+    if (!asyncConfig) return;
+
+    const control = this.form.get(field.name);
+    if (!control) return;
+
+    // Create a subject for this field's async validation
+    const validationSubject = new Subject<any>();
+    this.asyncValidationSubjects.set(field.name, validationSubject);
+
+    const debounceMs = asyncConfig.debounceMs ?? 300;
+    const trigger = asyncConfig.trigger ?? 'blur';
+
+    // Set up the validation pipeline
+    validationSubject
+      .pipe(
+        takeUntil(this.destroy$),
+        debounceTime(debounceMs),
+        distinctUntilChanged(),
+        filter((value) => {
+          // Skip validation for empty values if not required
+          const isRequired = field.validations?.some((v) => v.type === 'required');
+          if (!isRequired && (value === '' || value === null || value === undefined)) {
+            // Clear any previous async error for this field
+            this.externalErrors.delete(field.name);
+            this.updateErrors();
+            return false;
+          }
+          return true;
+        }),
+        switchMap(async (value) => {
+          // Mark field as validating
+          this.validatingFields.add(field.name);
+
+          try {
+            const result = await asyncConfig.validator(value, this.form.value);
+            return { field: field.name, result, value };
+          } catch (error) {
+            return {
+              field: field.name,
+              result: { valid: false, message: 'Validation failed' },
+              value,
+            };
+          }
+        })
+      )
+      .subscribe(({ field: fieldName, result }) => {
+        // Mark field as no longer validating
+        this.validatingFields.delete(fieldName);
+
+        // Update external errors based on result
+        if (result.valid) {
+          this.externalErrors.delete(fieldName);
+        } else {
+          this.externalErrors.set(fieldName, result.message || 'Invalid value');
+        }
+
+        this.updateErrors();
+      });
+
+    // Trigger validation based on config (blur or change)
+    if (trigger === 'change') {
+      control.valueChanges.pipe(takeUntil(this.destroy$)).subscribe((value) => {
+        // Clear external error when value changes
+        this.externalErrors.delete(field.name);
+        validationSubject.next(value);
+      });
+    } else {
+      // For blur trigger, we need to watch for status changes that indicate touched
+      control.statusChanges.pipe(takeUntil(this.destroy$)).subscribe(() => {
+        if (control.touched) {
+          // Only trigger once per blur
+          validationSubject.next(control.value);
+        }
+      });
+    }
+  }
+
+  /**
+   * Trigger async validation for a field manually (e.g., on blur event)
+   */
+  triggerAsyncValidation(fieldName: string): void {
+    const subject = this.asyncValidationSubjects.get(fieldName);
+    const control = this.form.get(fieldName);
+    if (subject && control) {
+      subject.next(control.value);
+    }
+  }
+
+  /**
+   * Run all async validations and wait for them to complete
+   * Returns true if all validations pass
+   */
+  async validateAllAsync(): Promise<boolean> {
+    const currentConfig = this.config();
+    const asyncFields = currentConfig.fields.filter((f) => f.asyncValidation);
+
+    if (asyncFields.length === 0) return true;
+
+    // Trigger all async validations
+    const validationPromises = asyncFields.map(async (field) => {
+      const asyncConfig = field.asyncValidation!;
+      const control = this.form.get(field.name);
+      if (!control) return true;
+
+      const value = control.value;
+
+      // Skip empty non-required fields
+      const isRequired = field.validations?.some((v) => v.type === 'required');
+      if (!isRequired && (value === '' || value === null || value === undefined)) {
+        return true;
+      }
+
+      this.validatingFields.add(field.name);
+
+      try {
+        const result = await asyncConfig.validator(value, this.form.value);
+        this.validatingFields.delete(field.name);
+
+        if (result.valid) {
+          this.externalErrors.delete(field.name);
+        } else {
+          this.externalErrors.set(field.name, result.message || 'Invalid value');
+        }
+
+        return result.valid;
+      } catch {
+        this.validatingFields.delete(field.name);
+        this.externalErrors.set(field.name, 'Validation failed');
+        return false;
+      }
+    });
+
+    const results = await Promise.all(validationPromises);
+    this.updateErrors();
+
+    return results.every((r) => r);
   }
 }

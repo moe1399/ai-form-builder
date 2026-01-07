@@ -2,9 +2,10 @@
 <form
   [formGroup]="form"
   [attr.data-form-id]="config().id"
-  [attr.data-form-valid]="isFormValidForSubmit()"
+  [attr.data-form-valid]="valid"
   [attr.data-form-dirty]="form.dirty"
-  [attr.data-form-touched]="form.touched">
+  [attr.data-form-touched]="form.touched"
+  [attr.data-form-validating]="validating">
 
   <!-- Field template defined inside form for formControlName to work -->
   <ng-template #fieldTemplate let-field>
@@ -30,6 +31,7 @@
         [attr.data-field-dirty]="form.get(field.name)?.dirty"
         [attr.data-field-disabled]="form.get(field.name)?.disabled"
         [attr.data-field-required]="isFieldRequired(field)"
+        [attr.data-field-validating]="isFieldValidating(field.name)"
         [attr.data-field-width]="field.width || 1"
         [attr.data-has-label]="!!field.label"
         [ngClass]="field.cssClass">

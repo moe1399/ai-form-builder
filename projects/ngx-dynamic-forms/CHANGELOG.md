@@ -2,6 +2,27 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.3.0] - 2026-01-07
+
+### Added
+
+- Async/API validation support for form fields
+  - `asyncValidation` config option on `FormFieldConfig` with validator function, trigger ('blur' or 'change'), and debounce time
+  - `AsyncValidationConfig` and `AsyncValidationResult` interfaces
+- `validating` getter to check if any async validation is in progress
+- `setErrors(errors: FieldError[])` method to set external validation errors (e.g., from API responses)
+- `clearErrors()` method to clear all external validation errors
+- `clearFieldError(fieldName: string)` method to clear error for a specific field
+- `isFieldValidating(fieldName: string)` method to check if a specific field is validating
+- `triggerAsyncValidation(fieldName: string)` method to manually trigger async validation
+- `validateAllAsync()` method to run all async validations and wait for completion
+- `data-form-validating` attribute on form element
+- `data-field-validating` attribute on field elements
+
+### Changed
+
+- `valid` getter now returns false when form is validating or has external errors
+
 ## [0.2.0] - 2026-01-07
 
 ### Breaking Changes
