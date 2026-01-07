@@ -2,7 +2,7 @@ import { Component, inject, OnInit, signal } from '@angular/core';
 import { RouterOutlet } from '@angular/router';
 import { DynamicForm, NgxFormBuilder, FormConfig, UrlSchemaService } from 'ngx-dynamic-forms';
 
-type ViewType = 'builder' | 'preview' | 'docs' | 'changelog';
+type ViewType = 'builder' | 'preview' | 'docs' | 'changelog' | 'theme';
 
 @Component({
   selector: 'app-root',
@@ -24,6 +24,9 @@ export class App implements OnInit {
 
   // Share notification
   shareNotification = signal<string>('');
+
+  // Theme CSS copied notification
+  themeCopied = signal<boolean>(false);
 
   ngOnInit(): void {
     this.loadSchemaFromUrl();
@@ -85,5 +88,20 @@ export class App implements OnInit {
 
   onValidationErrors(errors: any[]): void {
     console.log('Validation errors:', errors);
+  }
+
+  async copyThemeCss(): Promise<void> {
+    const cssElement = document.getElementById('theme-css-content');
+    if (cssElement) {
+      try {
+        await navigator.clipboard.writeText(cssElement.textContent || '');
+        this.themeCopied.set(true);
+        setTimeout(() => {
+          this.themeCopied.set(false);
+        }, 2000);
+      } catch {
+        console.error('Failed to copy CSS to clipboard');
+      }
+    }
   }
 }
