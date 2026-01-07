@@ -47,7 +47,7 @@
             @if (field.description) {
               <span
                 data-info-icon
-                (click)="togglePopover(field.name); $event.stopPropagation()"
+                (click)="togglePopover(field.name); $event.stopPropagation(); $event.preventDefault()"
                 [attr.data-popover-open]="activePopover === field.name"
                 title="Click for more information">
                 &#9432;
@@ -58,7 +58,7 @@
                   <button
                     type="button"
                     data-popover-close
-                    (click)="closePopover(); $event.stopPropagation()">
+                    (click)="closePopover(); $event.stopPropagation(); $event.preventDefault()">
                     &times;
                   </button>
                 </span>
