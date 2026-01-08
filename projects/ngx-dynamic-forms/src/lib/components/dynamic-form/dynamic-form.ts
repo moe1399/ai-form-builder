@@ -1,4 +1,4 @@
-import { Component, input, output, OnInit, OnDestroy, effect, inject } from '@angular/core';
+import { Component, input, output, OnInit, OnDestroy, effect, inject, ChangeDetectorRef } from '@angular/core';
 import { FormGroup, FormControl, FormArray, Validators, ReactiveFormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
 import { Subject, fromEvent, merge } from 'rxjs';
@@ -25,6 +25,7 @@ import { ValidatorRegistry } from '../../services/validator-registry.service';
   styleUrl: './dynamic-form.scss',
   host: {
     '(document:click)': 'onDocumentClick($event)',
+    '(focusout)': 'onFocusOut()',
   },
 })
 export class DynamicForm implements OnInit, OnDestroy {
@@ -32,6 +33,7 @@ export class DynamicForm implements OnInit, OnDestroy {
   private formStorage = inject(FormStorage);
   private formBuilderService = inject(FormBuilderService);
   private validatorRegistry = inject(ValidatorRegistry);
+  private cdr = inject(ChangeDetectorRef);
 
   // Inputs using signals
   config = input.required<FormConfig>();
@@ -1080,6 +1082,14 @@ export class DynamicForm implements OnInit, OnDestroy {
     if (!isPopoverClick && !isInfoIconClick) {
       this.closePopover();
     }
+  }
+
+  /**
+   * Handle focusout events to trigger change detection for validation display
+   * This ensures error messages show immediately when a field is blurred
+   */
+  onFocusOut(): void {
+    this.cdr.markForCheck();
   }
 
   /**

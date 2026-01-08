@@ -1,5 +1,12 @@
 # CLAUDE.md
 
+## Git Workflow
+
+- **NEVER commit changes to git unless explicitly told to**
+- Do not push to remote unless explicitly requested
+
+## Project Overview
+
 Angular 21 app with standalone components, TypeScript strict mode, no NgModules.
 
 ## Angular Best Practices
