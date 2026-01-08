@@ -495,6 +495,16 @@ export class NgxFormBuilder {
       delete field.formrefConfig;
     }
 
+    // Initialize options when switching to select, radio, or checkbox type
+    if ((type === 'select' || type === 'radio' || type === 'checkbox') && !field.options) {
+      field.options = [{ value: 'option_1', label: 'Option 1' }];
+    }
+
+    // Clear options when switching away from select, radio, or checkbox type
+    if (type !== 'select' && type !== 'radio' && type !== 'checkbox') {
+      delete field.options;
+    }
+
     this.updateField(index, field);
   }
 
