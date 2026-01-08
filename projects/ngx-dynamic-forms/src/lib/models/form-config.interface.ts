@@ -161,7 +161,19 @@ export interface ValidationRule {
   type: 'required' | 'email' | 'minLength' | 'maxLength' | 'min' | 'max' | 'pattern' | 'custom';
   value?: any;
   message: string;
+  /**
+   * Inline validator function (client-side only, not serializable)
+   * @deprecated Use customValidatorName for cross-platform validation
+   */
   validator?: (value: any) => boolean;
+  /**
+   * Name of a registered custom validator (works on client and server)
+   */
+  customValidatorName?: string;
+  /**
+   * Parameters to pass to the custom validator
+   */
+  customValidatorParams?: Record<string, any>;
 }
 
 /**

@@ -16,6 +16,7 @@ import {
 } from '../../models/form-config.interface';
 import { FormStorage } from '../../services/form-storage.service';
 import { FormBuilderService } from '../../services/form-builder.service';
+import { ValidatorRegistry } from '../../services/validator-registry.service';
 
 @Component({
   selector: 'ngx-dynamic-form',
@@ -27,6 +28,7 @@ export class DynamicForm implements OnInit, OnDestroy {
   // Inject services
   private formStorage = inject(FormStorage);
   private formBuilderService = inject(FormBuilderService);
+  private validatorRegistry = inject(ValidatorRegistry);
 
   // Inputs using signals
   config = input.required<FormConfig>();
@@ -488,7 +490,22 @@ export class DynamicForm implements OnInit, OnDestroy {
           validators.push(Validators.pattern(rule.value));
           break;
         case 'custom':
-          if (rule.validator) {
+          // Support both inline validator and named validator
+          if (rule.customValidatorName) {
+            // Named validator - look up from registry
+            const namedValidator = this.validatorRegistry.get(rule.customValidatorName);
+            if (namedValidator) {
+              validators.push((control: FormControl) => {
+                const formData = this.form.value;
+                return namedValidator(control.value, rule.customValidatorParams, undefined, formData)
+                  ? null
+                  : { custom: true };
+              });
+            } else {
+              console.warn(`Custom validator "${rule.customValidatorName}" not registered`);
+            }
+          } else if (rule.validator) {
+            // Legacy inline validator (deprecated)
             validators.push((control: FormControl) => {
               return rule.validator!(control.value) ? null : { custom: true };
             });

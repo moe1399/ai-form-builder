@@ -9,8 +9,13 @@
     "test": "ng test",
     "build:lib": "ng build ngx-dynamic-forms",
     "build:lib:watch": "ng build ngx-dynamic-forms --watch",
-    "publish:lib": "cd dist/ngx-dynamic-forms && npm publish",
-    "publish:lib:dry": "cd dist/ngx-dynamic-forms && npm publish --dry-run"
+    "publish:lib": "cd dist/ngx-dynamic-forms && npm publish --access public",
+    "publish:lib:dry": "cd dist/ngx-dynamic-forms && npm publish --dry-run",
+    "build:validation": "cd packages/form-validation && npm run build",
+    "build:validation-dotnet": "cd packages/form-validation-dotnet && dotnet build -c Release",
+    "publish:validation": "npm run publish:validation-npm && npm run publish:validation-nuget",
+    "publish:validation-npm": "cd packages/form-validation && npm run build && npm publish --access public",
+    "publish:validation-nuget": "cd packages/form-validation-dotnet && dotnet pack -c Release && dotnet nuget push bin/Release/DynamicForms.FormValidation.*.nupkg --api-key $NUGET_API_KEY --source https://api.nuget.org/v3/index.json --skip-duplicate"
   },
   "prettier": {
     "printWidth": 100,

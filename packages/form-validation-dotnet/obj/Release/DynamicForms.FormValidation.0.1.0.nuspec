@@ -1,0 +1,23 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<package xmlns="http://schemas.microsoft.com/packaging/2012/06/nuspec.xsd">
+  <metadata>
+    <id>DynamicForms.FormValidation</id>
+    <version>0.1.0</version>
+    <authors>moe1399</authors>
+    <license type="expression">MIT</license>
+    <licenseUrl>https://licenses.nuget.org/MIT</licenseUrl>
+    <readme>README.md</readme>
+    <description>Server-side form validation library compatible with @moe1399/ngx-dynamic-forms. Use the same form configuration and validation rules on both client and server.</description>
+    <tags>form validation ngx-dynamic-forms server-side dotnet</tags>
+    <repository type="git" commit="ad87a5106773d2e0969e577bd8d352656572e568" />
+    <dependencies>
+      <group targetFramework=".NETStandard2.0">
+        <dependency id="System.Text.Json" version="8.0.5" exclude="Build,Analyzers" />
+      </group>
+    </dependencies>
+  </metadata>
+  <files>
+    <file src="/Users/danyo1399/src/moe/form-builder/ai-form-builder/packages/form-validation-dotnet/bin/Release/netstandard2.0/DynamicForms.FormValidation.dll" target="lib/netstandard2.0/DynamicForms.FormValidation.dll" />
+    <file src="/Users/danyo1399/src/moe/form-builder/ai-form-builder/packages/form-validation-dotnet/README.md" target="/README.md" />
+  </files>
+</package>

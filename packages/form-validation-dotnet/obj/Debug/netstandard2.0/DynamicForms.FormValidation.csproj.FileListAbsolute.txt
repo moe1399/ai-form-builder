@@ -1,0 +1,11 @@
+/Users/danyo1399/src/moe/form-builder/ai-form-builder/packages/form-validation-dotnet/bin/Debug/netstandard2.0/DynamicForms.FormValidation.deps.json
+/Users/danyo1399/src/moe/form-builder/ai-form-builder/packages/form-validation-dotnet/bin/Debug/netstandard2.0/DynamicForms.FormValidation.dll
+/Users/danyo1399/src/moe/form-builder/ai-form-builder/packages/form-validation-dotnet/bin/Debug/netstandard2.0/DynamicForms.FormValidation.pdb
+/Users/danyo1399/src/moe/form-builder/ai-form-builder/packages/form-validation-dotnet/obj/Debug/netstandard2.0/DynamicForms.FormValidation.csproj.AssemblyReference.cache
+/Users/danyo1399/src/moe/form-builder/ai-form-builder/packages/form-validation-dotnet/obj/Debug/netstandard2.0/DynamicForms.FormValidation.GeneratedMSBuildEditorConfig.editorconfig
+/Users/danyo1399/src/moe/form-builder/ai-form-builder/packages/form-validation-dotnet/obj/Debug/netstandard2.0/DynamicForms.FormValidation.AssemblyInfoInputs.cache
+/Users/danyo1399/src/moe/form-builder/ai-form-builder/packages/form-validation-dotnet/obj/Debug/netstandard2.0/DynamicForms.FormValidation.AssemblyInfo.cs
+/Users/danyo1399/src/moe/form-builder/ai-form-builder/packages/form-validation-dotnet/obj/Debug/netstandard2.0/DynamicForms.FormValidation.csproj.CoreCompileInputs.cache
+/Users/danyo1399/src/moe/form-builder/ai-form-builder/packages/form-validation-dotnet/obj/Debug/netstandard2.0/DynamicForms.FormValidation.sourcelink.json
+/Users/danyo1399/src/moe/form-builder/ai-form-builder/packages/form-validation-dotnet/obj/Debug/netstandard2.0/DynamicForms.FormValidation.dll
+/Users/danyo1399/src/moe/form-builder/ai-form-builder/packages/form-validation-dotnet/obj/Debug/netstandard2.0/DynamicForms.FormValidation.pdb
