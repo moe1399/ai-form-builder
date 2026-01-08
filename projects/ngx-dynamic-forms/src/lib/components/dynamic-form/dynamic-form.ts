@@ -1027,8 +1027,18 @@ export class DynamicForm implements OnInit, OnDestroy {
       return externalError;
     }
 
-    const fieldError = this.errors.find((e) => e.field === fieldName);
-    return fieldError?.message || '';
+    // Compute error message directly from control state
+    const field = this.getField(fieldName);
+    const control = this.form.get(fieldName);
+
+    if (field && control?.invalid && control?.touched) {
+      const fieldErrors = this.getFieldErrors(field, control);
+      if (fieldErrors.length > 0) {
+        return fieldErrors[0].message;
+      }
+    }
+
+    return '';
   }
 
   /**
