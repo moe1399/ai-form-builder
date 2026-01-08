@@ -41,3 +41,9 @@ __screenshots__/
 # System files
 .DS_Store
 Thumbs.db
+
+# Validation packages build artifacts
+packages/form-validation/node_modules/
+packages/form-validation/dist/
+packages/form-validation-dotnet/bin/
+packages/form-validation-dotnet/obj/

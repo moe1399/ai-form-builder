@@ -1,8 +1,0 @@
-is_global = true
-build_property.RootNamespace = DynamicForms.FormValidation
-build_property.ProjectDir = /Users/danyo1399/src/moe/form-builder/ai-form-builder/packages/form-validation-dotnet/
-build_property.EnableComHosting = 
-build_property.EnableGeneratedComInterfaceComImportInterop = 
-build_property.CsWinRTUseWindowsUIXamlProjections = false
-build_property.EffectiveAnalysisLevelStyle = 
-build_property.EnableCodeStyleSeverity = 
