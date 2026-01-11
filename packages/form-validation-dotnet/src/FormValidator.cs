@@ -104,9 +104,19 @@ public static class FormValidator
         object? value,
         ValidationRule rule,
         FormFieldConfig fieldConfig,
-        Dictionary<string, object?> formData
+        Dictionary<string, object?> formData,
+        Dictionary<string, object?>? rowData = null
     )
     {
+        // Check if validation has a condition and if it's met
+        if (rule.Condition != null)
+        {
+            if (!EvaluateCondition(rule.Condition, formData, rowData))
+            {
+                return true; // Condition not met, validation passes (doesn't apply)
+            }
+        }
+
         return rule.Type switch
         {
             ValidationRuleType.Required => !IsEmpty(value),
@@ -119,6 +129,56 @@ public static class FormValidator
             ValidationRuleType.Custom => ValidateCustom(value, rule, fieldConfig, formData),
             _ => true
         };
+    }
+
+    private static bool EvaluateCondition(
+        ValidationCondition condition,
+        Dictionary<string, object?> formData,
+        Dictionary<string, object?>? rowData
+    )
+    {
+        object? fieldValue;
+
+        if (condition.Field.StartsWith("$form."))
+        {
+            // Form-level field reference (used from within table/datagrid context)
+            var fieldName = condition.Field.Substring(6);
+            formData.TryGetValue(fieldName, out fieldValue);
+        }
+        else if (rowData != null)
+        {
+            // Same-row column reference (table/datagrid context)
+            rowData.TryGetValue(condition.Field, out fieldValue);
+        }
+        else
+        {
+            // Standalone field context
+            formData.TryGetValue(condition.Field, out fieldValue);
+        }
+
+        return condition.Operator switch
+        {
+            ValidationConditionOperator.Equals => AreValuesEqual(fieldValue, condition.Value),
+            ValidationConditionOperator.NotEquals => !AreValuesEqual(fieldValue, condition.Value),
+            ValidationConditionOperator.IsEmpty => IsEmpty(fieldValue),
+            ValidationConditionOperator.IsNotEmpty => !IsEmpty(fieldValue),
+            _ => true
+        };
+    }
+
+    private static bool AreValuesEqual(object? a, object? b)
+    {
+        if (a == null && b == null) return true;
+        if (a == null || b == null) return false;
+
+        // Handle JsonElement comparisons
+        var aStr = GetStringValue(a);
+        var bStr = GetStringValue(b);
+
+        if (aStr != null && bStr != null)
+            return aStr == bStr;
+
+        return a.Equals(b);
     }
 
     private static bool IsEmpty(object? value)
@@ -251,7 +311,7 @@ public static class FormValidator
                 foreach (var rule in column.Validations)
                 {
                     var tempField = new FormFieldConfig { Name = column.Name };
-                    if (!ValidateRule(cellValue, rule, tempField, formData))
+                    if (!ValidateRule(cellValue, rule, tempField, formData, row))
                     {
                         errors.Add(new FieldValidationError
                         {
@@ -299,7 +359,7 @@ public static class FormValidator
                 foreach (var rule in column.Validations)
                 {
                     var tempField = new FormFieldConfig { Name = column.Name };
-                    if (!ValidateRule(cellValue, rule, tempField, formData))
+                    if (!ValidateRule(cellValue, rule, tempField, formData, rowData))
                     {
                         errors.Add(new FieldValidationError
                         {

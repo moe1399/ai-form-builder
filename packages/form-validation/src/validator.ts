@@ -3,6 +3,7 @@ import {
   FormConfig,
   FormFieldConfig,
   ValidationRule,
+  ValidationCondition,
   ValidationResult,
   FieldValidationError,
   TableConfig,
@@ -25,14 +26,67 @@ function isEmpty(value: any): boolean {
 }
 
 /**
+ * Evaluate a validation condition
+ * @param condition - The condition to evaluate
+ * @param formData - The full form data
+ * @param rowData - Optional row data for table/datagrid context
+ * @returns true if the condition is met, false otherwise
+ */
+function evaluateCondition(
+  condition: ValidationCondition,
+  formData: Record<string, any>,
+  rowData?: Record<string, any>
+): boolean {
+  let fieldValue: any;
+
+  if (condition.field.startsWith('$form.')) {
+    // Form-level field reference (used from within table/datagrid context)
+    const fieldName = condition.field.substring(6);
+    fieldValue = formData[fieldName];
+  } else if (rowData !== undefined) {
+    // Same-row column reference (table/datagrid context)
+    fieldValue = rowData[condition.field];
+  } else {
+    // Standalone field context
+    fieldValue = formData[condition.field];
+  }
+
+  switch (condition.operator) {
+    case 'equals':
+      return fieldValue === condition.value;
+    case 'notEquals':
+      return fieldValue !== condition.value;
+    case 'isEmpty':
+      return fieldValue === null || fieldValue === undefined || fieldValue === '';
+    case 'isNotEmpty':
+      return fieldValue !== null && fieldValue !== undefined && fieldValue !== '';
+    default:
+      return true;
+  }
+}
+
+/**
  * Validate a single value against a validation rule
+ * @param value - The value to validate
+ * @param rule - The validation rule
+ * @param fieldConfig - The field configuration
+ * @param formData - The full form data
+ * @param rowData - Optional row data for table/datagrid context (for condition evaluation)
  */
 function validateRule(
   value: any,
   rule: ValidationRule,
   fieldConfig: FormFieldConfig,
-  formData: Record<string, any>
+  formData: Record<string, any>,
+  rowData?: Record<string, any>
 ): boolean {
+  // Check if validation has a condition and if it's met
+  if (rule.condition) {
+    if (!evaluateCondition(rule.condition, formData, rowData)) {
+      return true; // Condition not met, validation passes (doesn't apply)
+    }
+  }
+
   switch (rule.type) {
     case 'required':
       return !isEmpty(value);
@@ -155,7 +209,8 @@ function validateTableField(
           cellValue,
           rule,
           { ...field, name: column.name } as FormFieldConfig,
-          formData
+          formData,
+          row // Pass row data for condition evaluation
         );
         if (!isValid) {
           errors.push({
@@ -204,7 +259,8 @@ function validateDataGridField(
           cellValue,
           rule,
           { ...field, name: column.name } as FormFieldConfig,
-          formData
+          formData,
+          rowData // Pass row data for condition evaluation
         );
         if (!isValid) {
           errors.push({

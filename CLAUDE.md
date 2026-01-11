@@ -160,6 +160,19 @@ src/styles/
 - No arrow functions (use component methods)
 - No complex expressions (move to component)
 
+## Server Validation Packages
+
+When making changes to form validation (ValidationRule, validation types, conditional validation, etc.), **always update both server validation packages**:
+
+- `packages/form-validation/` - TypeScript/JavaScript package
+  - `src/types.ts` - Type definitions
+  - `src/validator.ts` - Validation logic
+- `packages/form-validation-dotnet/` - .NET package
+  - `src/Models/ValidationRule.cs` - Model classes
+  - `src/FormValidator.cs` - Validation logic
+
+Both packages must stay in sync with the Angular library's validation features.
+
 ## Documentation Maintenance
 
 - **Always update README.md** when adding new features or changing existing functionality

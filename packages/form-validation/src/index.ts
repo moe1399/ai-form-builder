@@ -46,6 +46,8 @@ export type {
   FormSection,
   FieldType,
   ValidationRule,
+  ValidationCondition,
+  ValidationConditionOperator,
   // Table types
   TableConfig,
   TableColumnConfig,
