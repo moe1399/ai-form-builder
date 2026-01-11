@@ -4,34 +4,125 @@
  * Uses data-* attributes for styling
  *
  * All styles are scoped to .ngx-df to prevent CSS clashes
+ *
+ * ## Customization
+ * Override CSS variables on .ngx-df to customize the theme:
+ *
+ * .ngx-df {
+ *   --df-color-primary: #0066cc;
+ *   --df-color-background: #f0f4f8;
+ *   --df-font-family: 'Roboto', sans-serif;
+ * }
  */
 
 .ngx-df {
+  /* ========================================
+     Design Tokens
+     ======================================== */
+
+  /* Colors - Primary */
+  --df-color-primary: #512B58;
+  --df-color-primary-dark: #3d2042;
+  --df-color-primary-light: #6b3d73;
+
+  /* Colors - Background & Surface */
+  --df-color-background: #E8E0ED;
+  --df-color-background-light: #F4F0F7;
+  --df-color-surface: #ffffff;
+  --df-color-surface-alt: #fafafa;
+  --df-color-surface-hover: #f5f5f5;
+
+  /* Colors - Border */
+  --df-color-border: #ccc;
+  --df-color-border-dark: #999;
+  --df-color-border-light: #ddd;
+  --df-color-border-lighter: #eee;
+
+  /* Colors - Text */
+  --df-color-text: #333;
+  --df-color-text-muted: #666;
+  --df-color-text-disabled: #888;
+  --df-color-text-inverse: #ffffff;
+
+  /* Colors - State */
+  --df-color-error: #c00;
+  --df-color-error-bg: #fff8f8;
+  --df-color-error-border: #f5c6cb;
+  --df-color-error-text: #721c24;
+  --df-color-warning: #f59e0b;
+  --df-color-warning-bg: #fff3cd;
+  --df-color-info: #3b82f6;
+
+  /* Typography */
+  --df-font-family: Arial, sans-serif;
+  --df-font-size-base: 14px;
+  --df-font-size-sm: 13px;
+  --df-font-size-xs: 12px;
+  --df-font-size-lg: 15px;
+  --df-font-size-icon: 24px;
+
+  /* Spacing */
+  --df-spacing-xs: 4px;
+  --df-spacing-sm: 6px;
+  --df-spacing-md: 8px;
+  --df-spacing-lg: 10px;
+  --df-spacing-xl: 12px;
+  --df-spacing-2xl: 16px;
+
+  /* Borders */
+  --df-border-radius: 0;
+  --df-border-radius-sm: 3px;
+  --df-border-radius-md: 4px;
+
+  /* Shadows */
+  --df-shadow-focus: 0 0 0 2px rgba(81, 43, 88, 0.15);
+  --df-shadow-focus-error: 0 0 0 2px rgba(204, 0, 0, 0.15);
+  --df-shadow-popover: 0 2px 8px rgba(0, 0, 0, 0.15);
+  --df-shadow-tooltip: 0 2px 8px rgba(0, 0, 0, 0.2);
+
+  /* Component - Labels */
+  --df-label-width: 200px;
+
+  /* Component - Inputs */
+  --df-input-min-height: 80px;
+
+  /* Component - Buttons */
+  --df-button-padding: 8px 20px;
+  --df-button-padding-sm: 6px 12px;
+  --df-button-padding-icon: 4px 8px;
+
+  /* Component - Table */
+  --df-table-actions-width: 50px;
+
+  /* ========================================
+     Base Styles
+     ======================================== */
+
   /* Form Container */
   &[data-form-id] {
     max-width: 800px;
     margin: 0 auto;
-    background: #ffffff;
-    border: 1px solid #ccc;
-    font-family: Arial, sans-serif;
-    font-size: 14px;
+    background: var(--df-color-surface);
+    border: 1px solid var(--df-color-border);
+    font-family: var(--df-font-family);
+    font-size: var(--df-font-size-base);
   }
 
   /* Read-only Form State */
-  &[data-form-readonly="true"] input,
+  &[data-form-readonly="true"] input:not([data-radio-input]):not([data-checkbox-input]),
   &[data-form-readonly="true"] textarea,
   &[data-form-readonly="true"] select {
-    background: #fafafa;
+    background: var(--df-color-surface-alt);
     cursor: default;
     pointer-events: none;
   }
 
-  &[data-form-readonly="true"] input:focus,
+  &[data-form-readonly="true"] input:not([data-radio-input]):not([data-checkbox-input]):focus,
   &[data-form-readonly="true"] textarea:focus,
   &[data-form-readonly="true"] select:focus {
     outline: none;
     box-shadow: none;
-    border-color: #999;
+    border-color: var(--df-color-border-dark);
   }
 
   /* Hide interactive elements in read-only mode */
@@ -49,11 +140,11 @@
     display: none;
   }
 
-  /* Hide radio/checkbox clickability in read-only mode */
-  &[data-form-readonly="true"] [data-radio-option],
-  &[data-form-readonly="true"] [data-checkbox-option] {
-    pointer-events: none;
+  /* Radio/checkbox - keep normal appearance in read-only mode */
+  &[data-form-readonly="true"] [data-radio-input],
+  &[data-form-readonly="true"] [data-checkbox-input] {
     cursor: default;
+    pointer-events: none;
   }
 
   &[data-form-readonly="true"] [data-radio-option]:hover,
@@ -73,13 +164,13 @@
 
   /* Section Headers - Purple background */
   [data-section-header] {
-    background: #512B58;
-    color: #ffffff;
-    padding: 8px 12px;
+    background: var(--df-color-primary);
+    color: var(--df-color-text-inverse);
+    padding: var(--df-spacing-md) var(--df-spacing-xl);
     font-weight: bold;
-    font-size: 14px;
+    font-size: var(--df-font-size-base);
     margin: 0;
-    border-bottom: 1px solid #ccc;
+    border-bottom: 1px solid var(--df-color-border);
   }
 
   /* Remove header border when followed by description */
@@ -89,21 +180,21 @@
 
   /* Section Description - Purple background, smaller text */
   [data-section-description] {
-    background: #512B58;
-    color: #ffffff;
-    padding: 6px 12px 10px 12px;
-    font-size: 13px;
+    background: var(--df-color-primary);
+    color: var(--df-color-text-inverse);
+    padding: var(--df-spacing-sm) var(--df-spacing-xl) var(--df-spacing-lg) var(--df-spacing-xl);
+    font-size: var(--df-font-size-sm);
     font-weight: normal;
     line-height: 1.4;
     margin: 0;
-    border-bottom: 1px solid #ccc;
+    border-bottom: 1px solid var(--df-color-border);
   }
 
   /* Field Row - Container for one or more fields */
   [data-field-row] {
     display: flex;
     flex-wrap: nowrap;
-    border-bottom: 1px solid #ccc;
+    border-bottom: 1px solid var(--df-color-border);
   }
 
   [data-field-row]:last-child {
@@ -113,7 +204,7 @@
   /* Inline Group - Multiple fields in a row */
   [data-field-row][data-inline-group] [data-field-name] {
     border-bottom: none;
-    border-right: 1px solid #ccc;
+    border-right: 1px solid var(--df-color-border);
   }
 
   [data-field-row][data-inline-group] [data-field-name]:last-child {
@@ -143,7 +234,7 @@
     flex-wrap: wrap;
     flex: 1;
     align-items: stretch;
-    background: #E8E0ED;
+    background: var(--df-color-background);
     margin: 0;
   }
 
@@ -151,23 +242,23 @@
   label[data-label-for] {
     display: flex;
     align-items: center;
-    min-width: 200px;
-    max-width: 200px;
-    padding: 10px 12px;
-    font-size: 13px;
+    min-width: var(--df-label-width);
+    max-width: var(--df-label-width);
+    padding: var(--df-spacing-lg) var(--df-spacing-xl);
+    font-size: var(--df-font-size-sm);
     font-weight: normal;
-    color: #333;
-    background: #E8E0ED;
-    border-right: 1px solid #ccc;
+    color: var(--df-color-text);
+    background: var(--df-color-background);
+    border-right: 1px solid var(--df-color-border);
     margin: 0;
     position: relative;
   }
 
   /* Required Indicator */
   [data-required-indicator] {
-    color: #c00;
-    font-size: 14px;
-    margin-left: 4px;
+    color: var(--df-color-error);
+    font-size: var(--df-font-size-base);
+    margin-left: var(--df-spacing-xs);
   }
 
   /* Input container - Right column style */
@@ -176,8 +267,8 @@
     display: flex;
     flex-wrap: wrap;
     align-items: center;
-    padding: 6px 10px;
-    background: #ffffff;
+    padding: var(--df-spacing-sm) var(--df-spacing-lg);
+    background: var(--df-color-surface);
   }
 
   /* Input Fields */
@@ -185,23 +276,23 @@
   textarea[data-input-type],
   select[data-input-type] {
     width: 100%;
-    padding: 6px 8px;
-    border: 1px solid #999;
-    font-size: 13px;
+    padding: var(--df-spacing-sm) var(--df-spacing-md);
+    border: 1px solid var(--df-color-border-dark);
+    font-size: var(--df-font-size-sm);
     font-family: inherit;
-    background: #ffffff;
+    background: var(--df-color-surface);
   }
 
   input[data-input-type]:focus,
   textarea[data-input-type]:focus,
   select[data-input-type]:focus {
     outline: none;
-    border-color: #512B58;
-    box-shadow: 0 0 0 2px rgba(81, 43, 88, 0.15);
+    border-color: var(--df-color-primary);
+    box-shadow: var(--df-shadow-focus);
   }
 
   textarea[data-input-type] {
-    min-height: 80px;
+    min-height: var(--df-input-min-height);
     resize: vertical;
   }
 
@@ -213,59 +304,59 @@
   [data-field-valid="false"] input:not([data-table-input]),
   [data-field-valid="false"] textarea:not([data-table-input]),
   [data-field-valid="false"] select:not([data-table-input]) {
-    border-color: #c00;
-    background: #fff8f8;
+    border-color: var(--df-color-error);
+    background: var(--df-color-error-bg);
   }
 
   [data-field-valid="false"] input:not([data-table-input]):focus,
   [data-field-valid="false"] textarea:not([data-table-input]):focus,
   [data-field-valid="false"] select:not([data-table-input]):focus {
-    box-shadow: 0 0 0 2px rgba(204, 0, 0, 0.15);
+    box-shadow: var(--df-shadow-focus-error);
   }
 
   /* Validation Error Messages */
   [data-validation-error] {
-    color: #c00;
-    font-size: 12px;
-    padding: 4px 10px;
-    background: #fff;
+    color: var(--df-color-error);
+    font-size: var(--df-font-size-xs);
+    padding: var(--df-spacing-xs) var(--df-spacing-lg);
+    background: var(--df-color-surface);
     width: 100%;
   }
 
   /* Disabled Fields */
   [data-field-disabled="true"] label {
-    color: #888;
+    color: var(--df-color-text-disabled);
   }
 
   [data-field-disabled="true"] input,
   [data-field-disabled="true"] textarea,
   [data-field-disabled="true"] select {
-    background: #f5f5f5;
-    border-color: #ccc;
-    color: #888;
+    background: var(--df-color-surface-hover);
+    border-color: var(--df-color-border);
+    color: var(--df-color-text-disabled);
     cursor: not-allowed;
   }
 
   /* Actions Section */
   [data-form-section="actions"] {
     display: flex;
-    gap: 10px;
+    gap: var(--df-spacing-lg);
     justify-content: flex-start;
-    padding: 15px 12px;
-    background: #E8E0ED;
-    border-top: 1px solid #ccc;
+    padding: 15px var(--df-spacing-xl);
+    background: var(--df-color-background);
+    border-top: 1px solid var(--df-color-border);
   }
 
   /* Buttons */
   button[data-action] {
-    padding: 8px 20px;
-    font-size: 13px;
+    padding: var(--df-button-padding);
+    font-size: var(--df-font-size-sm);
     font-weight: normal;
-    border: 1px solid #999;
+    border: 1px solid var(--df-color-border-dark);
     cursor: pointer;
     font-family: inherit;
-    background: #f5f5f5;
-    color: #333;
+    background: var(--df-color-surface-hover);
+    color: var(--df-color-text);
   }
 
   button[data-action]:hover {
@@ -273,12 +364,12 @@
   }
 
   button[data-action]:active {
-    background: #ddd;
+    background: var(--df-color-border-light);
   }
 
   button[data-action="save"] {
-    background: #f5f5f5;
-    color: #333;
+    background: var(--df-color-surface-hover);
+    color: var(--df-color-text);
   }
 
   button[data-action="save"]:hover {
@@ -286,13 +377,13 @@
   }
 
   button[data-action="submit"] {
-    background: #512B58;
-    color: #ffffff;
-    border-color: #512B58;
+    background: var(--df-color-primary);
+    color: var(--df-color-text-inverse);
+    border-color: var(--df-color-primary);
   }
 
   button[data-action="submit"]:hover {
-    background: #3d2042;
+    background: var(--df-color-primary-dark);
   }
 
   button[data-action="submit"][data-can-submit="false"] {
@@ -301,7 +392,7 @@
   }
 
   button[data-action="submit"][data-can-submit="false"]:hover {
-    background: #512B58;
+    background: var(--df-color-primary);
   }
 
   /* Fields without labels - input takes full width */
@@ -325,7 +416,7 @@
 
   [data-checkbox-single] {
     width: auto;
-    margin-right: 8px;
+    margin-right: var(--df-spacing-md);
   }
 
   /* Radio Group */
@@ -339,10 +430,10 @@
   [data-radio-option] {
     display: flex;
     align-items: center;
-    padding: 10px 12px;
+    padding: var(--df-spacing-lg) var(--df-spacing-xl);
     cursor: pointer;
-    border-bottom: 1px solid #ddd;
-    background: #fff;
+    border-bottom: 1px solid var(--df-color-border-light);
+    background: var(--df-color-surface);
     transition: background 0.15s;
   }
 
@@ -351,21 +442,21 @@
   }
 
   [data-radio-option]:hover {
-    background: #f5f5f5;
+    background: var(--df-color-surface-hover);
   }
 
   [data-radio-input] {
     width: 16px;
     height: 16px;
     margin: 0;
-    margin-right: 10px;
+    margin-right: var(--df-spacing-lg);
     cursor: pointer;
-    accent-color: #512B58;
+    accent-color: var(--df-color-primary);
   }
 
   [data-radio-label] {
-    font-size: 13px;
-    color: #333;
+    font-size: var(--df-font-size-sm);
+    color: var(--df-color-text);
     flex: 1;
   }
 
@@ -380,10 +471,10 @@
   [data-checkbox-option] {
     display: flex;
     align-items: center;
-    padding: 10px 12px;
+    padding: var(--df-spacing-lg) var(--df-spacing-xl);
     cursor: pointer;
-    border-bottom: 1px solid #ddd;
-    background: #fff;
+    border-bottom: 1px solid var(--df-color-border-light);
+    background: var(--df-color-surface);
     transition: background 0.15s;
   }
 
@@ -392,36 +483,36 @@
   }
 
   [data-checkbox-option]:hover {
-    background: #f5f5f5;
+    background: var(--df-color-surface-hover);
   }
 
   [data-checkbox-option][data-option-selected="true"] {
-    background: #f0ebf2;
+    background: var(--df-color-background-light);
   }
 
   [data-checkbox-input] {
     width: 16px;
     height: 16px;
     margin: 0;
-    margin-right: 10px;
+    margin-right: var(--df-spacing-lg);
     cursor: pointer;
-    accent-color: #512B58;
+    accent-color: var(--df-color-primary);
   }
 
   [data-checkbox-label] {
-    font-size: 13px;
-    color: #333;
+    font-size: var(--df-font-size-sm);
+    color: var(--df-color-text);
     flex: 1;
   }
 
   /* Checkbox label markdown styles */
   [data-checkbox-label] a {
-    color: #512B58;
+    color: var(--df-color-primary);
     text-decoration: underline;
   }
 
   [data-checkbox-label] a:hover {
-    color: #3d2042;
+    color: var(--df-color-primary-dark);
   }
 
   [data-checkbox-label] strong {
@@ -445,13 +536,14 @@
     justify-content: center;
     width: 16px;
     height: 16px;
-    margin-left: 6px;
-    font-size: 14px;
+    margin-left: var(--df-spacing-sm);
+    font-size: var(--df-font-size-base);
     font-weight: bold;
-    color: #512B58;
+    color: var(--df-color-primary);
     cursor: pointer;
     border-radius: 50%;
     transition: background 0.15s;
+    position: relative;
   }
 
   [data-info-icon]:hover {
@@ -459,30 +551,30 @@
   }
 
   [data-info-icon][data-popover-open="true"] {
-    background: #512B58;
-    color: #fff;
+    background: var(--df-color-primary);
+    color: var(--df-color-text-inverse);
   }
 
   /* Popover */
   [data-popover] {
     position: absolute;
-    top: 100%;
-    left: 0;
+    top: 50%;
+    left: calc(100% + var(--df-spacing-sm));
+    transform: translateY(-50%);
     z-index: 100;
     display: flex;
     align-items: flex-start;
-    gap: 8px;
+    gap: var(--df-spacing-md);
     min-width: 200px;
     max-width: 300px;
-    padding: 10px 12px;
-    margin-top: 4px;
-    background: #fff;
-    border: 1px solid #ccc;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
-    font-size: 12px;
+    padding: var(--df-spacing-lg) var(--df-spacing-xl);
+    background: var(--df-color-surface);
+    border: 1px solid var(--df-color-border);
+    box-shadow: var(--df-shadow-popover);
+    font-size: var(--df-font-size-xs);
     font-weight: normal;
     line-height: 1.4;
-    color: #333;
+    color: var(--df-color-text);
   }
 
   [data-popover-content] {
@@ -498,12 +590,12 @@
     border: none;
     font-size: 16px;
     line-height: 1;
-    color: #666;
+    color: var(--df-color-text-muted);
     cursor: pointer;
   }
 
   [data-popover-close]:hover {
-    color: #333;
+    color: var(--df-color-text);
   }
 
   /* ========================================
@@ -513,7 +605,7 @@
   /* Phone field container */
   [data-phone-container] {
     display: flex;
-    gap: 8px;
+    gap: var(--df-spacing-md);
     width: 100%;
     align-items: stretch;
   }
@@ -523,19 +615,19 @@
     width: auto !important;
     min-width: 180px;
     max-width: 220px;
-    padding: 6px 8px;
-    border: 1px solid #999;
-    font-size: 13px;
+    padding: var(--df-spacing-sm) var(--df-spacing-md);
+    border: 1px solid var(--df-color-border-dark);
+    font-size: var(--df-font-size-sm);
     font-family: inherit;
-    background: #ffffff;
+    background: var(--df-color-surface);
     cursor: pointer;
     flex: 0 0 auto;
   }
 
   select[data-phone-country-code]:focus {
     outline: none;
-    border-color: #512B58;
-    box-shadow: 0 0 0 2px rgba(81, 43, 88, 0.15);
+    border-color: var(--df-color-primary);
+    box-shadow: var(--df-shadow-focus);
   }
 
   /* Phone number input - override global width: 100% */
@@ -543,35 +635,35 @@
     width: auto !important;
     flex: 1 1 auto;
     min-width: 0;
-    padding: 6px 8px;
-    border: 1px solid #999;
-    font-size: 13px;
+    padding: var(--df-spacing-sm) var(--df-spacing-md);
+    border: 1px solid var(--df-color-border-dark);
+    font-size: var(--df-font-size-sm);
     font-family: inherit;
-    background: #ffffff;
+    background: var(--df-color-surface);
   }
 
   input[data-phone-number]:focus {
     outline: none;
-    border-color: #512B58;
-    box-shadow: 0 0 0 2px rgba(81, 43, 88, 0.15);
+    border-color: var(--df-color-primary);
+    box-shadow: var(--df-shadow-focus);
   }
 
   /* Invalid phone field state */
   [data-phone-valid="false"] [data-phone-number] {
-    border-color: #c00;
-    background: #fff8f8;
+    border-color: var(--df-color-error);
+    background: var(--df-color-error-bg);
   }
 
   [data-phone-valid="false"] [data-phone-number]:focus {
-    box-shadow: 0 0 0 2px rgba(204, 0, 0, 0.15);
+    box-shadow: var(--df-shadow-focus-error);
   }
 
   /* Phone field disabled state */
   [data-field-disabled="true"] select[data-phone-country-code],
   [data-field-disabled="true"] input[data-phone-number] {
-    background: #f5f5f5;
-    border-color: #ccc;
-    color: #888;
+    background: var(--df-color-surface-hover);
+    border-color: var(--df-color-border);
+    color: var(--df-color-text-disabled);
     cursor: not-allowed;
   }
 
@@ -582,7 +674,7 @@
   /* Date range container */
   [data-daterange-container] {
     display: flex;
-    gap: 8px;
+    gap: var(--df-spacing-md);
     width: 100%;
     align-items: center;
   }
@@ -598,51 +690,51 @@
   /* Date range labels */
   [data-daterange-label] {
     font-size: 11px;
-    color: #666;
-    margin-bottom: 4px;
+    color: var(--df-color-text-muted);
+    margin-bottom: var(--df-spacing-xs);
     font-weight: normal;
   }
 
   /* Date range inputs */
   input[data-daterange-input] {
     width: 100%;
-    padding: 6px 8px;
-    border: 1px solid #999;
-    font-size: 13px;
+    padding: var(--df-spacing-sm) var(--df-spacing-md);
+    border: 1px solid var(--df-color-border-dark);
+    font-size: var(--df-font-size-sm);
     font-family: inherit;
-    background: #ffffff;
+    background: var(--df-color-surface);
   }
 
   input[data-daterange-input]:focus {
     outline: none;
-    border-color: #512B58;
-    box-shadow: 0 0 0 2px rgba(81, 43, 88, 0.15);
+    border-color: var(--df-color-primary);
+    box-shadow: var(--df-shadow-focus);
   }
 
   /* Date range separator */
   [data-daterange-separator] {
-    padding: 0 4px;
-    font-size: 13px;
-    color: #666;
+    padding: 0 var(--df-spacing-xs);
+    font-size: var(--df-font-size-sm);
+    color: var(--df-color-text-muted);
     white-space: nowrap;
     flex-shrink: 0;
   }
 
   /* Invalid date range state */
   [data-daterange-valid="false"] input[data-daterange-input] {
-    border-color: #c00;
-    background: #fff8f8;
+    border-color: var(--df-color-error);
+    background: var(--df-color-error-bg);
   }
 
   [data-daterange-valid="false"] input[data-daterange-input]:focus {
-    box-shadow: 0 0 0 2px rgba(204, 0, 0, 0.15);
+    box-shadow: var(--df-shadow-focus-error);
   }
 
   /* Date range disabled state */
   [data-field-disabled="true"] input[data-daterange-input] {
-    background: #f5f5f5;
-    border-color: #ccc;
-    color: #888;
+    background: var(--df-color-surface-hover);
+    border-color: var(--df-color-border);
+    color: var(--df-color-text-disabled);
     cursor: not-allowed;
   }
 
@@ -653,21 +745,21 @@
   /* Info block container */
   [data-info-block] {
     flex: 1;
-    background: #E8E0ED;
-    border-bottom: 1px solid #ccc;
+    background: var(--df-color-background);
+    border-bottom: 1px solid var(--df-color-border);
   }
 
   /* Info content */
   [data-info-content] {
-    padding: 12px 16px;
-    font-size: 13px;
+    padding: var(--df-spacing-xl) var(--df-spacing-2xl);
+    font-size: var(--df-font-size-sm);
     line-height: 1.5;
-    color: #333;
+    color: var(--df-color-text);
   }
 
   /* Info block markdown styles */
   [data-info-content] strong {
-    color: #512B58;
+    color: var(--df-color-primary);
     font-weight: bold;
   }
 
@@ -676,12 +768,12 @@
   }
 
   [data-info-content] a {
-    color: #512B58;
+    color: var(--df-color-primary);
     text-decoration: underline;
   }
 
   [data-info-content] a:hover {
-    color: #3d2042;
+    color: var(--df-color-primary-dark);
   }
 
   /* ========================================
@@ -696,12 +788,12 @@
 
   [data-field-type="formref"] label[data-label-for] {
     display: block;
-    background: #512B58;
-    color: #ffffff;
+    background: var(--df-color-primary);
+    color: var(--df-color-text-inverse);
     font-weight: bold;
-    padding: 8px 12px;
+    padding: var(--df-spacing-md) var(--df-spacing-xl);
     border-right: none;
-    border-bottom: 1px solid #ccc;
+    border-bottom: 1px solid var(--df-color-border);
     min-width: 100%;
     max-width: 100%;
   }
@@ -714,38 +806,38 @@
   /* Formref Container */
   [data-formref-container] {
     width: 100%;
-    border: 1px solid #ccc;
+    border: 1px solid var(--df-color-border);
     border-top: none;
   }
 
   /* Formref Section Headers */
   [data-formref-section-header] {
-    background: #6b3d73;
-    color: #ffffff;
-    padding: 8px 12px;
+    background: var(--df-color-primary-light);
+    color: var(--df-color-text-inverse);
+    padding: var(--df-spacing-md) var(--df-spacing-xl);
     font-weight: bold;
-    font-size: 13px;
+    font-size: var(--df-font-size-sm);
     margin: 0;
-    border-bottom: 1px solid #ccc;
+    border-bottom: 1px solid var(--df-color-border);
   }
 
   [data-formref-section-description] {
-    background: #6b3d73;
-    color: #ffffff;
-    padding: 6px 12px 10px 12px;
-    font-size: 12px;
+    background: var(--df-color-primary-light);
+    color: var(--df-color-text-inverse);
+    padding: var(--df-spacing-sm) var(--df-spacing-xl) var(--df-spacing-lg) var(--df-spacing-xl);
+    font-size: var(--df-font-size-xs);
     font-weight: normal;
     line-height: 1.4;
     margin: 0;
-    border-bottom: 1px solid #ccc;
+    border-bottom: 1px solid var(--df-color-border);
   }
 
   /* Formref Field */
   [data-formref-field] {
     display: flex;
     flex-wrap: wrap;
-    background: #E8E0ED;
-    border-bottom: 1px solid #ccc;
+    background: var(--df-color-background);
+    border-bottom: 1px solid var(--df-color-border);
   }
 
   [data-formref-field]:last-child {
@@ -756,14 +848,14 @@
   [data-formref-label] {
     display: flex;
     align-items: center;
-    min-width: 200px;
-    max-width: 200px;
-    padding: 10px 12px;
-    font-size: 13px;
+    min-width: var(--df-label-width);
+    max-width: var(--df-label-width);
+    padding: var(--df-spacing-lg) var(--df-spacing-xl);
+    font-size: var(--df-font-size-sm);
     font-weight: normal;
-    color: #333;
-    background: #E8E0ED;
-    border-right: 1px solid #ccc;
+    color: var(--df-color-text);
+    background: var(--df-color-background);
+    border-right: 1px solid var(--df-color-border);
     margin: 0;
   }
 
@@ -773,8 +865,8 @@
     display: flex;
     flex-wrap: wrap;
     align-items: center;
-    padding: 6px 10px;
-    background: #ffffff;
+    padding: var(--df-spacing-sm) var(--df-spacing-lg);
+    background: var(--df-color-surface);
   }
 
   /* Formref Input Fields */
@@ -782,23 +874,23 @@
   textarea[data-formref-input],
   select[data-formref-input] {
     width: 100%;
-    padding: 6px 8px;
-    border: 1px solid #999;
-    font-size: 13px;
+    padding: var(--df-spacing-sm) var(--df-spacing-md);
+    border: 1px solid var(--df-color-border-dark);
+    font-size: var(--df-font-size-sm);
     font-family: inherit;
-    background: #ffffff;
+    background: var(--df-color-surface);
   }
 
   input[data-formref-input]:focus,
   textarea[data-formref-input]:focus,
   select[data-formref-input]:focus {
     outline: none;
-    border-color: #512B58;
-    box-shadow: 0 0 0 2px rgba(81, 43, 88, 0.15);
+    border-color: var(--df-color-primary);
+    box-shadow: var(--df-shadow-focus);
   }
 
   textarea[data-formref-input] {
-    min-height: 80px;
+    min-height: var(--df-input-min-height);
     resize: vertical;
   }
 
@@ -806,23 +898,23 @@
   [data-formref-field][data-field-valid="false"] input[data-formref-input],
   [data-formref-field][data-field-valid="false"] textarea[data-formref-input],
   [data-formref-field][data-field-valid="false"] select[data-formref-input] {
-    border-color: #c00;
-    background: #fff8f8;
+    border-color: var(--df-color-error);
+    background: var(--df-color-error-bg);
   }
 
   [data-formref-field][data-field-valid="false"] input[data-formref-input]:focus,
   [data-formref-field][data-field-valid="false"] textarea[data-formref-input]:focus,
   [data-formref-field][data-field-valid="false"] select[data-formref-input]:focus {
-    box-shadow: 0 0 0 2px rgba(204, 0, 0, 0.15);
+    box-shadow: var(--df-shadow-focus-error);
   }
 
   /* Formref Error Message */
   [data-formref-error] {
-    padding: 12px 16px;
-    background: #fff8f8;
-    color: #c00;
-    font-size: 13px;
-    border: 1px solid #f5c6cb;
+    padding: var(--df-spacing-xl) var(--df-spacing-2xl);
+    background: var(--df-color-error-bg);
+    color: var(--df-color-error);
+    font-size: var(--df-font-size-sm);
+    border: 1px solid var(--df-color-error-border);
   }
 
   /* Formref Radio Group */
@@ -836,10 +928,10 @@
   [data-formref-radio-option] {
     display: flex;
     align-items: center;
-    padding: 10px 12px;
+    padding: var(--df-spacing-lg) var(--df-spacing-xl);
     cursor: pointer;
-    border-bottom: 1px solid #ddd;
-    background: #fff;
+    border-bottom: 1px solid var(--df-color-border-light);
+    background: var(--df-color-surface);
     transition: background 0.15s;
   }
 
@@ -848,21 +940,21 @@
   }
 
   [data-formref-radio-option]:hover {
-    background: #f5f5f5;
+    background: var(--df-color-surface-hover);
   }
 
   [data-formref-radio-input] {
     width: 16px;
     height: 16px;
     margin: 0;
-    margin-right: 10px;
+    margin-right: var(--df-spacing-lg);
     cursor: pointer;
-    accent-color: #512B58;
+    accent-color: var(--df-color-primary);
   }
 
   [data-formref-radio-label] {
-    font-size: 13px;
-    color: #333;
+    font-size: var(--df-font-size-sm);
+    color: var(--df-color-text);
     flex: 1;
   }
 
@@ -877,10 +969,10 @@
   [data-formref-checkbox-option] {
     display: flex;
     align-items: center;
-    padding: 10px 12px;
+    padding: var(--df-spacing-lg) var(--df-spacing-xl);
     cursor: pointer;
-    border-bottom: 1px solid #ddd;
-    background: #fff;
+    border-bottom: 1px solid var(--df-color-border-light);
+    background: var(--df-color-surface);
     transition: background 0.15s;
   }
 
@@ -889,27 +981,39 @@
   }
 
   [data-formref-checkbox-option]:hover {
-    background: #f5f5f5;
+    background: var(--df-color-surface-hover);
   }
 
   [data-formref-checkbox-input] {
     width: 16px;
     height: 16px;
     margin: 0;
-    margin-right: 10px;
+    margin-right: var(--df-spacing-lg);
     cursor: pointer;
-    accent-color: #512B58;
+    accent-color: var(--df-color-primary);
   }
 
   [data-formref-checkbox-label] {
-    font-size: 13px;
-    color: #333;
+    font-size: var(--df-font-size-sm);
+    color: var(--df-color-text);
     flex: 1;
   }
 
   [data-formref-checkbox-single] {
     width: auto;
-    margin-right: 8px;
+    margin-right: var(--df-spacing-md);
+  }
+
+  /* Formref read-only state - prevent radio/checkbox interaction */
+  &[data-form-readonly="true"] [data-formref-radio-input],
+  &[data-form-readonly="true"] [data-formref-checkbox-input] {
+    cursor: default;
+    pointer-events: none;
+  }
+
+  &[data-form-readonly="true"] [data-formref-radio-option]:hover,
+  &[data-form-readonly="true"] [data-formref-checkbox-option]:hover {
+    background: inherit;
   }
 
   /* ========================================
@@ -941,25 +1045,25 @@
   [data-table] {
     width: 100%;
     border-collapse: collapse;
-    font-size: 13px;
+    font-size: var(--df-font-size-sm);
     table-layout: fixed; /* Enable fixed layout for column width control */
   }
 
   /* Table Header */
   [data-table-header] {
-    background: #E8E0ED;
+    background: var(--df-color-background);
   }
 
   [data-table-header-row] {
-    border-bottom: 1px solid #ccc;
+    border-bottom: 1px solid var(--df-color-border);
   }
 
   [data-table-header-cell] {
-    padding: 10px 12px;
+    padding: var(--df-spacing-lg) var(--df-spacing-xl);
     text-align: left;
     font-weight: normal;
-    color: #333;
-    border-right: 1px solid #ccc;
+    color: var(--df-color-text);
+    border-right: 1px solid var(--df-color-border);
   }
 
   [data-table-header-cell]:last-child {
@@ -985,19 +1089,19 @@
 
   /* Actions column (narrow) */
   [data-table-actions-column] {
-    width: 50px;
-    min-width: 50px;
+    width: var(--df-table-actions-width);
+    min-width: var(--df-table-actions-width);
     text-align: center;
   }
 
   /* Table Body */
   [data-table-body] {
-    background: #ffffff;
+    background: var(--df-color-surface);
   }
 
   /* Table Row */
   [data-table-row] {
-    border-bottom: 1px solid #ccc;
+    border-bottom: 1px solid var(--df-color-border);
   }
 
   [data-table-row]:last-child {
@@ -1006,14 +1110,14 @@
 
   /* Empty row styling (lighter) */
   [data-table-row][data-row-empty="true"] {
-    background: #fafafa;
+    background: var(--df-color-surface-alt);
   }
 
   /* Table Cell */
   [data-table-cell] {
-    padding: 6px 8px;
+    padding: var(--df-spacing-sm) var(--df-spacing-md);
     vertical-align: top;
-    border-right: 1px solid #ccc;
+    border-right: 1px solid var(--df-color-border);
     position: relative;
   }
 
@@ -1030,27 +1134,27 @@
   /* Table Inputs */
   [data-table-input] {
     width: 100%;
-    padding: 6px 8px;
-    border: 1px solid #999;
-    font-size: 13px;
+    padding: var(--df-spacing-sm) var(--df-spacing-md);
+    border: 1px solid var(--df-color-border-dark);
+    font-size: var(--df-font-size-sm);
     font-family: inherit;
-    background: #ffffff;
+    background: var(--df-color-surface);
   }
 
   [data-table-input]:focus {
     outline: none;
-    border-color: #512B58;
-    box-shadow: 0 0 0 2px rgba(81, 43, 88, 0.15);
+    border-color: var(--df-color-primary);
+    box-shadow: var(--df-shadow-focus);
   }
 
   /* Invalid cell state */
   [data-cell-valid="false"] [data-table-input] {
-    border-color: #c00;
-    background: #fff8f8;
+    border-color: var(--df-color-error);
+    background: var(--df-color-error-bg);
   }
 
   [data-cell-valid="false"] [data-table-input]:focus {
-    box-shadow: 0 0 0 2px rgba(204, 0, 0, 0.15);
+    box-shadow: var(--df-shadow-focus-error);
   }
 
   /* Cell Error Tooltip */
@@ -1061,42 +1165,42 @@
     z-index: 100;
     min-width: 150px;
     max-width: 250px;
-    padding: 6px 10px;
+    padding: var(--df-spacing-sm) var(--df-spacing-lg);
     margin-top: 2px;
-    background: #c00;
-    color: #fff;
-    font-size: 12px;
+    background: var(--df-color-error);
+    color: var(--df-color-text-inverse);
+    font-size: var(--df-font-size-xs);
     line-height: 1.3;
-    border-radius: 3px;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+    border-radius: var(--df-border-radius-sm);
+    box-shadow: var(--df-shadow-tooltip);
   }
 
   [data-cell-error-tooltip]::before {
     content: '';
     position: absolute;
     bottom: 100%;
-    left: 10px;
+    left: var(--df-spacing-lg);
     border: 6px solid transparent;
-    border-bottom-color: #c00;
+    border-bottom-color: var(--df-color-error);
   }
 
   /* Table Footer (Add row button) */
   [data-table-footer] {
-    padding: 10px 12px;
-    background: #E8E0ED;
-    border-top: 1px solid #ccc;
+    padding: var(--df-spacing-lg) var(--df-spacing-xl);
+    background: var(--df-color-background);
+    border-top: 1px solid var(--df-color-border);
   }
 
   /* Table Action Buttons */
   button[data-table-action] {
-    padding: 6px 12px;
-    font-size: 12px;
+    padding: var(--df-button-padding-sm);
+    font-size: var(--df-font-size-xs);
     font-weight: normal;
-    border: 1px solid #999;
+    border: 1px solid var(--df-color-border-dark);
     cursor: pointer;
     font-family: inherit;
-    background: #f5f5f5;
-    color: #333;
+    background: var(--df-color-surface-hover);
+    color: var(--df-color-text);
   }
 
   button[data-table-action]:hover:not(:disabled) {
@@ -1109,26 +1213,26 @@
   }
 
   button[data-table-action="add"] {
-    background: #512B58;
-    color: #ffffff;
-    border-color: #512B58;
+    background: var(--df-color-primary);
+    color: var(--df-color-text-inverse);
+    border-color: var(--df-color-primary);
   }
 
   button[data-table-action="add"]:hover:not(:disabled) {
-    background: #3d2042;
+    background: var(--df-color-primary-dark);
   }
 
   button[data-table-action="remove"] {
     background: #f8d7da;
-    color: #721c24;
-    border-color: #f5c6cb;
-    padding: 4px 8px;
-    font-size: 14px;
+    color: var(--df-color-error-text);
+    border-color: var(--df-color-error-border);
+    padding: var(--df-button-padding-icon);
+    font-size: var(--df-font-size-base);
     line-height: 1;
   }
 
   button[data-table-action="remove"]:hover:not(:disabled) {
-    background: #f5c6cb;
+    background: var(--df-color-error-border);
   }
 
   /* ========================================
@@ -1160,7 +1264,7 @@
   [data-datagrid] {
     width: 100%;
     border-collapse: collapse;
-    font-size: 13px;
+    font-size: var(--df-font-size-sm);
     table-layout: fixed;
   }
 
@@ -1168,7 +1272,7 @@
 
   /* DataGrid Header - Two-tier with groups */
   [data-datagrid-header] {
-    background: #E8E0ED;
+    background: var(--df-color-background);
   }
 
   [data-datagrid-header-groups] {
@@ -1177,89 +1281,89 @@
 
   /* Group row - purple background for group headers */
   [data-datagrid-group-row] {
-    background: #512B58;
+    background: var(--df-color-primary);
   }
 
   [data-datagrid-group-row] [data-datagrid-header-cell] {
-    background: #512B58;
-    color: #ffffff;
+    background: var(--df-color-primary);
+    color: var(--df-color-text-inverse);
     font-weight: bold;
     text-align: center;
-    padding: 8px 12px;
+    padding: var(--df-spacing-md) var(--df-spacing-xl);
     border-right: 1px solid rgba(255, 255, 255, 0.3);
-    border-bottom: 1px solid #ccc;
+    border-bottom: 1px solid var(--df-color-border);
   }
 
   [data-datagrid-group-row] [data-datagrid-header-cell]:last-child {
-    border-right: 1px solid #ccc;
+    border-right: 1px solid var(--df-color-border);
   }
 
   /* Column group header cells */
   [data-datagrid-header-cell][data-column-group] {
-    background: #512B58;
-    color: #ffffff;
+    background: var(--df-color-primary);
+    color: var(--df-color-text-inverse);
     font-weight: bold;
-    border-bottom: 1px solid #ccc;
+    border-bottom: 1px solid var(--df-color-border);
   }
 
   /* Row label header - spans both rows with purple bg */
   /* Width is controlled by colgroup col element */
   [data-row-label-header] {
-    background: #512B58 !important;
-    color: #ffffff !important;
+    background: var(--df-color-primary) !important;
+    color: var(--df-color-text-inverse) !important;
     font-weight: bold;
     text-align: left;
-    border-right: 1px solid #ccc;
+    border-right: 1px solid var(--df-color-border);
   }
 
   /* Row total header */
   /* Width is controlled by colgroup col element */
   [data-row-total-header] {
-    background: #512B58 !important;
-    color: #ffffff !important;
+    background: var(--df-color-primary) !important;
+    color: var(--df-color-text-inverse) !important;
     font-weight: bold;
     text-align: center;
-    border-left: 1px solid #ccc;
+    border-left: 1px solid var(--df-color-border);
   }
 
   /* Column row (second tier) */
   [data-datagrid-column-row] {
-    background: #E8E0ED;
+    background: var(--df-color-background);
   }
 
   [data-datagrid-column-row] [data-datagrid-header-cell] {
-    padding: 10px 12px;
+    padding: var(--df-spacing-lg) var(--df-spacing-xl);
     text-align: left;
     font-weight: normal;
-    color: #333;
-    border-right: 1px solid #ccc;
-    border-bottom: 1px solid #ccc;
+    color: var(--df-color-text);
+    border-right: 1px solid var(--df-color-border);
+    border-bottom: 1px solid var(--df-color-border);
   }
 
   [data-datagrid-column-row] [data-datagrid-header-cell]:last-child {
-    border-right: 1px solid #ccc;
+    border-right: 1px solid var(--df-color-border);
   }
 
   /* Ungrouped columns (span both rows) */
   [data-column-ungrouped] {
-    background: #E8E0ED !important;
-    color: #333 !important;
+    background: var(--df-color-background) !important;
+    color: var(--df-color-text) !important;
     font-weight: normal;
-    border-right: 1px solid #ccc;
+    border-right: 1px solid var(--df-color-border);
   }
 
   /* Single-tier header row (no groups) */
   [data-datagrid-header-row] {
-    background: #E8E0ED;
-    border-bottom: 1px solid #ccc;
+    background: var(--df-color-background);
+    border-bottom: 1px solid var(--df-color-border);
   }
 
   [data-datagrid-header-row] [data-datagrid-header-cell] {
-    padding: 10px 12px;
+    padding: var(--df-spacing-lg) var(--df-spacing-xl);
     text-align: left;
     font-weight: normal;
-    color: #333;
-    border-right: 1px solid #ccc;
+    color: var(--df-color-text);
+    border-right: 1px solid var(--df-color-border);
   }
 
   [data-datagrid-header-row] [data-datagrid-header-cell]:last-child {
@@ -1268,12 +1372,12 @@
 
   /* DataGrid Body */
   [data-datagrid-body] {
-    background: #ffffff;
+    background: var(--df-color-surface);
   }
 
   /* DataGrid Row */
   [data-datagrid-row] {
-    border-bottom: 1px solid #ccc;
+    border-bottom: 1px solid var(--df-color-border);
   }
 
   [data-datagrid-row]:last-child {
@@ -1282,18 +1386,18 @@
 
   /* Row label cell - lavender background like label column */
   [data-row-label-cell] {
-    background: #E8E0ED;
+    background: var(--df-color-background);
     font-weight: normal;
-    padding: 10px 12px;
-    border-right: 1px solid #ccc;
-    color: #333;
+    padding: var(--df-spacing-lg) var(--df-spacing-xl);
+    border-right: 1px solid var(--df-color-border);
+    color: var(--df-color-text);
   }
 
   /* DataGrid Cell */
   [data-datagrid-cell] {
-    padding: 6px 8px;
+    padding: var(--df-spacing-sm) var(--df-spacing-md);
     vertical-align: middle;
-    border-right: 1px solid #ccc;
+    border-right: 1px solid var(--df-color-border);
   }
 
   [data-datagrid-cell]:last-child {
@@ -1308,52 +1412,52 @@
   /* DataGrid Inputs */
   [data-datagrid-input] {
     width: 100%;
-    padding: 6px 8px;
-    border: 1px solid #999;
-    font-size: 13px;
+    padding: var(--df-spacing-sm) var(--df-spacing-md);
+    border: 1px solid var(--df-color-border-dark);
+    font-size: var(--df-font-size-sm);
     font-family: inherit;
-    background: #ffffff;
+    background: var(--df-color-surface);
   }
 
   [data-datagrid-input]:focus {
     outline: none;
-    border-color: #512B58;
-    box-shadow: 0 0 0 2px rgba(81, 43, 88, 0.15);
+    border-color: var(--df-color-primary);
+    box-shadow: var(--df-shadow-focus);
   }
 
   /* Invalid cell state */
   [data-datagrid-cell][data-cell-valid="false"] [data-datagrid-input] {
-    border-color: #c00;
-    background: #fff8f8;
+    border-color: var(--df-color-error);
+    background: var(--df-color-error-bg);
   }
 
   [data-datagrid-cell][data-cell-valid="false"] [data-datagrid-input]:focus {
-    box-shadow: 0 0 0 2px rgba(204, 0, 0, 0.15);
+    box-shadow: var(--df-shadow-focus-error);
   }
 
   /* Computed values display */
   [data-datagrid-computed-value] {
     display: block;
-    padding: 6px 8px;
-    font-size: 13px;
-    color: #666;
+    padding: var(--df-spacing-sm) var(--df-spacing-md);
+    font-size: var(--df-font-size-sm);
+    color: var(--df-color-text-muted);
     background: transparent;
     text-align: right;
   }
 
   /* Total row styling */
   [data-datagrid-row][data-is-total-row="true"] {
-    background: #E8E0ED;
+    background: var(--df-color-background);
     font-weight: bold;
-    border-top: 2px solid #512B58;
+    border-top: 2px solid var(--df-color-primary);
   }
 
   [data-datagrid-row][data-is-total-row="true"] [data-datagrid-cell] {
-    background: #E8E0ED;
+    background: var(--df-color-background);
   }
 
   [data-datagrid-row][data-is-total-row="true"] [data-datagrid-computed-value] {
-    color: #333;
+    color: var(--df-color-text);
     font-weight: bold;
   }
 
@@ -1364,24 +1468,24 @@
 
   /* Row total cell styling */
   [data-row-total-cell] {
-    background: #f5f5f5;
-    border-left: 1px solid #ccc;
+    background: var(--df-color-surface-hover);
+    border-left: 1px solid var(--df-color-border);
   }
 
   /* Column total cell styling */
   [data-column-total-cell] {
-    background: #E8E0ED;
+    background: var(--df-color-background);
   }
 
   /* Grand total cell */
   [data-grand-total-cell] {
-    background: #E8E0ED !important;
+    background: var(--df-color-background) !important;
     font-weight: bold;
   }
 
   [data-grand-total-cell] [data-datagrid-computed-value] {
     font-weight: bold;
-    color: #512B58;
+    color: var(--df-color-primary);
   }
 
   /* Data column widths are set via inline styles on <col> elements in the template */
@@ -1398,7 +1502,7 @@
   /* File upload field - use standard input container */
   [data-field-type="fileupload"] [data-input-container] {
     display: block;
-    padding: 6px 10px;
+    padding: var(--df-spacing-sm) var(--df-spacing-lg);
     align-items: initial;
   }
 
@@ -1426,47 +1530,47 @@
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    gap: 6px;
-    padding: 16px;
-    border: 1px dashed #999;
-    background: #ffffff;
+    gap: var(--df-spacing-sm);
+    padding: var(--df-spacing-2xl);
+    border: 1px dashed var(--df-color-border-dark);
+    background: var(--df-color-surface);
     cursor: pointer;
     transition: all 0.15s ease;
   }
 
   .fileupload-dropzone:hover {
-    border-color: #512B58;
-    background: #fafafa;
+    border-color: var(--df-color-primary);
+    background: var(--df-color-surface-alt);
   }
 
   /* Drop zone active state */
   .fileupload-dropzone[data-dropzone-active="true"] {
-    border-color: #512B58;
+    border-color: var(--df-color-primary);
     border-style: solid;
-    background: #E8E0ED;
+    background: var(--df-color-background);
   }
 
   .fileupload-dropzone-icon {
-    font-size: 24px;
-    color: #512B58;
+    font-size: var(--df-font-size-icon);
+    color: var(--df-color-primary);
   }
 
   .fileupload-dropzone-text {
-    font-size: 13px;
-    color: #333;
+    font-size: var(--df-font-size-sm);
+    color: var(--df-color-text);
     text-align: center;
   }
 
   /* Upload button (when drag-drop is disabled) - matches standard button style */
   .fileupload-button {
-    padding: 8px 20px;
-    font-size: 13px;
+    padding: var(--df-button-padding);
+    font-size: var(--df-font-size-sm);
     font-weight: normal;
-    border: 1px solid #999;
+    border: 1px solid var(--df-color-border-dark);
     cursor: pointer;
     font-family: inherit;
-    background: #f5f5f5;
-    color: #333;
+    background: var(--df-color-surface-hover);
+    color: var(--df-color-text);
   }
 
   .fileupload-button:hover:not(:disabled) {
@@ -1481,11 +1585,11 @@
   /* File list - table-like style */
   .fileupload-list {
     list-style: none;
-    margin: 8px 0 0 0;
+    margin: var(--df-spacing-md) 0 0 0;
     padding: 0;
     display: flex;
     flex-direction: column;
-    border: 1px solid #ccc;
+    border: 1px solid var(--df-color-border);
     width: 100%;
   }
 
@@ -1494,12 +1598,12 @@
     display: flex;
     flex-direction: row;
     align-items: center;
-    padding: 8px 10px;
-    background: #fff;
-    gap: 10px;
+    padding: var(--df-spacing-md) var(--df-spacing-lg);
+    background: var(--df-color-surface);
+    gap: var(--df-spacing-lg);
     width: 100%;
     box-sizing: border-box;
-    border-bottom: 1px solid #ccc;
+    border-bottom: 1px solid var(--df-color-border);
   }
 
   .fileupload-item:last-child {
@@ -1508,7 +1612,7 @@
 
   /* Alternate row background like table */
   .fileupload-item:nth-child(even) {
-    background: #fafafa;
+    background: var(--df-color-surface-alt);
   }
 
   /* File icon - simple gray style */
@@ -1517,7 +1621,7 @@
     flex: 0 0 32px;
     width: 32px;
     height: 32px;
-    color: #666;
+    color: var(--df-color-text-muted);
   }
 
   .fileupload-file-icon > svg {
@@ -1534,26 +1638,26 @@
     width: 10px;
     height: 10px;
     border-radius: 50%;
-    border: 2px solid #fff;
-    background: #999;
+    border: 2px solid var(--df-color-surface);
+    background: var(--df-color-border-dark);
   }
 
   /* Status dot colors based on item status */
   .fileupload-item[data-status="completed"] .fileupload-status-dot {
-    background: #512B58;
+    background: var(--df-color-primary);
   }
 
   .fileupload-item[data-status="failed"] .fileupload-status-dot,
   .fileupload-item[data-status="cancelled"] .fileupload-status-dot {
-    background: #c00;
+    background: var(--df-color-error);
   }
 
   .fileupload-item[data-status="uploading"] .fileupload-status-dot {
-    background: #3b82f6;
+    background: var(--df-color-info);
   }
 
   .fileupload-item[data-status="pending"] .fileupload-status-dot {
-    background: #f59e0b;
+    background: var(--df-color-warning);
   }
 
   /* File info */
@@ -1566,8 +1670,8 @@
   }
 
   .fileupload-item-name {
-    font-size: 13px;
-    color: #333;
+    font-size: var(--df-font-size-sm);
+    color: var(--df-color-text);
     font-weight: normal;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -1576,8 +1680,8 @@
   }
 
   .fileupload-item-size {
-    font-size: 12px;
-    color: #666;
+    font-size: var(--df-font-size-xs);
+    color: var(--df-color-text-muted);
   }
 
   /* Status area */
@@ -1587,7 +1691,7 @@
     align-items: center;
     justify-content: flex-end;
     min-width: 0;
-    padding-right: 8px;
+    padding-right: var(--df-spacing-md);
   }
 
   /* Progress bar - simple flat style */
@@ -1595,7 +1699,7 @@
     display: flex;
     flex-direction: row;
     align-items: center;
-    gap: 8px;
+    gap: var(--df-spacing-md);
     width: 100%;
     max-width: 200px;
   }
@@ -1610,20 +1714,20 @@
 
   .fileupload-progress-bar {
     height: 100%;
-    background: #512B58;
+    background: var(--df-color-primary);
     transition: width 0.2s ease-out;
   }
 
   .fileupload-progress-label {
-    font-size: 12px;
-    color: #666;
+    font-size: var(--df-font-size-xs);
+    color: var(--df-color-text-muted);
     white-space: nowrap;
   }
 
   .fileupload-progress-text {
-    font-size: 12px;
+    font-size: var(--df-font-size-xs);
     font-weight: normal;
-    color: #512B58;
+    color: var(--df-color-primary);
     min-width: 32px;
     text-align: right;
   }
@@ -1632,10 +1736,10 @@
   .fileupload-status-complete {
     display: inline-flex;
     align-items: center;
-    gap: 4px;
-    font-size: 13px;
+    gap: var(--df-spacing-xs);
+    font-size: var(--df-font-size-sm);
     font-weight: normal;
-    color: #512B58;
+    color: var(--df-color-primary);
   }
 
   .fileupload-status-complete svg {
@@ -1649,10 +1753,10 @@
   .fileupload-status-error {
     display: inline-flex;
     align-items: center;
-    gap: 4px;
-    font-size: 13px;
+    gap: var(--df-spacing-xs);
+    font-size: var(--df-font-size-sm);
     font-weight: normal;
-    color: #c00;
+    color: var(--df-color-error);
   }
 
   .fileupload-status-error svg {
@@ -1664,15 +1768,15 @@
 
   /* Status pending */
   .fileupload-status-pending {
-    font-size: 13px;
-    color: #f59e0b;
+    font-size: var(--df-font-size-sm);
+    color: var(--df-color-warning);
     font-weight: normal;
   }
 
   /* Status cancelled */
   .fileupload-status-cancelled {
-    font-size: 13px;
-    color: #666;
+    font-size: var(--df-font-size-sm);
+    color: var(--df-color-text-muted);
     font-weight: normal;
   }
 
@@ -1681,7 +1785,7 @@
     display: flex;
     flex-direction: row;
     align-items: center;
-    gap: 4px;
+    gap: var(--df-spacing-xs);
     flex-shrink: 0;
   }
 
@@ -1693,11 +1797,11 @@
     width: 28px;
     height: 28px;
     padding: 0;
-    border: 1px solid #999;
+    border: 1px solid var(--df-color-border-dark);
     cursor: pointer;
     font-family: inherit;
-    background: #f5f5f5;
-    color: #333;
+    background: var(--df-color-surface-hover);
+    color: var(--df-color-text);
     transition: background 0.15s ease;
   }
 
@@ -1710,50 +1814,50 @@
 
   .fileupload-action:hover:not(:disabled) {
     background: #e8e8e8;
-    border-color: #666;
+    border-color: var(--df-color-text-muted);
   }
 
   /* Action button variants */
   .fileupload-action-remove:hover {
     background: #f8d7da;
-    border-color: #c00;
-    color: #c00;
+    border-color: var(--df-color-error);
+    color: var(--df-color-error);
   }
 
   .fileupload-action-retry:hover {
-    background: #fff3cd;
-    border-color: #f59e0b;
-    color: #f59e0b;
+    background: var(--df-color-warning-bg);
+    border-color: var(--df-color-warning);
+    color: var(--df-color-warning);
   }
 
   .fileupload-action-download:hover {
-    background: #E8E0ED;
-    border-color: #512B58;
-    color: #512B58;
+    background: var(--df-color-background);
+    border-color: var(--df-color-primary);
+    color: var(--df-color-primary);
   }
 
   .fileupload-action-upload:hover {
-    background: #E8E0ED;
-    border-color: #512B58;
-    color: #512B58;
+    background: var(--df-color-background);
+    border-color: var(--df-color-primary);
+    color: var(--df-color-primary);
   }
 
   /* Upload all button - purple primary style */
   .fileupload-action-upload-all {
     width: auto;
     height: auto;
-    margin-top: 8px;
-    padding: 8px 20px;
-    font-size: 13px;
+    margin-top: var(--df-spacing-md);
+    padding: var(--df-button-padding);
+    font-size: var(--df-font-size-sm);
     font-weight: normal;
-    background: #512B58;
-    color: #fff;
-    border-color: #512B58;
+    background: var(--df-color-primary);
+    color: var(--df-color-text-inverse);
+    border-color: var(--df-color-primary);
   }
 
   .fileupload-action-upload-all:hover {
-    background: #3d2042;
-    color: #fff;
+    background: var(--df-color-primary-dark);
+    color: var(--df-color-text-inverse);
   }
 
   /* Max files reached state */
@@ -1782,7 +1886,7 @@
     /* Phone field responsive */
     [data-phone-container] {
       flex-direction: column;
-      gap: 6px;
+      gap: var(--df-spacing-sm);
     }
 
     select[data-phone-country-code] {
@@ -1798,7 +1902,7 @@
     /* Date range responsive */
     [data-daterange-container] {
       flex-direction: column;
-      gap: 8px;
+      gap: var(--df-spacing-md);
       align-items: stretch;
     }
 
@@ -1808,7 +1912,7 @@
 
     [data-daterange-separator] {
       text-align: center;
-      padding: 4px 0;
+      padding: var(--df-spacing-xs) 0;
     }
 
     /* Formref Responsive */
@@ -1820,8 +1924,8 @@
       min-width: 100%;
       max-width: 100%;
       border-right: none;
-      border-bottom: 1px solid #ccc;
-      padding: 8px 12px;
+      border-bottom: 1px solid var(--df-color-border);
+      padding: var(--df-spacing-md) var(--df-spacing-xl);
     }
 
     /* Stack inline groups vertically on mobile */
@@ -1831,7 +1935,7 @@
 
     [data-field-row][data-inline-group] [data-field-name] {
       border-right: none;
-      border-bottom: 1px solid #ccc;
+      border-bottom: 1px solid var(--df-color-border);
     }
 
     [data-field-row][data-inline-group] [data-field-name]:last-child {
@@ -1846,8 +1950,8 @@
       min-width: 100%;
       max-width: 100%;
       border-right: none;
-      border-bottom: 1px solid #ccc;
-      padding: 8px 12px;
+      border-bottom: 1px solid var(--df-color-border);
+      padding: var(--df-spacing-md) var(--df-spacing-xl);
     }
 
     [data-form-section="actions"] {
@@ -1879,11 +1983,11 @@
     /* Each row becomes a card */
     [data-table-row] {
       display: block;
-      margin-bottom: 12px;
-      padding: 12px;
-      background: #fff;
-      border: 1px solid #ccc;
-      border-radius: 4px;
+      margin-bottom: var(--df-spacing-xl);
+      padding: var(--df-spacing-xl);
+      background: var(--df-color-surface);
+      border: 1px solid var(--df-color-border);
+      border-radius: var(--df-border-radius-md);
     }
 
     [data-table-row]:last-child {
@@ -1891,16 +1995,16 @@
     }
 
     [data-table-row][data-row-empty="true"] {
-      background: #fafafa;
+      background: var(--df-color-surface-alt);
     }
 
     /* Each cell becomes a labeled field */
     [data-table-cell] {
       display: flex;
       flex-direction: column;
-      padding: 8px 0;
+      padding: var(--df-spacing-md) 0;
       border-right: none;
-      border-bottom: 1px solid #eee;
+      border-bottom: 1px solid var(--df-color-border-lighter);
     }
 
     [data-table-cell]:last-child {
@@ -1911,17 +2015,17 @@
     [data-table-cell][data-column-label]::before {
       content: attr(data-column-label);
       display: block;
-      margin-bottom: 4px;
-      font-size: 12px;
+      margin-bottom: var(--df-spacing-xs);
+      font-size: var(--df-font-size-xs);
       font-weight: bold;
-      color: #666;
+      color: var(--df-color-text-muted);
     }
 
     /* Actions cell styling */
     [data-table-actions-cell] {
       flex-direction: row;
       justify-content: flex-end;
-      padding-top: 12px;
+      padding-top: var(--df-spacing-xl);
       border-bottom: none;
     }
 
@@ -1939,7 +2043,7 @@
       position: relative;
       top: auto;
       left: auto;
-      margin-top: 4px;
+      margin-top: var(--df-spacing-xs);
     }
 
     [data-cell-error-tooltip]::before {
@@ -1948,7 +2052,7 @@
 
     /* Table footer */
     [data-table-footer] {
-      margin-top: 12px;
+      margin-top: var(--df-spacing-xl);
     }
 
     /* ========================================
@@ -1981,10 +2085,10 @@
     /* Each row becomes a card */
     [data-datagrid-row] {
       display: block;
-      margin-bottom: 12px;
-      background: #fff;
-      border: 1px solid #ccc;
-      border-radius: 4px;
+      margin-bottom: var(--df-spacing-xl);
+      background: var(--df-color-surface);
+      border: 1px solid var(--df-color-border);
+      border-radius: var(--df-border-radius-md);
       overflow: hidden;
     }
 
@@ -1995,12 +2099,12 @@
     /* Row label cell becomes card header */
     [data-datagrid-row] [data-row-label-cell] {
       display: block;
-      background: #512B58;
-      color: #fff;
+      background: var(--df-color-primary);
+      color: var(--df-color-text-inverse);
       font-weight: bold;
-      padding: 10px 12px;
+      padding: var(--df-spacing-lg) var(--df-spacing-xl);
       border-right: none;
-      border-bottom: 1px solid #ccc;
+      border-bottom: 1px solid var(--df-color-border);
     }
 
     /* Show row label header before the row label for context */
@@ -2014,9 +2118,9 @@
     [data-datagrid-cell] {
       display: flex;
       flex-direction: column;
-      padding: 10px 12px;
+      padding: var(--df-spacing-lg) var(--df-spacing-xl);
       border-right: none;
-      border-bottom: 1px solid #eee;
+      border-bottom: 1px solid var(--df-color-border-lighter);
     }
 
     [data-datagrid-cell]:last-child {
@@ -2027,10 +2131,10 @@
     [data-datagrid-cell][data-column-label]::before {
       content: attr(data-column-label);
       display: block;
-      margin-bottom: 6px;
-      font-size: 12px;
+      margin-bottom: var(--df-spacing-sm);
+      font-size: var(--df-font-size-xs);
       font-weight: bold;
-      color: #666;
+      color: var(--df-color-text-muted);
     }
 
     /* Show column group label before column label when present */
@@ -2051,12 +2155,12 @@
 
     /* Computed column cells in card mode */
     [data-datagrid-cell][data-column-computed="true"] {
-      background: #f9f9f9;
+      background: var(--df-color-surface-alt);
     }
 
     /* Row total cell styling in card mode */
     [data-row-total-cell] {
-      background: #f0f0f0;
+      background: var(--df-color-background-light);
       border-left: none;
       font-weight: bold;
     }
@@ -2064,25 +2168,25 @@
     [data-row-total-cell]::before {
       content: attr(data-total-label);
       display: block;
-      margin-bottom: 6px;
-      font-size: 12px;
+      margin-bottom: var(--df-spacing-sm);
+      font-size: var(--df-font-size-xs);
       font-weight: bold;
-      color: #666;
+      color: var(--df-color-text-muted);
     }
 
     /* Total row styling in card mode */
     [data-datagrid-row][data-is-total-row="true"] {
-      background: #E8E0ED;
+      background: var(--df-color-background);
       border-top: none;
     }
 
     [data-datagrid-row][data-is-total-row="true"] [data-row-label-cell] {
-      background: #512B58;
-      color: #fff;
+      background: var(--df-color-primary);
+      color: var(--df-color-text-inverse);
     }
 
     [data-datagrid-row][data-is-total-row="true"] [data-datagrid-cell] {
-      background: #E8E0ED;
+      background: var(--df-color-background);
     }
 
     /* Grand total cell in card mode */
@@ -2093,15 +2197,15 @@
     [data-grand-total-cell]::before {
       content: 'Grand Total';
       display: block;
-      margin-bottom: 6px;
-      font-size: 12px;
+      margin-bottom: var(--df-spacing-sm);
+      font-size: var(--df-font-size-xs);
       font-weight: bold;
-      color: #512B58;
+      color: var(--df-color-primary);
     }
 
     [data-grand-total-cell] [data-datagrid-computed-value] {
-      font-size: 15px;
-      color: #512B58;
+      font-size: var(--df-font-size-lg);
+      color: var(--df-color-primary);
     }
   }
 }

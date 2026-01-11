@@ -140,6 +140,51 @@ Import the default theme in your `styles.scss`:
 @use '@moe1399/ngx-dynamic-forms/src/styles/themes/default';
 ```
 
+#### Theme Customization with CSS Variables
+
+The default theme uses CSS custom properties (design tokens) for easy customization. Override these variables on `.ngx-df` to customize colors, typography, spacing, and more:
+
+```scss
+.ngx-df {
+  // Primary colors
+  --df-color-primary: #0066cc;
+  --df-color-primary-dark: #004d99;
+  --df-color-primary-light: #3399ff;
+
+  // Backgrounds
+  --df-color-background: #f0f4f8;
+  --df-color-surface: #ffffff;
+
+  // Typography
+  --df-font-family: 'Roboto', sans-serif;
+  --df-font-size-base: 16px;
+
+  // Spacing
+  --df-spacing-md: 12px;
+  --df-spacing-lg: 16px;
+
+  // Borders
+  --df-border-radius: 4px;
+}
+```
+
+**Available CSS Variables:**
+
+| Category | Variables |
+|----------|-----------|
+| Primary Colors | `--df-color-primary`, `--df-color-primary-dark`, `--df-color-primary-light` |
+| Backgrounds | `--df-color-background`, `--df-color-background-light`, `--df-color-surface`, `--df-color-surface-alt` |
+| Borders | `--df-color-border`, `--df-color-border-dark`, `--df-color-border-light` |
+| Text | `--df-color-text`, `--df-color-text-muted`, `--df-color-text-disabled`, `--df-color-text-inverse` |
+| State | `--df-color-error`, `--df-color-error-bg`, `--df-color-warning`, `--df-color-info` |
+| Typography | `--df-font-family`, `--df-font-size-base`, `--df-font-size-sm`, `--df-font-size-xs`, `--df-font-size-lg` |
+| Spacing | `--df-spacing-xs` (4px), `--df-spacing-sm` (6px), `--df-spacing-md` (8px), `--df-spacing-lg` (10px), `--df-spacing-xl` (12px), `--df-spacing-2xl` (16px) |
+| Borders | `--df-border-radius`, `--df-border-radius-sm`, `--df-border-radius-md` |
+| Shadows | `--df-shadow-focus`, `--df-shadow-popover`, `--df-shadow-tooltip` |
+| Components | `--df-label-width`, `--df-input-min-height`, `--df-button-padding` |
+
+#### Custom Styles with Data Attributes
+
 Or create custom styles using `data-*` attribute selectors:
 
 ```scss

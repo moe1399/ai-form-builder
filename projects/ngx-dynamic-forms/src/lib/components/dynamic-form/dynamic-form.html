@@ -151,7 +151,6 @@
                     [attr.name]="field.name"
                     [value]="option.value"
                     data-radio-input
-                    [attr.disabled]="readOnly || null"
                   />
                   <span data-radio-label>{{ option.label }}</span>
                 </label>
@@ -175,7 +174,6 @@
                       [checked]="isCheckboxOptionSelected(field.name, option.value)"
                       (change)="toggleCheckboxOption(field.name, option.value)"
                       data-checkbox-input
-                      [attr.disabled]="readOnly || null"
                     />
                     <span data-checkbox-label [innerHTML]="parseMarkdown(option.label)"></span>
                   </label>
@@ -187,7 +185,6 @@
                 [formControlName]="field.name"
                 type="checkbox"
                 data-checkbox-single
-                [attr.disabled]="readOnly || null"
               />
             }
           }
