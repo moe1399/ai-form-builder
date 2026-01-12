@@ -7,7 +7,8 @@
   [attr.data-form-dirty]="form.dirty"
   [attr.data-form-touched]="form.touched"
   [attr.data-form-validating]="validating"
-  [attr.data-form-readonly]="readOnly">
+  [attr.data-form-readonly]="readOnly"
+  [attr.data-form-disabled]="disabled">
 
   <!-- Field template defined inside form for formControlName to work -->
   <ng-template #fieldTemplate let-field>
@@ -129,10 +130,12 @@
               [id]="field.name"
               [formControlName]="field.name"
               [attr.data-input-type]="field.type"
-              [attr.tabindex]="readOnly ? -1 : null">
+              [attr.tabindex]="readOnly ? -1 : null"
+              [style.pointer-events]="readOnly ? 'none' : null">
               @if (field.placeholder) {
                 <option value="" disabled>{{ field.placeholder }}</option>
               }
+              <option value="">--</option>
               @for (option of field.options; track option.value) {
                 <option [value]="option.value">{{ option.label }}</option>
               }
@@ -142,7 +145,8 @@
             <div
               data-radio-group
               role="radiogroup"
-              [attr.aria-labelledby]="field.name + '-label'">
+              [attr.aria-labelledby]="field.name + '-label'"
+              [style.pointer-events]="readOnly ? 'none' : null">
               @for (option of field.options; track option.value) {
                 <label
                   data-radio-option
@@ -164,7 +168,8 @@
               <div
                 data-checkbox-group
                 role="group"
-                [attr.aria-labelledby]="field.name + '-label'">
+                [attr.aria-labelledby]="field.name + '-label'"
+                [style.pointer-events]="readOnly ? 'none' : null">
                 @for (option of field.options; track option.value) {
                   <label
                     data-checkbox-option
@@ -187,6 +192,7 @@
                 [formControlName]="field.name"
                 type="checkbox"
                 data-checkbox-single
+                [style.pointer-events]="readOnly ? 'none' : null"
               />
             }
           }
@@ -274,7 +280,8 @@
                                   [formControlName]="column.name"
                                   data-table-input
                                   [attr.data-input-type]="column.type"
-                                  [attr.tabindex]="readOnly ? -1 : null">
+                                  [attr.tabindex]="readOnly ? -1 : null"
+                                  [style.pointer-events]="readOnly ? 'none' : null">
                                   @if (column.placeholder) {
                                     <option value="" disabled>{{ column.placeholder }}</option>
                                   }
@@ -335,7 +342,8 @@
                   formControlName="countryCode"
                   data-phone-country-code
                   [attr.data-input-type]="'phone-country'"
-                  [attr.tabindex]="readOnly ? -1 : null">
+                  [attr.tabindex]="readOnly ? -1 : null"
+                  [style.pointer-events]="readOnly ? 'none' : null">
                   @for (country of field.phoneConfig.countryCodes; track country.code) {
                     <option [value]="country.code">
                       @if (country.flag) {
@@ -608,7 +616,8 @@
                                     [formControlName]="column.name"
                                     data-datagrid-input
                                     [attr.data-input-type]="column.type"
-                                    [attr.tabindex]="readOnly ? -1 : null">
+                                    [attr.tabindex]="readOnly ? -1 : null"
+                                    [style.pointer-events]="readOnly ? 'none' : null">
                                     <option value="">--</option>
                                     @for (option of column.options; track option.value) {
                                       <option [value]="option.value">{{ option.label }}</option>
@@ -755,17 +764,19 @@
                                   <select
                                     [id]="embeddedField.name"
                                     [formControlName]="embeddedField.name"
-                                    data-formref-input>
+                                    data-formref-input
+                                    [style.pointer-events]="readOnly ? 'none' : null">
                                     @if (embeddedField.placeholder) {
                                       <option value="" disabled>{{ embeddedField.placeholder }}</option>
                                     }
+                                    <option value="">--</option>
                                     @for (option of embeddedField.options; track option.value) {
                                       <option [value]="option.value">{{ option.label }}</option>
                                     }
                                   </select>
                                 }
                                 @case ('radio') {
-                                  <div data-formref-radio-group>
+                                  <div data-formref-radio-group [style.pointer-events]="readOnly ? 'none' : null">
                                     @for (option of embeddedField.options; track option.value) {
                                       <label data-formref-radio-option>
                                         <input
@@ -782,7 +793,7 @@
                                 }
                                 @case ('checkbox') {
                                   @if (embeddedField.options && embeddedField.options.length > 0) {
-                                    <div data-formref-checkbox-group>
+                                    <div data-formref-checkbox-group [style.pointer-events]="readOnly ? 'none' : null">
                                       @for (option of embeddedField.options; track option.value) {
                                         <label data-formref-checkbox-option>
                                           <input
@@ -800,6 +811,7 @@
                                       [formControlName]="embeddedField.name"
                                       type="checkbox"
                                       data-formref-checkbox-single
+                                      [style.pointer-events]="readOnly ? 'none' : null"
                                     />
                                   }
                                 }
@@ -878,17 +890,19 @@
                               <select
                                 [id]="embeddedField.name"
                                 [formControlName]="embeddedField.name"
-                                data-formref-input>
+                                data-formref-input
+                                [style.pointer-events]="readOnly ? 'none' : null">
                                 @if (embeddedField.placeholder) {
                                   <option value="" disabled>{{ embeddedField.placeholder }}</option>
                                 }
+                                <option value="">--</option>
                                 @for (option of embeddedField.options; track option.value) {
                                   <option [value]="option.value">{{ option.label }}</option>
                                 }
                               </select>
                             }
                             @case ('radio') {
-                              <div data-formref-radio-group>
+                              <div data-formref-radio-group [style.pointer-events]="readOnly ? 'none' : null">
                                 @for (option of embeddedField.options; track option.value) {
                                   <label data-formref-radio-option>
                                     <input
@@ -905,7 +919,7 @@
                             }
                             @case ('checkbox') {
                               @if (embeddedField.options && embeddedField.options.length > 0) {
-                                <div data-formref-checkbox-group>
+                                <div data-formref-checkbox-group [style.pointer-events]="readOnly ? 'none' : null">
                                   @for (option of embeddedField.options; track option.value) {
                                     <label data-formref-checkbox-option>
                                       <input
@@ -923,6 +937,7 @@
                                   [formControlName]="embeddedField.name"
                                   type="checkbox"
                                   data-formref-checkbox-single
+                                  [style.pointer-events]="readOnly ? 'none' : null"
                                 />
                               }
                             }
@@ -999,17 +1014,19 @@
                             <select
                               [id]="embeddedField.name"
                               [formControlName]="embeddedField.name"
-                              data-formref-input>
+                              data-formref-input
+                              [style.pointer-events]="readOnly ? 'none' : null">
                               @if (embeddedField.placeholder) {
                                 <option value="" disabled>{{ embeddedField.placeholder }}</option>
                               }
+                              <option value="">--</option>
                               @for (option of embeddedField.options; track option.value) {
                                 <option [value]="option.value">{{ option.label }}</option>
                               }
                             </select>
                           }
                           @case ('radio') {
-                            <div data-formref-radio-group>
+                            <div data-formref-radio-group [style.pointer-events]="readOnly ? 'none' : null">
                               @for (option of embeddedField.options; track option.value) {
                                 <label data-formref-radio-option>
                                   <input
@@ -1026,7 +1043,7 @@
                           }
                           @case ('checkbox') {
                             @if (embeddedField.options && embeddedField.options.length > 0) {
-                              <div data-formref-checkbox-group>
+                              <div data-formref-checkbox-group [style.pointer-events]="readOnly ? 'none' : null">
                                 @for (option of embeddedField.options; track option.value) {
                                   <label data-formref-checkbox-option>
                                     <input
@@ -1044,6 +1061,7 @@
                                 [formControlName]="embeddedField.name"
                                 type="checkbox"
                                 data-formref-checkbox-single
+                                [style.pointer-events]="readOnly ? 'none' : null"
                               />
                             }
                           }

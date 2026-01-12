@@ -1,4 +1,4 @@
-import { Component, input, output, OnInit, OnDestroy, effect, inject, ChangeDetectorRef, signal } from '@angular/core';
+import { Component, input, output, OnInit, OnDestroy, effect, inject, ChangeDetectorRef, signal, booleanAttribute } from '@angular/core';
 import { FormGroup, FormControl, FormArray, Validators, ReactiveFormsModule, ValidatorFn, AbstractControl } from '@angular/forms';
 import { CommonModule } from '@angular/common';
 import { Subject, fromEvent, merge } from 'rxjs';
@@ -47,6 +47,15 @@ export class DynamicForm implements OnInit, OnDestroy {
   config = input.required<FormConfig>();
   fileUploadHandler = input<FileUploadHandler | undefined>(undefined);
   fileDownloadHandler = input<FileDownloadHandler | undefined>(undefined);
+
+  /** Read-only state input - form is viewable but not editable */
+  readOnlyInput = input(false, { alias: 'readOnly', transform: booleanAttribute });
+
+  /** Disabled state input - disables entire form including all controls */
+  disabledInput = input(false, { alias: 'disabled', transform: booleanAttribute });
+
+  /** Internal override for deprecated setReadOnly method */
+  private readOnlyOverride = signal<boolean | null>(null);
 
   // Outputs
   formSubmit = output<{ [key: string]: any }>();
@@ -122,24 +131,22 @@ export class DynamicForm implements OnInit, OnDestroy {
   }
 
   /**
-   * Read-only state - form is viewable but not editable
-   */
-  private _readOnly = signal(false);
-
-  /**
    * Check if the form is currently in read-only mode
+   * Combines the input value with any imperative override from deprecated setReadOnly()
    */
   get readOnly(): boolean {
-    return this._readOnly();
+    const override = this.readOnlyOverride();
+    return override !== null ? override : this.readOnlyInput();
   }
 
   /**
    * Set the form to read-only mode
    * In read-only mode, the form values are visible but cannot be edited
    * Unlike disabled, read-only fields are still submitted and look normal
+   * @deprecated Use [readOnly] input binding instead. Will be removed in next major version.
    */
   setReadOnly(value: boolean): void {
-    this._readOnly.set(value);
+    this.readOnlyOverride.set(value);
     this.cdr.markForCheck();
   }
 
@@ -156,6 +163,18 @@ export class DynamicForm implements OnInit, OnDestroy {
       const currentConfig = this.config();
       if (currentConfig) {
         this.initializeForm();
+      }
+    });
+
+    // React to disabled input changes
+    effect(() => {
+      const isDisabled = this.disabledInput();
+      if (this.form) {
+        if (isDisabled) {
+          this.form.disable({ emitEvent: false });
+        } else {
+          this.form.enable({ emitEvent: false });
+        }
       }
     });
   }
