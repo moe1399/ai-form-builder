@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.validatorRegistry = void 0;
+exports.asyncValidatorRegistry = exports.validatorRegistry = void 0;
 /**
  * Registry for custom validators that can be referenced by name.
  * Register validators here to use them with ValidationRule.customValidatorName.
@@ -66,6 +66,75 @@ class ValidatorRegistry {
     }
 }
 /**
+ * Registry for async validators that can be referenced by name.
+ * Register async validators here to use them with AsyncValidationConfig.validatorName.
+ *
+ * @example
+ * ```typescript
+ * import { asyncValidatorRegistry } from '@moe1399/form-validation';
+ *
+ * asyncValidatorRegistry.register('checkEmailExists', async (value, params) => {
+ *   const response = await fetch(`/api/validate/email?email=${encodeURIComponent(value)}`);
+ *   const result = await response.json();
+ *   return { valid: result.available, message: result.available ? undefined : 'Email already exists' };
+ * });
+ * ```
+ */
+class AsyncValidatorRegistry {
+    validators = new Map();
+    /**
+     * Register an async validator by name
+     */
+    register(name, validator) {
+        if (this.validators.has(name)) {
+            console.warn(`AsyncValidatorRegistry: Validator "${name}" is being overwritten`);
+        }
+        this.validators.set(name, validator);
+    }
+    /**
+     * Register multiple async validators at once
+     */
+    registerAll(validators) {
+        for (const [name, validator] of Object.entries(validators)) {
+            this.register(name, validator);
+        }
+    }
+    /**
+     * Get an async validator by name
+     */
+    get(name) {
+        return this.validators.get(name);
+    }
+    /**
+     * Check if an async validator exists
+     */
+    has(name) {
+        return this.validators.has(name);
+    }
+    /**
+     * List all registered async validator names
+     */
+    list() {
+        return Array.from(this.validators.keys());
+    }
+    /**
+     * Remove an async validator
+     */
+    unregister(name) {
+        return this.validators.delete(name);
+    }
+    /**
+     * Clear all async validators
+     */
+    clear() {
+        this.validators.clear();
+    }
+}
+/**
  * Global validator registry singleton
  */
 exports.validatorRegistry = new ValidatorRegistry();
+/**
+ * Global async validator registry singleton
+ */
+exports.asyncValidatorRegistry = new AsyncValidatorRegistry();

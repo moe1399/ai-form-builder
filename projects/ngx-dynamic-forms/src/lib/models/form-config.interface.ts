@@ -36,6 +36,7 @@ import type {
   ValidationRule as BaseValidationRule,
   FormFieldConfig as BaseFormFieldConfig,
   FormSection,
+  AsyncValidatorFn,
 } from '@moe1399/ngx-dynamic-forms-validation';
 
 /**
@@ -92,20 +93,42 @@ export interface FileUploadState {
 
 /**
  * Result of async validation
+ * Re-exported from validation package for consistency
  */
-export interface AsyncValidationResult {
-  valid: boolean;
-  message?: string;
+export type {
+  AsyncValidationResult,
+  AsyncValidationConfig,
+  AsyncValidatorFn,
+} from '@moe1399/ngx-dynamic-forms-validation';
+
+/**
+ * Async validator registry for client-side validation
+ * Register async validators here to use them with AsyncValidationConfig.validatorName
+ *
+ * @example
+ * ```typescript
+ * import { asyncValidatorRegistry } from '@moe1399/ngx-dynamic-forms';
+ *
+ * asyncValidatorRegistry.register('checkEmailExists', async (value) => {
+ *   const response = await fetch(`/api/validate/email?email=${encodeURIComponent(value)}`);
+ *   const result = await response.json();
+ *   return { valid: result.available, message: result.available ? undefined : 'Email already exists' };
+ * });
+ * ```
+ */
+export interface AsyncValidatorRegistry {
+  register(name: string, validator: AsyncValidatorFn): void;
+  get(name: string): AsyncValidatorFn | undefined;
+  has(name: string): boolean;
+  list(): string[];
+  unregister(name: string): boolean;
+  clear(): void;
 }
 
 /**
- * Async validation configuration for a field (client-side only)
+ * Global async validator registry instance
  */
-export interface AsyncValidationConfig {
-  validator: (value: any, formValues: Record<string, any>) => Promise<AsyncValidationResult>;
-  trigger?: 'blur' | 'change';
-  debounceMs?: number;
-}
+export declare const asyncValidatorRegistry: AsyncValidatorRegistry;
 
 /**
  * Validation rule configuration.
@@ -123,9 +146,9 @@ export interface ValidationRule extends BaseValidationRule {
  * Field configuration for dynamic form.
  * Extends base field config with client-only async validation.
  */
-export interface FormFieldConfig extends Omit<BaseFormFieldConfig, 'validations'> {
+export interface FormFieldConfig extends Omit<BaseFormFieldConfig, 'validations' | 'asyncValidation'> {
   validations?: ValidationRule[];
-  asyncValidation?: AsyncValidationConfig;
+  asyncValidation?: import('@moe1399/ngx-dynamic-forms-validation').AsyncValidationConfig;
 }
 
 /**

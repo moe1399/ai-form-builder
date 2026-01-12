@@ -26,6 +26,7 @@ import {
   FileUploadTiming,
 } from '../../models/form-config.interface';
 import { FormBuilderService } from '../../services/form-builder.service';
+import { AsyncValidatorRegistry } from '../../services/validator-registry.service';
 
 /**
  * Configuration options for toolbar buttons
@@ -45,8 +46,9 @@ export interface ToolbarConfig {
   styleUrl: './form-builder.scss',
 })
 export class NgxFormBuilder {
-  // Inject service using inject()
+  // Inject services using inject()
   private formBuilderService = inject(FormBuilderService);
+  private asyncValidatorRegistry = inject(AsyncValidatorRegistry);
 
   // Two-way binding for config - the primary API for reusable usage
   config = model<FormConfig | null>(null);
@@ -274,6 +276,198 @@ export class NgxFormBuilder {
     config.fields = [...config.fields];
     const field = { ...config.fields[fieldIndex] };
     field.validations = (field.validations || []).filter((_, i) => i !== validationIndex);
+    config.fields[fieldIndex] = field;
+    this.updateConfig(config);
+  }
+
+  // ============================================
+  // Async Validation Methods
+  // ============================================
+
+  /**
+   * Check if field type supports async validation
+   */
+  shouldShowAsyncValidation(field: import('../../models').FormFieldConfig): boolean {
+    const typesWithoutValidation: (typeof field.type)[] = ['info', 'formref'];
+    return !typesWithoutValidation.includes(field.type);
+  }
+
+  /**
+   * Check if field has async validation enabled
+   */
+  hasAsyncValidation(field: import('../../models').FormFieldConfig): boolean {
+    return !!field.asyncValidation;
+  }
+
+  /**
+   * Toggle async validation on/off for a field
+   */
+  toggleAsyncValidation(fieldIndex: number, event: Event): void {
+    const config = { ...this.currentConfig() };
+    config.fields = [...config.fields];
+    const field = { ...config.fields[fieldIndex] };
+
+    const checkbox = event.target as HTMLInputElement;
+    if (checkbox.checked) {
+      // Enable async validation with defaults
+      field.asyncValidation = {
+        validatorName: '',
+        trigger: 'blur',
+        debounceMs: 300,
+        params: undefined,
+      };
+    } else {
+      // Disable async validation
+      field.asyncValidation = undefined;
+    }
+
+    config.fields[fieldIndex] = field;
+    this.updateConfig(config);
+  }
+
+  /**
+   * Get list of available async validators from registry
+   */
+  availableAsyncValidators(): string[] {
+    return this.asyncValidatorRegistry.list();
+  }
+
+  /**
+   * Update async validator name
+   */
+  updateAsyncValidatorName(fieldIndex: number, name: string): void {
+    const config = { ...this.currentConfig() };
+    config.fields = [...config.fields];
+    const field = { ...config.fields[fieldIndex] };
+
+    if (field.asyncValidation) {
+      field.asyncValidation = { ...field.asyncValidation, validatorName: name };
+    }
+
+    config.fields[fieldIndex] = field;
+    this.updateConfig(config);
+  }
+
+  /**
+   * Update async validation trigger
+   */
+  updateAsyncValidationTrigger(fieldIndex: number, trigger: 'blur' | 'change'): void {
+    const config = { ...this.currentConfig() };
+    config.fields = [...config.fields];
+    const field = { ...config.fields[fieldIndex] };
+
+    if (field.asyncValidation) {
+      field.asyncValidation = { ...field.asyncValidation, trigger };
+      // Reset debounce to default when switching to blur
+      if (trigger === 'blur') {
+        field.asyncValidation.debounceMs = undefined;
+      }
+    }
+
+    config.fields[fieldIndex] = field;
+    this.updateConfig(config);
+  }
+
+  /**
+   * Update async validation debounce
+   */
+  updateAsyncValidationDebounce(fieldIndex: number, ms: number): void {
+    const config = { ...this.currentConfig() };
+    config.fields = [...config.fields];
+    const field = { ...config.fields[fieldIndex] };
+
+    if (field.asyncValidation) {
+      field.asyncValidation = { ...field.asyncValidation, debounceMs: ms || undefined };
+    }
+
+    config.fields[fieldIndex] = field;
+    this.updateConfig(config);
+  }
+
+  /**
+   * Get async validation parameter keys
+   */
+  getAsyncValidationParamKeys(field: import('../../models').FormFieldConfig): string[] {
+    return field.asyncValidation?.params ? Object.keys(field.asyncValidation.params) : [];
+  }
+
+  /**
+   * Add a new parameter to async validation
+   */
+  addAsyncValidationParam(fieldIndex: number): void {
+    const config = { ...this.currentConfig() };
+    config.fields = [...config.fields];
+    const field = { ...config.fields[fieldIndex] };
+
+    if (field.asyncValidation) {
+      const params = field.asyncValidation.params || {};
+      const newKey = `param_${Object.keys(params).length + 1}`;
+      field.asyncValidation = {
+        ...field.asyncValidation,
+        params: { ...params, [newKey]: '' },
+      };
+    }
+
+    config.fields[fieldIndex] = field;
+    this.updateConfig(config);
+  }
+
+  /**
+   * Update async validation parameter key
+   */
+  updateAsyncValidationParamKey(fieldIndex: number, oldKey: string, newKey: string): void {
+    const config = { ...this.currentConfig() };
+    config.fields = [...config.fields];
+    const field = { ...config.fields[fieldIndex] };
+
+    if (field.asyncValidation?.params && oldKey in field.asyncValidation.params) {
+      const params = { ...field.asyncValidation.params };
+      const value = params[oldKey];
+      delete params[oldKey];
+      params[newKey] = value;
+      field.asyncValidation = { ...field.asyncValidation, params };
+    }
+
+    config.fields[fieldIndex] = field;
+    this.updateConfig(config);
+  }
+
+  /**
+   * Update async validation parameter value
+   */
+  updateAsyncValidationParamValue(fieldIndex: number, key: string, value: string): void {
+    const config = { ...this.currentConfig() };
+    config.fields = [...config.fields];
+    const field = { ...config.fields[fieldIndex] };
+
+    if (field.asyncValidation?.params) {
+      field.asyncValidation = {
+        ...field.asyncValidation,
+        params: { ...field.asyncValidation.params, [key]: value },
+      };
+    }
+
+    config.fields[fieldIndex] = field;
+    this.updateConfig(config);
+  }
+
+  /**
+   * Remove async validation parameter
+   */
+  removeAsyncValidationParam(fieldIndex: number, key: string): void {
+    const config = { ...this.currentConfig() };
+    config.fields = [...config.fields];
+    const field = { ...config.fields[fieldIndex] };
+
+    if (field.asyncValidation?.params) {
+      const params = { ...field.asyncValidation.params };
+      delete params[key];
+      field.asyncValidation = {
+        ...field.asyncValidation,
+        params: Object.keys(params).length > 0 ? params : undefined,
+      };
+    }
+
     config.fields[fieldIndex] = field;
     this.updateConfig(config);
   }

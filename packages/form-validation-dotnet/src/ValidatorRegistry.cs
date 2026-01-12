@@ -18,6 +18,21 @@ public delegate bool CustomValidatorFn(
 );
 
 /// <summary>
+/// Async validator function signature
+/// </summary>
+/// <param name="value">The value to validate</param>
+/// <param name="parameters">Optional parameters for the validator</param>
+/// <param name="fieldConfig">The field configuration</param>
+/// <param name="formData">The complete form data</param>
+/// <returns>AsyncValidationResult indicating whether validation passed</returns>
+public delegate Task<AsyncValidationResult> AsyncValidatorFn(
+    object? value,
+    Dictionary<string, object?>? parameters,
+    FormFieldConfig? fieldConfig,
+    Dictionary<string, object?>? formData
+);
+
+/// <summary>
 /// Registry for custom validators that can be referenced by name.
 /// Register validators here to use them with ValidationRule.CustomValidatorName.
 /// </summary>
@@ -102,6 +117,95 @@ public sealed class ValidatorRegistry
 
     /// <summary>
     /// Clear all custom validators
+    /// </summary>
+    public void Clear() => _validators.Clear();
+}
+
+/// <summary>
+/// Registry for async validators that can be referenced by name.
+/// Register async validators here to use them with AsyncValidationConfig.ValidatorName.
+/// </summary>
+/// <example>
+/// <code>
+/// AsyncValidatorRegistry.Instance.Register("checkEmailExists", async (value, _, _, _) => {
+///     var email = value?.ToString();
+///     var exists = await _emailService.EmailExistsAsync(email);
+///     return new AsyncValidationResult { Valid = !exists, Message = exists ? "Email already exists" : null };
+/// });
+/// </code>
+/// </example>
+public sealed class AsyncValidatorRegistry
+{
+    private static readonly Lazy<AsyncValidatorRegistry> _instance =
+        new(() => new AsyncValidatorRegistry());
+
+    private readonly Dictionary<string, AsyncValidatorFn> _validators = new();
+
+    private AsyncValidatorRegistry() { }
+
+    /// <summary>
+    /// Singleton instance of the async validator registry
+    /// </summary>
+    public static AsyncValidatorRegistry Instance => _instance.Value;
+
+    /// <summary>
+    /// Register an async validator by name
+    /// </summary>
+    /// <param name="name">Validator name</param>
+    /// <param name="validator">Async validator function</param>
+    public void Register(string name, AsyncValidatorFn validator)
+    {
+        if (_validators.ContainsKey(name))
+        {
+            Console.WriteLine($"AsyncValidatorRegistry: Validator \"{name}\" is being overwritten");
+        }
+        _validators[name] = validator;
+    }
+
+    /// <summary>
+    /// Register multiple async validators at once
+    /// </summary>
+    /// <param name="validators">Dictionary of validator names to functions</param>
+    public void RegisterAll(Dictionary<string, AsyncValidatorFn> validators)
+    {
+        foreach (var kvp in validators)
+        {
+            Register(kvp.Key, kvp.Value);
+        }
+    }
+
+    /// <summary>
+    /// Get an async validator by name
+    /// </summary>
+    /// <param name="name">Validator name</param>
+    /// <returns>The async validator function, or null if not found</returns>
+    public AsyncValidatorFn? Get(string name)
+    {
+        return _validators.TryGetValue(name, out var validator) ? validator : null;
+    }
+
+    /// <summary>
+    /// Check if an async validator exists
+    /// </summary>
+    /// <param name="name">Validator name</param>
+    /// <returns>True if the async validator exists</returns>
+    public bool Has(string name) => _validators.ContainsKey(name);
+
+    /// <summary>
+    /// List all registered async validator names
+    /// </summary>
+    /// <returns>List of async validator names</returns>
+    public List<string> List() => _validators.Keys.ToList();
+
+    /// <summary>
+    /// Remove an async validator
+    /// </summary>
+    /// <param name="name">Validator name</param>
+    /// <returns>True if the async validator was removed</returns>
+    public bool Unregister(string name) => _validators.Remove(name);
+
+    /// <summary>
+    /// Clear all async validators
     /// </summary>
     public void Clear() => _validators.Clear();
 }

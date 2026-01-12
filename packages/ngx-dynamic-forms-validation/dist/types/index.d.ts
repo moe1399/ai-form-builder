@@ -23,8 +23,8 @@
  * }
  * ```
  */
-export { validateForm, validateFieldValue } from './validator.js';
+export { validateForm, validateFieldValue, validateFieldAsync, validateFormAsync } from './validator.js';
 export { parseConfig, validateConfig, loadConfig, loadConfigSync, } from './config-loader.js';
-export { validatorRegistry } from './registry.js';
-export type { FormConfig, FormFieldConfig, FormSection, FieldType, ValidationRule, ValidationRuleType, ValidationCondition, ValidationConditionOperator, CountryCodeOption, PhoneConfig, DateRangeConfig, FormRefConfig, FileUploadTiming, FileUploadConfig, FileUploadValue, TableColumnType, TableRowMode, TableConfig, TableColumnConfig, DataGridColumnType, DataGridColumnGroup, DataGridFormula, DataGridConfig, DataGridColumnConfig, DataGridRowLabel, DataGridTotalsConfig, CustomValidatorFn, ValidationResult, FieldValidationError, } from './types.js';
+export { validatorRegistry, asyncValidatorRegistry } from './registry.js';
+export type { FormConfig, FormFieldConfig, FormSection, FieldType, ValidationRule, ValidationRuleType, ValidationCondition, ValidationConditionOperator, CountryCodeOption, PhoneConfig, DateRangeConfig, FormRefConfig, FileUploadTiming, FileUploadConfig, FileUploadValue, TableColumnType, TableRowMode, TableConfig, TableColumnConfig, DataGridColumnType, DataGridColumnGroup, DataGridFormula, DataGridConfig, DataGridColumnConfig, DataGridRowLabel, DataGridTotalsConfig, CustomValidatorFn, AsyncValidatorFn, AsyncValidationResult, AsyncValidationConfig, ValidationResult, FieldValidationError, } from './types.js';
 export type { ConfigValidationError, ConfigValidationResult, } from './config-loader.js';

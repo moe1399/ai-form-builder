@@ -25,7 +25,7 @@
  */
 
 // Main validation functions
-export { validateForm, validateFieldValue } from './validator.js';
+export { validateForm, validateFieldValue, validateFieldAsync, validateFormAsync } from './validator.js';
 
 // Config loading and validation
 export {
@@ -36,7 +36,7 @@ export {
 } from './config-loader.js';
 
 // Validator registry
-export { validatorRegistry } from './registry.js';
+export { validatorRegistry, asyncValidatorRegistry } from './registry.js';
 
 // Types
 export type {
@@ -75,6 +75,9 @@ export type {
   DataGridTotalsConfig,
   // Validation types
   CustomValidatorFn,
+  AsyncValidatorFn,
+  AsyncValidationResult,
+  AsyncValidationConfig,
   ValidationResult,
   FieldValidationError,
 } from './types.js';

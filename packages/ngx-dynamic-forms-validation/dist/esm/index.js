@@ -24,8 +24,8 @@
  * ```
  */
 // Main validation functions
-export { validateForm, validateFieldValue } from './validator.js';
+export { validateForm, validateFieldValue, validateFieldAsync, validateFormAsync } from './validator.js';
 // Config loading and validation
 export { parseConfig, validateConfig, loadConfig, loadConfigSync, } from './config-loader.js';
 // Validator registry
-export { validatorRegistry } from './registry.js';
+export { validatorRegistry, asyncValidatorRegistry } from './registry.js';

@@ -1,4 +1,4 @@
-import { CustomValidatorFn } from './types.js';
+import { CustomValidatorFn, AsyncValidatorFn } from './types.js';
 /**
  * Registry for custom validators that can be referenced by name.
  * Register validators here to use them with ValidationRule.customValidatorName.
@@ -45,7 +45,57 @@ declare class ValidatorRegistry {
     clear(): void;
 }
 /**
+ * Registry for async validators that can be referenced by name.
+ * Register async validators here to use them with AsyncValidationConfig.validatorName.
+ *
+ * @example
+ * ```typescript
+ * import { asyncValidatorRegistry } from '@moe1399/form-validation';
+ *
+ * asyncValidatorRegistry.register('checkEmailExists', async (value, params) => {
+ *   const response = await fetch(`/api/validate/email?email=${encodeURIComponent(value)}`);
+ *   const result = await response.json();
+ *   return { valid: result.available, message: result.available ? undefined : 'Email already exists' };
+ * });
+ * ```
+ */
+declare class AsyncValidatorRegistry {
+    private validators;
+    /**
+     * Register an async validator by name
+     */
+    register(name: string, validator: AsyncValidatorFn): void;
+    /**
+     * Register multiple async validators at once
+     */
+    registerAll(validators: Record<string, AsyncValidatorFn>): void;
+    /**
+     * Get an async validator by name
+     */
+    get(name: string): AsyncValidatorFn | undefined;
+    /**
+     * Check if an async validator exists
+     */
+    has(name: string): boolean;
+    /**
+     * List all registered async validator names
+     */
+    list(): string[];
+    /**
+     * Remove an async validator
+     */
+    unregister(name: string): boolean;
+    /**
+     * Clear all async validators
+     */
+    clear(): void;
+}
+/**
  * Global validator registry singleton
  */
 export declare const validatorRegistry: ValidatorRegistry;
+/**
+ * Global async validator registry singleton
+ */
+export declare const asyncValidatorRegistry: AsyncValidatorRegistry;
 export {};

@@ -1,4 +1,4 @@
-import { validatorRegistry } from './registry.js';
+import { validatorRegistry, asyncValidatorRegistry } from './registry.js';
 import {
   FormConfig,
   FormFieldConfig,
@@ -8,6 +8,8 @@ import {
   FieldValidationError,
   TableConfig,
   DataGridConfig,
+  AsyncValidationConfig,
+  AsyncValidationResult,
 } from './types.js';
 
 /**
@@ -439,6 +441,141 @@ export function validateFieldValue(
   formData: Record<string, any> = {}
 ): ValidationResult {
   const errors = validateField(fieldConfig, value, formData);
+  return {
+    valid: errors.length === 0,
+    errors,
+  };
+}
+
+/**
+ * Validate a single field's async validator
+ *
+ * @param fieldConfig - The field configuration
+ * @param value - The value to validate
+ * @param formData - Optional full form data for contextual validation
+ * @returns Promise<AsyncValidationResult> from the async validator
+ *
+ * @example
+ * ```typescript
+ * import { validateFieldAsync, asyncValidatorRegistry } from '@moe1399/form-validation';
+ *
+ * // Register async validator
+ * asyncValidatorRegistry.register('checkEmailExists', async (value) => {
+ *   const response = await fetch(`/api/validate/email?email=${encodeURIComponent(value)}`);
+ *   const result = await response.json();
+ *   return { valid: result.available, message: result.available ? undefined : 'Email already exists' };
+ * });
+ *
+ * // Use async validation
+ * const result = await validateFieldAsync(fieldConfig, emailValue, formData);
+ * if (!result.valid) {
+ *   console.log(result.message);
+ * }
+ * ```
+ */
+export async function validateFieldAsync(
+  fieldConfig: FormFieldConfig,
+  value: any,
+  formData: Record<string, any> = {}
+): Promise<AsyncValidationResult> {
+  const asyncConfig = fieldConfig.asyncValidation;
+  if (!asyncConfig || !asyncConfig.validatorName) {
+    return { valid: true };
+  }
+
+  const validator = asyncValidatorRegistry.get(asyncConfig.validatorName);
+  if (!validator) {
+    console.warn(`Async validator "${asyncConfig.validatorName}" not registered`);
+    return { valid: true };
+  }
+
+  try {
+    return await validator(value, asyncConfig.params, fieldConfig, formData);
+  } catch (error) {
+    console.error(`Async validator "${asyncConfig.validatorName}" threw error:`, error);
+    return { valid: true };
+  }
+}
+
+/**
+ * Validate all async validators for a form
+ *
+ * @param config - The form configuration
+ * @param data - The form data to validate
+ * @returns Promise<ValidationResult> with async validation errors
+ *
+ * @example
+ * ```typescript
+ * import { validateFormAsync, asyncValidatorRegistry } from '@moe1399/form-validation';
+ *
+ * // Register async validators first
+ * asyncValidatorRegistry.register('checkEmailExists', async (value) => { ... });
+ * asyncValidatorRegistry.register('checkUsernameUnique', async (value) => { ... });
+ *
+ * // Validate form data asynchronously
+ * const result = await validateFormAsync(formConfig, formData);
+ * if (!result.valid) {
+ *   console.log('Async validation errors:', result.errors);
+ * }
+ * ```
+ */
+export async function validateFormAsync(
+  config: FormConfig,
+  data: Record<string, any>
+): Promise<ValidationResult> {
+  const errors: FieldValidationError[] = [];
+
+  // Collect all async validation promises
+  const asyncValidations: Array<{
+    field: FormFieldConfig;
+    value: any;
+    validatorName: string;
+    promise: Promise<AsyncValidationResult>;
+  }> = [];
+
+  for (const field of config.fields) {
+    // Skip archived fields
+    if (field.archived) continue;
+
+    // Skip non-input field types
+    if (field.type === 'info' || field.type === 'formref') continue;
+
+    // Skip fields without async validation
+    if (!field.asyncValidation || !field.asyncValidation.validatorName) continue;
+
+    // Skip fields where validator is not registered
+    if (!asyncValidatorRegistry.has(field.asyncValidation.validatorName)) {
+      console.warn(`Async validator "${field.asyncValidation.validatorName}" not registered for field "${field.name}"`);
+      continue;
+    }
+
+    const value = data[field.name];
+
+    asyncValidations.push({
+      field,
+      value,
+      validatorName: field.asyncValidation.validatorName,
+      promise: validateFieldAsync(field, value, data),
+    });
+  }
+
+  // Wait for all async validations to complete
+  const results = await Promise.all(asyncValidations.map((v) => v.promise));
+
+  // Collect errors from failed async validations
+  for (let i = 0; i < asyncValidations.length; i++) {
+    const validation = asyncValidations[i];
+    const result = results[i];
+
+    if (!result.valid) {
+      errors.push({
+        field: validation.field.name,
+        message: result.message || 'Async validation failed',
+        rule: validation.validatorName,
+      });
+    }
+  }
+
   return {
     valid: errors.length === 0,
     errors,

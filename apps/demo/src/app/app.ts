@@ -8,10 +8,46 @@ import {
   FileUploadHandler,
   FileDownloadHandler,
   FileUploadValue,
+  asyncValidatorRegistry,
 } from 'ngx-dynamic-forms';
 import { marked } from 'marked';
 
+// Register demo async validators at module load time
+// This ensures they're available before any component renders
+registerDemoAsyncValidators();
+
 type ViewType = 'builder' | 'preview' | 'docs' | 'changelog' | 'theme';
+
+/**
+ * Register demo async validators for testing purposes
+ * Called at module load time to ensure validators are registered before components render
+ */
+function registerDemoAsyncValidators(): void {
+  // Validator that checks if value only contains numbers
+  asyncValidatorRegistry.register('onlyNumbers', async (value) => {
+    // Simulate async server call with delay
+    await new Promise((resolve) => setTimeout(resolve, 500));
+
+    const isValid = /^\d+$/.test(value || '');
+    return {
+      valid: isValid,
+      message: isValid ? undefined : 'This field must contain only numbers',
+    };
+  });
+
+  // Validator that checks minimum length (async version)
+  asyncValidatorRegistry.register('minLengthAsync', async (value, params) => {
+    // Simulate async server call with delay
+    await new Promise((resolve) => setTimeout(resolve, 300));
+
+    const minLength = params?.['minLength'] || 3;
+    const isValid = (value || '').toString().length >= minLength;
+    return {
+      valid: isValid,
+      message: isValid ? undefined : `Must be at least ${minLength} characters`,
+    };
+  });
+}
 
 @Component({
   selector: 'app-root',

@@ -122,3 +122,69 @@ public class ValidationRule
     [JsonPropertyName("condition")]
     public ValidationCondition? Condition { get; set; }
 }
+
+/// <summary>
+/// Trigger type for async validation
+/// </summary>
+public enum AsyncValidationTrigger
+{
+    [JsonPropertyName("blur")]
+    Blur,
+
+    [JsonPropertyName("change")]
+    Change
+}
+
+/// <summary>
+/// Result of async validation
+/// </summary>
+public class AsyncValidationResult
+{
+    /// <summary>
+    /// Whether the validation passed
+    /// </summary>
+    [JsonPropertyName("valid")]
+    public bool Valid { get; set; }
+
+    /// <summary>
+    /// Optional error message when validation fails
+    /// </summary>
+    [JsonPropertyName("message")]
+    public string? Message { get; set; }
+}
+
+/// <summary>
+/// Async validation configuration using named validator pattern
+/// Works across client and server by referencing registered validators
+/// </summary>
+public class AsyncValidationConfig
+{
+    /// <summary>
+    /// Name of the registered async validator
+    /// Must be registered on both client and server
+    /// </summary>
+    [JsonPropertyName("validatorName")]
+    public string ValidatorName { get; set; } = string.Empty;
+
+    /// <summary>
+    /// Optional trigger for when validation should run
+    /// - 'blur': Validate when field loses focus (default)
+    /// - 'change': Validate on every change
+    /// </summary>
+    [JsonPropertyName("trigger")]
+    [JsonConverter(typeof(JsonStringEnumConverter))]
+    public AsyncValidationTrigger? Trigger { get; set; }
+
+    /// <summary>
+    /// Debounce delay in milliseconds (default: 300)
+    /// Only applies when trigger is 'change'
+    /// </summary>
+    [JsonPropertyName("debounceMs")]
+    public int? DebounceMs { get; set; }
+
+    /// <summary>
+    /// Optional parameters to pass to the async validator
+    /// </summary>
+    [JsonPropertyName("params")]
+    public Dictionary<string, object?>? Params { get; set; }
+}

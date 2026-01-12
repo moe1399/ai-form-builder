@@ -197,6 +197,9 @@ public class FormFieldConfig
     [JsonPropertyName("validations")]
     public List<ValidationRule>? Validations { get; set; }
 
+    [JsonPropertyName("asyncValidation")]
+    public AsyncValidationConfig? AsyncValidation { get; set; }
+
     [JsonPropertyName("options")]
     public List<SelectOption>? Options { get; set; }
 

@@ -23,7 +23,7 @@ import {
 } from '../../models/form-config.interface';
 import { FormStorage } from '../../services/form-storage.service';
 import { FormBuilderService } from '../../services/form-builder.service';
-import { ValidatorRegistry } from '../../services/validator-registry.service';
+import { ValidatorRegistry, AsyncValidatorRegistry } from '../../services/validator-registry.service';
 
 @Component({
   selector: 'ngx-dynamic-form',
@@ -32,7 +32,7 @@ import { ValidatorRegistry } from '../../services/validator-registry.service';
   styleUrl: './dynamic-form.scss',
   host: {
     '(document:click)': 'onDocumentClick($event)',
-    '(focusout)': 'onFocusOut()',
+    '(focusout)': 'onFocusOut($event)',
   },
 })
 export class DynamicForm implements OnInit, OnDestroy {
@@ -40,6 +40,7 @@ export class DynamicForm implements OnInit, OnDestroy {
   private formStorage = inject(FormStorage);
   private formBuilderService = inject(FormBuilderService);
   private validatorRegistry = inject(ValidatorRegistry);
+  private asyncValidatorRegistry = inject(AsyncValidatorRegistry);
   private cdr = inject(ChangeDetectorRef);
 
   // Inputs using signals
@@ -960,6 +961,11 @@ export class DynamicForm implements OnInit, OnDestroy {
    * Save form to local storage
    */
   saveForm(): void {
+    // Don't save if async validation is in progress
+    if (this.validating) {
+      return;
+    }
+
     const currentConfig = this.config();
     this.formStorage.saveForm(currentConfig.id, this.form.value, false);
     this.formSave.emit(this.form.value);
@@ -1455,9 +1461,28 @@ export class DynamicForm implements OnInit, OnDestroy {
   /**
    * Handle focusout events to trigger change detection for validation display
    * This ensures error messages show immediately when a field is blurred
+   * Also triggers async validation for fields with blur trigger
    */
-  onFocusOut(): void {
+  onFocusOut(event: FocusEvent): void {
     this.cdr.markForCheck();
+
+    // Trigger async validation for fields with blur trigger
+    const target = event.target as HTMLElement;
+    if (target) {
+      // Try to find the field name from formControlName or data attribute
+      const fieldName =
+        target.getAttribute('formControlName') ||
+        target.getAttribute('data-field-name') ||
+        target.closest('[data-field-name]')?.getAttribute('data-field-name');
+
+      if (fieldName) {
+        const field = this.config().fields.find((f) => f.name === fieldName);
+        if (field?.asyncValidation?.trigger !== 'change') {
+          // Default trigger is 'blur', so trigger if not explicitly 'change'
+          this.triggerAsyncValidation(fieldName);
+        }
+      }
+    }
   }
 
   /**
@@ -2378,6 +2403,13 @@ export class DynamicForm implements OnInit, OnDestroy {
     const asyncConfig = field.asyncValidation;
     if (!asyncConfig) return;
 
+    // Get the async validator from the registry by name
+    const validator = this.asyncValidatorRegistry.get(asyncConfig.validatorName);
+    if (!validator) {
+      console.warn(`DynamicForm: Async validator "${asyncConfig.validatorName}" not registered for field "${field.name}"`);
+      return;
+    }
+
     const control = this.form.get(field.name);
     if (!control) return;
 
@@ -2393,26 +2425,27 @@ export class DynamicForm implements OnInit, OnDestroy {
       .pipe(
         takeUntil(this.destroy$),
         debounceTime(debounceMs),
-        distinctUntilChanged(),
         filter((value) => {
           // Skip validation for empty values if not required
           const isRequired = field.validations?.some((v) => v.type === 'required');
           if (!isRequired && (value === '' || value === null || value === undefined)) {
             // Clear any previous async error for this field
             this.externalErrors.delete(field.name);
+            // Remove from validating since we're skipping
+            this.validatingFields.delete(field.name);
             this.updateErrors();
+            this.cdr.markForCheck();
             return false;
           }
           return true;
         }),
         switchMap(async (value) => {
-          // Mark field as validating
-          this.validatingFields.add(field.name);
-
           try {
-            const result = await asyncConfig.validator(value, this.form.value);
+            // Call the named async validator from the registry
+            const result = await validator(value, asyncConfig.params, field, this.form.value);
             return { field: field.name, result, value };
           } catch (error) {
+            console.error(`DynamicForm: Async validator "${asyncConfig.validatorName}" threw error:`, error);
             return {
               field: field.name,
               result: { valid: false, message: 'Validation failed' },
@@ -2433,22 +2466,16 @@ export class DynamicForm implements OnInit, OnDestroy {
         }
 
         this.updateErrors();
+        this.cdr.markForCheck();
       });
 
-    // Trigger validation based on config (blur or change)
+    // For 'change' trigger, subscribe to value changes
+    // For 'blur' trigger, validation is handled by onFocusOut()
     if (trigger === 'change') {
       control.valueChanges.pipe(takeUntil(this.destroy$)).subscribe((value) => {
         // Clear external error when value changes
         this.externalErrors.delete(field.name);
         validationSubject.next(value);
-      });
-    } else {
-      // For blur trigger, we need to watch for status changes that indicate touched
-      control.statusChanges.pipe(takeUntil(this.destroy$)).subscribe(() => {
-        if (control.touched) {
-          // Only trigger once per blur
-          validationSubject.next(control.value);
-        }
       });
     }
   }
@@ -2460,6 +2487,9 @@ export class DynamicForm implements OnInit, OnDestroy {
     const subject = this.asyncValidationSubjects.get(fieldName);
     const control = this.form.get(fieldName);
     if (subject && control) {
+      // Mark as validating immediately so submit/save are blocked during debounce
+      this.validatingFields.add(fieldName);
+      this.cdr.markForCheck();
       subject.next(control.value);
     }
   }
@@ -2480,6 +2510,13 @@ export class DynamicForm implements OnInit, OnDestroy {
       const control = this.form.get(field.name);
       if (!control) return true;
 
+      // Get the async validator from the registry by name
+      const validator = this.asyncValidatorRegistry.get(asyncConfig.validatorName);
+      if (!validator) {
+        console.warn(`DynamicForm: Async validator "${asyncConfig.validatorName}" not registered for field "${field.name}"`);
+        return true;
+      }
+
       const value = control.value;
 
       // Skip empty non-required fields
@@ -2491,7 +2528,8 @@ export class DynamicForm implements OnInit, OnDestroy {
       this.validatingFields.add(field.name);
 
       try {
-        const result = await asyncConfig.validator(value, this.form.value);
+        // Call the named async validator from the registry
+        const result = await validator(value, asyncConfig.params, field, this.form.value);
         this.validatingFields.delete(field.name);
 
         if (result.valid) {
@@ -2501,7 +2539,8 @@ export class DynamicForm implements OnInit, OnDestroy {
         }
 
         return result.valid;
-      } catch {
+      } catch (error) {
+        console.error(`DynamicForm: Async validator "${asyncConfig.validatorName}" threw error:`, error);
         this.validatingFields.delete(field.name);
         this.externalErrors.set(field.name, 'Validation failed');
         return false;

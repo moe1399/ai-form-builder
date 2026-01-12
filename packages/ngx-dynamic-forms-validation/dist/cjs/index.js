@@ -25,11 +25,13 @@
  * ```
  */
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.validatorRegistry = exports.loadConfigSync = exports.loadConfig = exports.validateConfig = exports.parseConfig = exports.validateFieldValue = exports.validateForm = void 0;
+exports.asyncValidatorRegistry = exports.validatorRegistry = exports.loadConfigSync = exports.loadConfig = exports.validateConfig = exports.parseConfig = exports.validateFormAsync = exports.validateFieldAsync = exports.validateFieldValue = exports.validateForm = void 0;
 // Main validation functions
 var validator_js_1 = require("./validator.js");
 Object.defineProperty(exports, "validateForm", { enumerable: true, get: function () { return validator_js_1.validateForm; } });
 Object.defineProperty(exports, "validateFieldValue", { enumerable: true, get: function () { return validator_js_1.validateFieldValue; } });
+Object.defineProperty(exports, "validateFieldAsync", { enumerable: true, get: function () { return validator_js_1.validateFieldAsync; } });
+Object.defineProperty(exports, "validateFormAsync", { enumerable: true, get: function () { return validator_js_1.validateFormAsync; } });
 // Config loading and validation
 var config_loader_js_1 = require("./config-loader.js");
 Object.defineProperty(exports, "parseConfig", { enumerable: true, get: function () { return config_loader_js_1.parseConfig; } });
@@ -39,3 +41,4 @@ Object.defineProperty(exports, "loadConfigSync", { enumerable: true, get: functi
 // Validator registry
 var registry_js_1 = require("./registry.js");
 Object.defineProperty(exports, "validatorRegistry", { enumerable: true, get: function () { return registry_js_1.validatorRegistry; } });
+Object.defineProperty(exports, "asyncValidatorRegistry", { enumerable: true, get: function () { return registry_js_1.asyncValidatorRegistry; } });

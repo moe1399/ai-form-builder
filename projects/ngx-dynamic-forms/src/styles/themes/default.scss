@@ -323,6 +323,37 @@
     width: 100%;
   }
 
+  /* Async Validation Loading State */
+  [data-field-validating="true"] [data-input-container] {
+    position: relative;
+  }
+
+  [data-field-validating="true"] [data-input-container]::after {
+    content: '';
+    position: absolute;
+    /* Position to vertically center in input: container padding + input padding + half line height - half spinner */
+    top: calc(var(--df-spacing-sm) + var(--df-spacing-sm) + 4px);
+    right: calc(var(--df-spacing-xl) + var(--df-spacing-lg));
+    width: 16px;
+    height: 16px;
+    border: 2px solid var(--df-color-border);
+    border-top-color: var(--df-color-primary);
+    border-radius: 50%;
+    animation: df-spinner 0.6s linear infinite;
+  }
+
+  @keyframes df-spinner {
+    to {
+      transform: rotate(360deg);
+    }
+  }
+
+  /* Adjust input padding when validating to make room for spinner */
+  [data-field-validating="true"] input[data-input-type],
+  [data-field-validating="true"] select[data-input-type] {
+    padding-right: calc(var(--df-spacing-xl) + 24px);
+  }
+
   /* Disabled Fields */
   [data-field-disabled="true"] label {
     color: var(--df-color-text-disabled);

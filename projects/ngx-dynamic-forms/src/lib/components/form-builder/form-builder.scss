@@ -229,6 +229,40 @@ $text-muted: #666;
   border: 1px solid $border-color;
 }
 
+/* Async Validation Section */
+.async-validation-section {
+  margin-top: 1rem;
+  padding-top: 1rem;
+  border-top: 1px solid $border-color;
+
+  h4 {
+    margin: 0 0 0.75rem 0;
+    font-size: 0.875rem;
+    padding: 0.5rem 0.75rem;
+    background: $purple;
+    color: #fff;
+  }
+
+  .form-hint {
+    display: block;
+    margin-top: 0.25rem;
+    color: $text-muted;
+    font-size: 0.75rem;
+  }
+
+  .param-row {
+    display: flex;
+    gap: 0.5rem;
+    margin-top: 0.5rem;
+    align-items: center;
+
+    input {
+      flex: 1;
+      min-width: 0;
+    }
+  }
+}
+
 .options-section {
   margin-top: 1rem;
   padding-top: 1rem;

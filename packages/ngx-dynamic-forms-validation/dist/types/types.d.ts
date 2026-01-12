@@ -235,6 +235,7 @@ export interface FormFieldConfig {
     description?: string;
     value?: any;
     validations?: ValidationRule[];
+    asyncValidation?: AsyncValidationConfig;
     options?: {
         label: string;
         value: any;
@@ -272,6 +273,44 @@ export interface FormConfig {
  * Custom validator function signature (for server-side validation)
  */
 export type CustomValidatorFn = (value: any, params?: Record<string, any>, fieldConfig?: FormFieldConfig, formData?: Record<string, any>) => boolean;
+/**
+ * Async validator function signature (for server-side validation)
+ * Returns a promise that resolves to an AsyncValidationResult
+ */
+export type AsyncValidatorFn = (value: any, params?: Record<string, any>, fieldConfig?: FormFieldConfig, formData?: Record<string, any>) => Promise<AsyncValidationResult>;
+/**
+ * Result of async validation
+ */
+export interface AsyncValidationResult {
+    valid: boolean;
+    message?: string;
+}
+/**
+ * Async validation configuration using named validator pattern
+ * Works across client and server by referencing registered validators
+ */
+export interface AsyncValidationConfig {
+    /**
+     * Name of the registered async validator
+     * Must be registered on both client and server
+     */
+    validatorName: string;
+    /**
+     * Optional trigger for when validation should run
+     * - 'blur': Validate when field loses focus (default)
+     * - 'change': Validate on every change
+     */
+    trigger?: 'blur' | 'change';
+    /**
+     * Debounce delay in milliseconds (default: 300)
+     * Only applies when trigger is 'change'
+     */
+    debounceMs?: number;
+    /**
+     * Optional parameters to pass to the async validator
+     */
+    params?: Record<string, any>;
+}
 /**
  * Field validation error
  */

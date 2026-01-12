@@ -1360,6 +1360,96 @@
             </div>
           }
 
+          <!-- Async Validation -->
+          @if (shouldShowAsyncValidation(field)) {
+            <div class="async-validation-section">
+              <h4>Async Validation</h4>
+              <small class="form-hint">Server-side validation (e.g., check email exists)</small>
+
+              <div class="form-group">
+                <label>
+                  <input
+                    type="checkbox"
+                    [checked]="hasAsyncValidation(field)"
+                    (change)="toggleAsyncValidation(fieldIndex, $event)"
+                  />
+                  Enable Async Validation
+                </label>
+              </div>
+
+              @if (field.asyncValidation) {
+                <!-- Validator Name -->
+                <div class="form-group">
+                  <label>Validator</label>
+                  <select
+                    [ngModel]="field.asyncValidation.validatorName || ''"
+                    (ngModelChange)="updateAsyncValidatorName(fieldIndex, $event)"
+                  >
+                    <option value="">-- Select Validator --</option>
+                    @for (validator of availableAsyncValidators(); track validator) {
+                      <option [value]="validator">{{ validator }}</option>
+                    }
+                  </select>
+                  <small class="form-hint">Registered async validators</small>
+                </div>
+
+                <!-- Trigger -->
+                @if (field.asyncValidation.validatorName) {
+                  <div class="form-group">
+                    <label>Trigger</label>
+                    <select
+                      [ngModel]="field.asyncValidation.trigger || 'blur'"
+                      (ngModelChange)="updateAsyncValidationTrigger(fieldIndex, $event)"
+                    >
+                      <option value="blur">On Blur (default)</option>
+                      <option value="change">On Change</option>
+                    </select>
+                  </div>
+
+                  <!-- Debounce (only for 'change' trigger) -->
+                  @if (field.asyncValidation.trigger === 'change') {
+                    <div class="form-group">
+                      <label>Debounce (ms)</label>
+                      <input
+                        type="number"
+                        [ngModel]="field.asyncValidation.debounceMs ?? 300"
+                        (ngModelChange)="updateAsyncValidationDebounce(fieldIndex, $event)"
+                        placeholder="300"
+                      />
+                      <small class="form-hint">Delay before validation runs</small>
+                    </div>
+                  }
+
+                  <!-- Parameters (optional) -->
+                  <div class="form-group">
+                    <label>Parameters (optional)</label>
+                    <button class="btn-sm btn-secondary" (click)="addAsyncValidationParam(fieldIndex)">+ Add Parameter</button>
+
+                    @if (field.asyncValidation.params) {
+                      @for (paramKey of getAsyncValidationParamKeys(field); track paramKey) {
+                        <div class="param-row">
+                          <input
+                            type="text"
+                            [value]="paramKey"
+                            (change)="updateAsyncValidationParamKey(fieldIndex, paramKey, $any($event.target).value)"
+                            placeholder="Key"
+                          />
+                          <input
+                            type="text"
+                            [value]="field.asyncValidation.params![paramKey]"
+                            (change)="updateAsyncValidationParamValue(fieldIndex, paramKey, $any($event.target).value)"
+                            placeholder="Value"
+                          />
+                          <button class="btn-icon btn-danger" (click)="removeAsyncValidationParam(fieldIndex, paramKey)">×</button>
+                        </div>
+                      }
+                    }
+                  </div>
+                }
+              }
+            </div>
+          }
+
           <!-- JSON Preview -->
           <div class="json-preview-section">
             <h4>JSON Preview</h4>
