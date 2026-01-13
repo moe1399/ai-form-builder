@@ -2053,19 +2053,21 @@
 
   [data-wizard-steps] {
     display: flex;
-    justify-content: space-between;
+    justify-content: center;
     align-items: flex-start;
     list-style: none;
     padding: 0;
     margin: 0;
     gap: 0;
+    max-width: 100%;
   }
 
   [data-wizard-step] {
-    flex: 1;
+    flex: 0 1 auto;
     display: flex;
-    align-items: center;
+    align-items: flex-start;
     position: relative;
+    max-width: 150px;
   }
 
   [data-wizard-step-button] {
@@ -2074,9 +2076,8 @@
     align-items: center;
     gap: var(--df-spacing-xs);
     padding: var(--df-spacing-md);
-    background: var(--df-color-surface);
-    border: 2px solid var(--df-color-border);
-    border-radius: var(--df-border-radius-md);
+    background: transparent;
+    border: none;
     cursor: pointer;
     min-width: 60px;
     transition: all 0.15s ease;
@@ -2084,8 +2085,11 @@
   }
 
   [data-wizard-step-button]:hover:not(:disabled) {
-    border-color: var(--df-color-primary);
-    background: var(--df-color-background-light);
+    background: transparent;
+  }
+
+  [data-wizard-step-button]:hover:not(:disabled) [data-wizard-step-number] {
+    transform: scale(1.1);
   }
 
   [data-wizard-step-button]:disabled {
@@ -2118,18 +2122,19 @@
   }
 
   [data-wizard-step-connector] {
-    flex: 1;
+    width: 40px;
+    min-width: 20px;
     height: 2px;
     background: var(--df-color-border);
-    margin: 0 var(--df-spacing-md);
-    margin-top: 14px; /* Align with step number center */
-    align-self: flex-start;
+    margin: 0 var(--df-spacing-sm);
+    /* Align with step number center: padding (8px) + half of number height (14px) - half of line height (1px) = 21px */
+    margin-top: 21px;
+    flex-shrink: 1;
   }
 
   /* Current step */
   [data-wizard-step][data-step-current="true"] [data-wizard-step-button] {
-    border-color: var(--df-color-primary);
-    background: var(--df-color-surface);
+    background: transparent;
   }
 
   [data-wizard-step][data-step-current="true"] [data-wizard-step-number] {
@@ -2152,10 +2157,7 @@
     background: var(--df-color-primary);
   }
 
-  /* Visited steps */
-  [data-wizard-step][data-step-visited="true"] [data-wizard-step-button] {
-    border-color: var(--df-color-primary-light);
-  }
+  /* Visited steps - no special button styling needed without borders */
 
   /* Steps with errors */
   [data-wizard-step][data-step-error="true"] [data-wizard-step-number] {
@@ -2163,9 +2165,7 @@
     color: var(--df-color-text-inverse);
   }
 
-  [data-wizard-step][data-step-error="true"] [data-wizard-step-button] {
-    border-color: var(--df-color-error);
-  }
+  /* Error step button - no border styling needed */
 
   /* Non-clickable steps */
   [data-wizard-step][data-step-clickable="false"] [data-wizard-step-button] {
@@ -2573,6 +2573,68 @@
     [data-grand-total-cell] [data-datagrid-computed-value] {
       font-size: var(--df-font-size-lg);
       color: var(--df-color-primary);
+    }
+
+    /* ========================================
+       Wizard Responsive - Compact layout on mobile
+       ======================================== */
+
+    [data-wizard-progress] {
+      padding: var(--df-spacing-lg);
+    }
+
+    [data-wizard-steps] {
+      flex-wrap: wrap;
+      gap: var(--df-spacing-md);
+      justify-content: center;
+    }
+
+    [data-wizard-step] {
+      flex: 0 0 auto;
+      max-width: none;
+    }
+
+    [data-wizard-step-button] {
+      min-width: 50px;
+      padding: var(--df-spacing-sm);
+    }
+
+    [data-wizard-step-number] {
+      width: 24px;
+      height: 24px;
+      font-size: var(--df-font-size-xs);
+    }
+
+    [data-wizard-step-title] {
+      display: none; /* Hide titles on mobile - numbers are enough */
+    }
+
+    [data-wizard-step-connector] {
+      width: 20px;
+      min-width: 10px;
+      margin: 0 var(--df-spacing-xs);
+      /* Align with smaller step number: padding (6px) + half of number height (12px) - half of line height (1px) = 17px */
+      margin-top: 17px;
+    }
+
+    /* Page indicator more prominent on mobile */
+    [data-wizard-page-indicator] {
+      font-size: var(--df-font-size-base);
+      font-weight: bold;
+      margin-top: var(--df-spacing-md);
+    }
+
+    /* Wizard navigation - stack buttons */
+    [data-wizard-navigation] {
+      flex-direction: column-reverse;
+      gap: var(--df-spacing-md);
+      padding: var(--df-spacing-lg);
+    }
+
+    [data-wizard-prev],
+    [data-wizard-next],
+    [data-wizard-submit] {
+      width: 100%;
     }
   }
 }
