@@ -659,6 +659,33 @@
   }
 
   /* ========================================
+     Large Modal Variant
+     ======================================== */
+
+  .modal-lg {
+    max-width: 900px;
+  }
+
+  /* ========================================
+     JSON Editor Styles
+     ======================================== */
+
+  .json-error {
+    background: var(--fb-color-error-bg, #fee);
+    color: var(--fb-color-error, #c00);
+    border: 1px solid var(--fb-color-error, #c00);
+    padding: var(--fb-spacing-md);
+    margin-bottom: var(--fb-spacing-md);
+    font-size: var(--fb-font-size-sm);
+    border-radius: 4px;
+  }
+
+  textarea.has-error {
+    border-color: var(--fb-color-error, #c00);
+    outline-color: var(--fb-color-error, #c00);
+  }
+
+  /* ========================================
      Validation Items
      ======================================== */
 
@@ -1431,6 +1458,37 @@
     .left-panel,
     .right-panel {
       max-height: none;
+    }
+  }
+
+  /* ========================================
+     Read-Only Mode
+     ======================================== */
+
+  &.read-only {
+    .panel-section,
+    .section-editor,
+    .wizard-page-editor,
+    .field-editor {
+      input:disabled,
+      select:disabled,
+      textarea:disabled {
+        opacity: 0.7;
+        cursor: not-allowed;
+        background-color: var(--fb-color-surface-alt);
+      }
+    }
+
+    /* Visual indicator for read-only state */
+    .form-builder::before {
+      content: '';
+      display: block;
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 3px;
+      background: var(--fb-color-border);
     }
   }
 }

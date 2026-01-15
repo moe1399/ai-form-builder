@@ -9,17 +9,20 @@
   <!-- Toolbar -->
   @if (showToolbar()) {
     <div class="toolbar">
-      @if (isToolbarButtonVisible('showNewForm')) {
+      @if (isToolbarButtonVisible('showNewForm') && !readOnly()) {
         <button class="btn btn-primary" (click)="createNewForm()">New Form</button>
       }
-      @if (isToolbarButtonVisible('showSave')) {
+      @if (isToolbarButtonVisible('showSave') && !readOnly()) {
         <button class="btn btn-secondary" (click)="saveConfiguration()">Save</button>
       }
       @if (isToolbarButtonVisible('showExport')) {
         <button class="btn btn-secondary" (click)="exportJson()">Export JSON</button>
       }
-      @if (isToolbarButtonVisible('showImport')) {
+      @if (isToolbarButtonVisible('showImport') && !readOnly()) {
         <button class="btn btn-secondary" (click)="openImportJson()">Import JSON</button>
+      }
+      @if (isToolbarButtonVisible('showEditJson') && !readOnly()) {
+        <button class="btn btn-secondary" (click)="openEditJson()">Edit JSON</button>
       }
       @if (isToolbarButtonVisible('showShare')) {
         <button
@@ -30,7 +33,7 @@
           Share
         </button>
       }
-      @if (showVersionHistory() && currentConfig().id) {
+      @if (showVersionHistory() && currentConfig().id && !readOnly()) {
         <button
           class="btn btn-secondary btn-version"
           (click)="openCreateVersionModal()"
@@ -55,6 +58,7 @@
               [ngModel]="currentConfig().id"
               (ngModelChange)="updateFormSettings({ id: $event })"
               placeholder="form-id"
+              [disabled]="readOnly()"
             />
           </div>
         </div>
@@ -63,7 +67,9 @@
       <!-- Sections List -->
       <div class="panel-section">
         <h3>Sections</h3>
-        <button class="btn btn-sm btn-primary" (click)="addSection()">+ Add Section</button>
+        @if (!readOnly()) {
+          <button class="btn btn-sm btn-primary" (click)="addSection()">+ Add Section</button>
+        }
         <div class="sections-list">
           @for (section of getSortedSections(); track section.id) {
             <div
@@ -73,11 +79,13 @@
               <div class="section-info">
                 <strong>{{ section.id }}</strong>
               </div>
-              <div class="section-actions">
-                <button class="btn-icon" (click)="moveSectionUp(section.id); $event.stopPropagation()" title="Move Up">↑</button>
-                <button class="btn-icon" (click)="moveSectionDown(section.id); $event.stopPropagation()" title="Move Down">↓</button>
-                <button class="btn-icon btn-danger" (click)="removeSection(section.id); $event.stopPropagation()" title="Delete">×</button>
-              </div>
+              @if (!readOnly()) {
+                <div class="section-actions">
+                  <button class="btn-icon" (click)="moveSectionUp(section.id); $event.stopPropagation()" title="Move Up">↑</button>
+                  <button class="btn-icon" (click)="moveSectionDown(section.id); $event.stopPropagation()" title="Move Down">↓</button>
+                  <button class="btn-icon btn-danger" (click)="removeSection(section.id); $event.stopPropagation()" title="Delete">×</button>
+                </div>
+              }
             </div>
           }
           @if (getSortedSections().length === 0) {
@@ -94,7 +102,8 @@
             <input
               type="checkbox"
               [checked]="isWizardModeEnabled()"
-              (change)="toggleWizardMode($event)">
+              (change)="toggleWizardMode($event)"
+              [disabled]="readOnly()">
             Enable Wizard Mode
           </label>
           <small class="form-hint">Split form into multiple pages with step navigation</small>
@@ -107,7 +116,8 @@
                 <input
                   type="checkbox"
                   [checked]="currentConfig().wizard?.allowFreeNavigation || false"
-                  (change)="updateWizardAllowFreeNavigation($event)">
+                  (change)="updateWizardAllowFreeNavigation($event)"
+                  [disabled]="readOnly()">
                 Allow Free Navigation
               </label>
               <small class="form-hint">Users can click any step without validation</small>
@@ -118,7 +128,8 @@
                 <input
                   type="checkbox"
                   [checked]="currentConfig().wizard?.showProgressBar !== false"
-                  (change)="updateWizardShowProgressBar($event)">
+                  (change)="updateWizardShowProgressBar($event)"
+                  [disabled]="readOnly()">
                 Show Progress Bar
               </label>
             </div>
@@ -128,7 +139,8 @@
                 <input
                   type="checkbox"
                   [checked]="currentConfig().wizard?.showPageNumbers !== false"
-                  (change)="updateWizardShowPageNumbers($event)">
+                  (change)="updateWizardShowPageNumbers($event)"
+                  [disabled]="readOnly()">
                 Show Page Numbers
               </label>
             </div>
@@ -139,7 +151,8 @@
                 type="text"
                 [ngModel]="currentConfig().wizard?.nextLabel || ''"
                 (ngModelChange)="updateWizardNextLabel($event)"
-                placeholder="Next">
+                placeholder="Next"
+                [disabled]="readOnly()">
             </div>
 
             <div class="form-group">
@@ -148,7 +161,8 @@
                 type="text"
                 [ngModel]="currentConfig().wizard?.prevLabel || ''"
                 (ngModelChange)="updateWizardPrevLabel($event)"
-                placeholder="Previous">
+                placeholder="Previous"
+                [disabled]="readOnly()">
             </div>
 
             <div class="form-group">
@@ -157,14 +171,17 @@
                 type="text"
                 [ngModel]="currentConfig().wizard?.submitLabel || ''"
                 (ngModelChange)="updateWizardSubmitLabel($event)"
-                placeholder="Submit">
+                placeholder="Submit"
+                [disabled]="readOnly()">
             </div>
           </div>
 
           <!-- Wizard Pages List -->
           <div class="wizard-pages">
             <h4>Wizard Pages</h4>
-            <button class="btn btn-sm btn-primary" (click)="addWizardPage()">+ Add Page</button>
+            @if (!readOnly()) {
+              <button class="btn btn-sm btn-primary" (click)="addWizardPage()">+ Add Page</button>
+            }
 
             @for (page of getWizardPages(); track page.id) {
               <div
@@ -175,11 +192,13 @@
                   <strong>{{ page.title }}</strong>
                   <small>{{ page.sectionIds.length }} sections</small>
                 </div>
-                <div class="page-actions">
-                  <button class="btn-icon" (click)="moveWizardPageUp(page.id); $event.stopPropagation()" title="Move Up">↑</button>
-                  <button class="btn-icon" (click)="moveWizardPageDown(page.id); $event.stopPropagation()" title="Move Down">↓</button>
-                  <button class="btn-icon btn-danger" (click)="removeWizardPage(page.id); $event.stopPropagation()" title="Delete">×</button>
-                </div>
+                @if (!readOnly()) {
+                  <div class="page-actions">
+                    <button class="btn-icon" (click)="moveWizardPageUp(page.id); $event.stopPropagation()" title="Move Up">↑</button>
+                    <button class="btn-icon" (click)="moveWizardPageDown(page.id); $event.stopPropagation()" title="Move Down">↓</button>
+                    <button class="btn-icon btn-danger" (click)="removeWizardPage(page.id); $event.stopPropagation()" title="Delete">×</button>
+                  </div>
+                }
               </div>
             }
 
@@ -230,7 +249,7 @@
                           title="Preview this version">
                           Preview
                         </button>
-                        @if (!isLatestVersion(version.id)) {
+                        @if (!isLatestVersion(version.id) && !readOnly()) {
                           <button
                             class="btn-sm btn-primary"
                             (click)="restoreVersion(version.id); $event.stopPropagation()"
@@ -251,7 +270,9 @@
       <!-- Fields List -->
       <div class="panel-section">
         <h3>Fields</h3>
-        <button class="btn btn-sm btn-primary" (click)="addField()">+ Add Field</button>
+        @if (!readOnly()) {
+          <button class="btn btn-sm btn-primary" (click)="addField()">+ Add Field</button>
+        }
         <div class="fields-list">
           @for (field of currentConfig().fields; track field.name; let i = $index) {
             <div
@@ -262,11 +283,13 @@
                 <strong>{{ field.name }}</strong>
                 <small>({{ field.type }})</small>
               </div>
-              <div class="field-actions">
-                <button class="btn-icon" (click)="moveFieldUp(i); $event.stopPropagation()" title="Move Up">↑</button>
-                <button class="btn-icon" (click)="moveFieldDown(i); $event.stopPropagation()" title="Move Down">↓</button>
-                <button class="btn-icon btn-danger" (click)="removeField(i); $event.stopPropagation()" title="Delete">×</button>
-              </div>
+              @if (!readOnly()) {
+                <div class="field-actions">
+                  <button class="btn-icon" (click)="moveFieldUp(i); $event.stopPropagation()" title="Move Up">↑</button>
+                  <button class="btn-icon" (click)="moveFieldDown(i); $event.stopPropagation()" title="Move Down">↓</button>
+                  <button class="btn-icon btn-danger" (click)="removeField(i); $event.stopPropagation()" title="Delete">×</button>
+                </div>
+              }
             </div>
           }
         </div>
@@ -284,7 +307,9 @@
               <span class="config-name">{{ config.id }}</span>
               <div class="config-actions">
                 <button class="btn-sm btn-secondary" (click)="loadConfiguration(config.id)">Load</button>
-                <button class="btn-sm btn-danger" (click)="deleteConfiguration(config.id)">Delete</button>
+                @if (!readOnly()) {
+                  <button class="btn-sm btn-danger" (click)="deleteConfiguration(config.id)">Delete</button>
+                }
               </div>
             </div>
           }
@@ -304,9 +329,11 @@
             }
           </div>
           <div class="preview-actions">
-            <button class="btn-sm btn-primary" (click)="restoreVersion(selectedVersionId()!)">
-              Restore This Version
-            </button>
+            @if (!readOnly()) {
+              <button class="btn-sm btn-primary" (click)="restoreVersion(selectedVersionId()!)">
+                Restore This Version
+              </button>
+            }
             <button class="btn-sm btn-secondary" (click)="exitPreviewMode()">
               Exit Preview
             </button>
@@ -413,6 +440,7 @@
               [ngModel]="section.id"
               (ngModelChange)="updateSectionId(section.id, $event)"
               #sectionIdInput="ngModel"
+              [disabled]="readOnly()"
             />
             @if (sectionIdInput.value && isSectionIdDuplicate(sectionIdInput.value, section.id)) {
               <small class="form-error">Section ID already exists</small>
@@ -427,6 +455,7 @@
               type="text"
               [ngModel]="section.title"
               (ngModelChange)="updateSectionTitle(section.id, $event)"
+              [disabled]="readOnly()"
             />
           </div>
 
@@ -437,6 +466,7 @@
               [ngModel]="section.description"
               (ngModelChange)="updateSectionDescription(section.id, $event)"
               placeholder="Description text appears below the section header"
+              [disabled]="readOnly()"
             ></textarea>
           </div>
 
@@ -447,6 +477,7 @@
               [ngModel]="section.anchorId"
               (ngModelChange)="updateSectionAnchorId(section.id, $event)"
               placeholder="Leave empty to auto-generate from title"
+              [disabled]="readOnly()"
             />
             <small class="form-hint">Custom anchor for navigation links (e.g., #school-info)</small>
           </div>
@@ -460,6 +491,7 @@
                   type="checkbox"
                   [checked]="!!section.condition"
                   (change)="toggleSectionCondition(section.id)"
+                  [disabled]="readOnly()"
                 />
                 Show conditionally
               </label>
@@ -471,7 +503,8 @@
                   <label>When field</label>
                   <select
                     [ngModel]="section.condition.field"
-                    (ngModelChange)="updateSectionConditionField(section.id, $event)">
+                    (ngModelChange)="updateSectionConditionField(section.id, $event)"
+                    [disabled]="readOnly()">
                     @for (f of getAvailableSectionConditionFields(); track f.value) {
                       <option [value]="f.value">{{ f.label }}</option>
                     }
@@ -482,7 +515,8 @@
                   <label>Operator</label>
                   <select
                     [ngModel]="section.condition.operator"
-                    (ngModelChange)="updateSectionConditionOperator(section.id, $event)">
+                    (ngModelChange)="updateSectionConditionOperator(section.id, $event)"
+                    [disabled]="readOnly()">
                     @for (op of conditionOperators; track op) {
                       <option [value]="op">{{ op }}</option>
                     }
@@ -497,6 +531,7 @@
                       [ngModel]="section.condition.value"
                       (ngModelChange)="updateSectionConditionValue(section.id, $event)"
                       placeholder="Enter value"
+                      [disabled]="readOnly()"
                     />
                   </div>
                 }
@@ -517,6 +552,7 @@
               type="text"
               [ngModel]="page.id"
               (ngModelChange)="updateWizardPageId(page.id, $event)"
+              [disabled]="readOnly()"
             />
             <small class="form-hint">Unique identifier for the page</small>
           </div>
@@ -527,6 +563,7 @@
               type="text"
               [ngModel]="page.title"
               (ngModelChange)="updateWizardPageTitle(page.id, $event)"
+              [disabled]="readOnly()"
             />
             <small class="form-hint">Shown in the progress bar</small>
           </div>
@@ -538,6 +575,7 @@
               [ngModel]="page.description"
               (ngModelChange)="updateWizardPageDescription(page.id, $event)"
               placeholder="Description shown at the top of the page"
+              [disabled]="readOnly()"
             ></textarea>
           </div>
 
@@ -550,7 +588,8 @@
                   <input
                     type="checkbox"
                     [checked]="isSectionInPage(page.id, section.id)"
-                    (change)="toggleSectionInPage(page.id, section.id)">
+                    (change)="toggleSectionInPage(page.id, section.id)"
+                    [disabled]="readOnly()">
                   {{ section.title }}
                 </label>
               }
@@ -570,6 +609,7 @@
                   type="checkbox"
                   [checked]="!!page.condition"
                   (change)="toggleWizardPageCondition(page.id)"
+                  [disabled]="readOnly()"
                 />
                 Show conditionally
               </label>
@@ -581,7 +621,8 @@
                   <label>When field</label>
                   <select
                     [ngModel]="page.condition.field"
-                    (ngModelChange)="updateWizardPageConditionField(page.id, $event)">
+                    (ngModelChange)="updateWizardPageConditionField(page.id, $event)"
+                    [disabled]="readOnly()">
                     @for (f of getAvailableSectionConditionFields(); track f.value) {
                       <option [value]="f.value">{{ f.label }}</option>
                     }
@@ -592,7 +633,8 @@
                   <label>Operator</label>
                   <select
                     [ngModel]="page.condition.operator"
-                    (ngModelChange)="updateWizardPageConditionOperator(page.id, $event)">
+                    (ngModelChange)="updateWizardPageConditionOperator(page.id, $event)"
+                    [disabled]="readOnly()">
                     @for (op of conditionOperators; track op) {
                       <option [value]="op">{{ op }}</option>
                     }
@@ -607,6 +649,7 @@
                       [ngModel]="page.condition.value"
                       (ngModelChange)="updateWizardPageConditionValue(page.id, $event)"
                       placeholder="Enter value"
+                      [disabled]="readOnly()"
                     />
                   </div>
                 }
@@ -628,6 +671,7 @@
               type="text"
               [ngModel]="field.name"
               (ngModelChange)="updateFieldName(fieldIndex, $event)"
+              [disabled]="readOnly()"
             />
           </div>
 
@@ -637,6 +681,7 @@
               type="text"
               [ngModel]="field.label"
               (ngModelChange)="updateFieldLabel(fieldIndex, $event)"
+              [disabled]="readOnly()"
             />
           </div>
 
@@ -644,7 +689,8 @@
             <label>Field Type</label>
             <select
               [ngModel]="field.type"
-              (ngModelChange)="updateFieldType(fieldIndex, $event)">
+              (ngModelChange)="updateFieldType(fieldIndex, $event)"
+              [disabled]="readOnly()">
               @for (type of fieldTypes; track type) {
                 <option [value]="type">{{ type }}</option>
               }
@@ -660,6 +706,7 @@
                 [ngModel]="field.content"
                 (ngModelChange)="updateFieldContent(fieldIndex, $event)"
                 placeholder="Enter information text. Supports **bold**, *italic*, and [links](url)"
+                [disabled]="readOnly()"
               ></textarea>
               <small class="form-hint">Supports: **bold**, *italic*, [link text](url), line breaks</small>
             </div>
@@ -673,6 +720,7 @@
                 type="text"
                 [ngModel]="field.placeholder"
                 (ngModelChange)="updateFieldPlaceholder(fieldIndex, $event)"
+                [disabled]="readOnly()"
               />
             </div>
 
@@ -683,6 +731,7 @@
                 [ngModel]="field.description"
                 (ngModelChange)="updateFieldDescription(fieldIndex, $event)"
                 placeholder="Optional help text shown via info icon"
+                [disabled]="readOnly()"
               ></textarea>
             </div>
           }
@@ -695,6 +744,7 @@
               [ngModel]="field.inlineGroup"
               (ngModelChange)="updateFieldInlineGroup(fieldIndex, $event)"
               placeholder="e.g. name-row, address-row"
+              [disabled]="readOnly()"
             />
             <small class="form-hint">Fields with the same group name appear on the same row</small>
           </div>
@@ -703,7 +753,8 @@
             <label>Width (1-4)</label>
             <select
               [ngModel]="field.width || 1"
-              (ngModelChange)="updateFieldWidth(fieldIndex, $event)">
+              (ngModelChange)="updateFieldWidth(fieldIndex, $event)"
+              [disabled]="readOnly()">
               <option [value]="1">1 (default)</option>
               <option [value]="2">2 (double)</option>
               <option [value]="3">3 (triple)</option>
@@ -717,7 +768,8 @@
             <label>Section</label>
             <select
               [ngModel]="field.sectionId || ''"
-              (ngModelChange)="updateFieldSectionId(fieldIndex, $event)">
+              (ngModelChange)="updateFieldSectionId(fieldIndex, $event)"
+              [disabled]="readOnly()">
               <option value="">-- No Section --</option>
               @for (section of getSortedSections(); track section.id) {
                 <option [value]="section.id">{{ section.title }}</option>
@@ -732,6 +784,7 @@
                 type="checkbox"
                 [ngModel]="field.disabled"
                 (ngModelChange)="updateFieldDisabled(fieldIndex, $event)"
+                [disabled]="readOnly()"
               />
               Disabled
             </label>
@@ -746,6 +799,7 @@
                   type="checkbox"
                   [checked]="!!field.condition"
                   (change)="toggleFieldCondition(fieldIndex)"
+                  [disabled]="readOnly()"
                 />
                 Show conditionally
               </label>
@@ -757,7 +811,8 @@
                   <label>When field</label>
                   <select
                     [ngModel]="field.condition.field"
-                    (ngModelChange)="updateFieldConditionField(fieldIndex, $event)">
+                    (ngModelChange)="updateFieldConditionField(fieldIndex, $event)"
+                    [disabled]="readOnly()">
                     @for (f of getAvailableFieldConditionFields(fieldIndex); track f.value) {
                       <option [value]="f.value">{{ f.label }}</option>
                     }
@@ -768,7 +823,8 @@
                   <label>Operator</label>
                   <select
                     [ngModel]="field.condition.operator"
-                    (ngModelChange)="updateFieldConditionOperator(fieldIndex, $event)">
+                    (ngModelChange)="updateFieldConditionOperator(fieldIndex, $event)"
+                    [disabled]="readOnly()">
                     @for (op of conditionOperators; track op) {
                       <option [value]="op">{{ op }}</option>
                     }
@@ -783,6 +839,7 @@
                       [ngModel]="field.condition.value"
                       (ngModelChange)="updateFieldConditionValue(fieldIndex, $event)"
                       placeholder="Enter value"
+                      [disabled]="readOnly()"
                     />
                   </div>
                 }
@@ -800,7 +857,9 @@
               @if (field.type === 'checkbox') {
                 <small class="form-hint">Checkboxes allow multiple selections</small>
               }
-              <button class="btn-sm btn-primary" (click)="addOption(fieldIndex)">+ Add Option</button>
+              @if (!readOnly()) {
+                <button class="btn-sm btn-primary" (click)="addOption(fieldIndex)">+ Add Option</button>
+              }
 
               @for (option of field.options; track $index; let oi = $index) {
                 <div class="option-item">
@@ -811,6 +870,7 @@
                       [ngModel]="option.label"
                       (ngModelChange)="updateOptionLabel(fieldIndex, oi, $event)"
                       placeholder="Display text"
+                      [disabled]="readOnly()"
                     />
                   </div>
                   <div class="form-group">
@@ -820,9 +880,12 @@
                       [ngModel]="option.value"
                       (ngModelChange)="updateOptionValue(fieldIndex, oi, $event)"
                       placeholder="Stored value"
+                      [disabled]="readOnly()"
                     />
                   </div>
-                  <button class="btn-sm btn-danger" (click)="removeOption(fieldIndex, oi)">Remove</button>
+                  @if (!readOnly()) {
+                    <button class="btn-sm btn-danger" (click)="removeOption(fieldIndex, oi)">Remove</button>
+                  }
                 </div>
               }
 
@@ -842,7 +905,8 @@
                 <label>Row Mode</label>
                 <select
                   [ngModel]="field.tableConfig?.rowMode || 'fixed'"
-                  (ngModelChange)="updateTableRowMode(fieldIndex, $event)">
+                  (ngModelChange)="updateTableRowMode(fieldIndex, $event)"
+                  [disabled]="readOnly()">
                   <option value="fixed">Fixed (set number of rows)</option>
                   <option value="dynamic">Dynamic (add/remove rows)</option>
                 </select>
@@ -858,6 +922,7 @@
                     max="20"
                     [ngModel]="field.tableConfig?.fixedRowCount || 3"
                     (ngModelChange)="updateTableFixedRowCount(fieldIndex, $event)"
+                    [disabled]="readOnly()"
                   />
                 </div>
               }
@@ -872,6 +937,7 @@
                     max="10"
                     [ngModel]="field.tableConfig?.minRows || 0"
                     (ngModelChange)="updateTableMinRows(fieldIndex, $event)"
+                    [disabled]="readOnly()"
                   />
                 </div>
                 <div class="form-group">
@@ -882,6 +948,7 @@
                     max="50"
                     [ngModel]="field.tableConfig?.maxRows || 10"
                     (ngModelChange)="updateTableMaxRows(fieldIndex, $event)"
+                    [disabled]="readOnly()"
                   />
                 </div>
                 <div class="form-group">
@@ -891,6 +958,7 @@
                     [ngModel]="field.tableConfig?.addRowLabel || ''"
                     (ngModelChange)="updateTableAddRowLabel(fieldIndex, $event)"
                     placeholder="Add row"
+                    [disabled]="readOnly()"
                   />
                 </div>
               }
@@ -2003,26 +2071,48 @@
   <!-- JSON Editor Modal -->
   @if (showJsonEditor()) {
     <div class="modal-overlay" (click)="showJsonEditor.set(false)">
-      <div class="modal" (click)="$event.stopPropagation()">
+      <div class="modal modal-lg" (click)="$event.stopPropagation()">
         <div class="modal-header">
-          <h3>{{ jsonEditorMode() === 'export' ? 'Export JSON' : 'Import JSON' }}</h3>
+          @switch (jsonEditorMode()) {
+            @case ('export') {
+              <h3>Export JSON</h3>
+            }
+            @case ('import') {
+              <h3>Import JSON</h3>
+            }
+            @case ('edit') {
+              <h3>Edit Raw JSON</h3>
+            }
+          }
           <button class="btn-close" (click)="showJsonEditor.set(false)">×</button>
         </div>
         <div class="modal-body">
+          @if (jsonEditorMode() === 'edit' && jsonEditorError()) {
+            <div class="json-error">{{ jsonEditorError() }}</div>
+          }
           <textarea
             [(ngModel)]="jsonEditorContent"
             rows="20"
             [placeholder]="jsonEditorMode() === 'export' ? '' : 'Paste JSON configuration here...'"
             [readonly]="jsonEditorMode() === 'export'"
+            [class.has-error]="jsonEditorMode() === 'edit' && jsonEditorError()"
+            (input)="jsonEditorMode() === 'edit' ? validateJsonContent() : null"
           ></textarea>
         </div>
         <div class="modal-footer">
-          @if (jsonEditorMode() === 'export') {
-            <button class="btn btn-secondary" (click)="showJsonEditor.set(false)">Close</button>
-            <button class="btn btn-primary" (click)="copyJsonToClipboard()">{{ copyButtonText() }}</button>
-          } @else {
-            <button class="btn btn-secondary" (click)="showJsonEditor.set(false)">Cancel</button>
-            <button class="btn btn-primary" (click)="importJson()">Import</button>
+          @switch (jsonEditorMode()) {
+            @case ('export') {
+              <button class="btn btn-secondary" (click)="showJsonEditor.set(false)">Close</button>
+              <button class="btn btn-primary" (click)="copyJsonToClipboard()">{{ copyButtonText() }}</button>
+            }
+            @case ('import') {
+              <button class="btn btn-secondary" (click)="showJsonEditor.set(false)">Cancel</button>
+              <button class="btn btn-primary" (click)="importJson()">Import</button>
+            }
+            @case ('edit') {
+              <button class="btn btn-secondary" (click)="showJsonEditor.set(false)">Cancel</button>
+              <button class="btn btn-primary" (click)="applyJsonEdit()" [disabled]="!!jsonEditorError()">Apply Changes</button>
+            }
           }
         </div>
       </div>

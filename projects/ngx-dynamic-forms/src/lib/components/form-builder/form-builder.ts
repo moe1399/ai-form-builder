@@ -40,6 +40,7 @@ export interface ToolbarConfig {
   showSave?: boolean;
   showExport?: boolean;
   showImport?: boolean;
+  showEditJson?: boolean;
   showShare?: boolean;
 }
 
@@ -50,6 +51,7 @@ export interface ToolbarConfig {
   styleUrl: './form-builder.scss',
   host: {
     class: 'ngx-fb',
+    '[class.read-only]': 'readOnly()',
   },
 })
 export class NgxFormBuilder {
@@ -66,11 +68,14 @@ export class NgxFormBuilder {
   showSavedConfigs = input<boolean>(true);
   showFormSettings = input<boolean>(true);
   showVersionHistory = input<boolean>(true);
+  /** When true, disables all editing functionality while allowing viewing of configurations */
+  readOnly = input<boolean>(false);
   toolbarConfig = input<ToolbarConfig>({
     showNewForm: true,
     showSave: true,
     showExport: true,
     showImport: true,
+    showEditJson: true,
     showShare: true,
   });
 
@@ -99,8 +104,9 @@ export class NgxFormBuilder {
   selectedSectionId = signal<string | null>(null);
   selectedWizardPageId = signal<string | null>(null);
   showJsonEditor = signal(false);
-  jsonEditorMode = signal<'import' | 'export'>('import');
+  jsonEditorMode = signal<'import' | 'export' | 'edit'>('import');
   jsonEditorContent = signal('');
+  jsonEditorError = signal<string | null>(null);
   copyButtonText = signal('Copy to Clipboard');
   message = signal<{ type: 'success' | 'error'; text: string } | null>(null);
 
@@ -187,6 +193,7 @@ export class NgxFormBuilder {
    * Update the config (internal and model)
    */
   private updateConfig(config: FormConfig): void {
+    if (this.readOnly()) return;
     this.internalConfig.set(config);
     this.config.set(config);
   }
@@ -599,6 +606,112 @@ export class NgxFormBuilder {
       this.showMessage('success', 'Configuration imported successfully');
     } else {
       this.showMessage('error', 'Invalid JSON format');
+    }
+  }
+
+  /**
+   * Open raw JSON editor for live editing
+   */
+  openEditJson(): void {
+    const config = this.currentConfig();
+    const json = this.formBuilderService.exportConfig(config);
+    this.jsonEditorContent.set(json);
+    this.jsonEditorError.set(null);
+    this.jsonEditorMode.set('edit');
+    this.showJsonEditor.set(true);
+  }
+
+  /**
+   * Validate JSON content and update error state
+   */
+  validateJsonContent(): void {
+    const content = this.jsonEditorContent();
+    if (!content.trim()) {
+      this.jsonEditorError.set('JSON content cannot be empty');
+      return;
+    }
+
+    try {
+      const parsed = JSON.parse(content);
+
+      // Basic structure validation
+      if (!parsed || typeof parsed !== 'object') {
+        this.jsonEditorError.set('Invalid JSON: must be an object');
+        return;
+      }
+
+      if (!parsed.id || typeof parsed.id !== 'string') {
+        this.jsonEditorError.set('Invalid config: missing or invalid "id" field');
+        return;
+      }
+
+      if (!Array.isArray(parsed.fields)) {
+        this.jsonEditorError.set('Invalid config: "fields" must be an array');
+        return;
+      }
+
+      // Validate each field has required properties
+      for (let i = 0; i < parsed.fields.length; i++) {
+        const field = parsed.fields[i];
+        if (!field.name || typeof field.name !== 'string') {
+          this.jsonEditorError.set(`Invalid field at index ${i}: missing or invalid "name"`);
+          return;
+        }
+        if (!field.type || typeof field.type !== 'string') {
+          this.jsonEditorError.set(`Invalid field at index ${i}: missing or invalid "type"`);
+          return;
+        }
+        if (!this.fieldTypes.includes(field.type)) {
+          this.jsonEditorError.set(`Invalid field at index ${i}: unknown type "${field.type}"`);
+          return;
+        }
+      }
+
+      // Validate sections if present
+      if (parsed.sections !== undefined && !Array.isArray(parsed.sections)) {
+        this.jsonEditorError.set('Invalid config: "sections" must be an array');
+        return;
+      }
+
+      // Validate wizard config if present
+      if (parsed.wizard !== undefined) {
+        if (typeof parsed.wizard !== 'object' || parsed.wizard === null) {
+          this.jsonEditorError.set('Invalid config: "wizard" must be an object');
+          return;
+        }
+        if (!Array.isArray(parsed.wizard.pages)) {
+          this.jsonEditorError.set('Invalid config: "wizard.pages" must be an array');
+          return;
+        }
+      }
+
+      this.jsonEditorError.set(null);
+    } catch (e) {
+      if (e instanceof SyntaxError) {
+        this.jsonEditorError.set(`JSON syntax error: ${e.message}`);
+      } else {
+        this.jsonEditorError.set('Invalid JSON format');
+      }
+    }
+  }
+
+  /**
+   * Apply changes from raw JSON editor
+   */
+  applyJsonEdit(): void {
+    this.validateJsonContent();
+    if (this.jsonEditorError()) {
+      return;
+    }
+
+    const config = this.formBuilderService.importConfig(this.jsonEditorContent());
+    if (config) {
+      this.updateConfig(config);
+      this.selectedFieldIndex.set(null);
+      this.showJsonEditor.set(false);
+      this.showMessage('success', 'Configuration updated from JSON');
+    } else {
+      this.jsonEditorError.set('Failed to parse configuration');
     }
   }
 
