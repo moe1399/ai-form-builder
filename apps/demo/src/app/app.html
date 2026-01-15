@@ -55,10 +55,17 @@
           <li>Export/import as JSON</li>
           <li>Preview with different styling themes</li>
         </ul>
+        <div class="demo-options">
+          <label class="checkbox-option">
+            <input type="checkbox" [checked]="builderReadOnly()" (change)="builderReadOnly.set($any($event.target).checked)" />
+            Read-only mode (disables editing)
+          </label>
+        </div>
       </div>
 
       <ngx-form-builder
         [(config)]="currentConfig"
+        [readOnly]="builderReadOnly()"
         (shareRequested)="shareForm()" />
     </div>
   }

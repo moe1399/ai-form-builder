@@ -124,6 +124,25 @@ $text-muted: #666;
       margin-bottom: 0.25rem;
     }
   }
+
+  .demo-options {
+    margin-top: 1rem;
+    padding-top: 1rem;
+    border-top: 1px solid $border-color;
+
+    .checkbox-option {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      font-size: 0.875rem;
+      color: $text-color;
+      cursor: pointer;
+
+      input[type='checkbox'] {
+        cursor: pointer;
+      }
+    }
+  }
 }
 
 .preview-view {

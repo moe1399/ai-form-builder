@@ -133,6 +133,9 @@ export class App implements OnInit {
   // Current form configuration
   currentConfig = signal<FormConfig | null>(null);
 
+  // Read-only mode for form builder
+  builderReadOnly = signal<boolean>(false);
+
   // Submission result
   submissionResult = signal<string>('');
 

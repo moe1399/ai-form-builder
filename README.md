@@ -14,10 +14,10 @@ A headless Angular dynamic form system with matching server-side validation pack
 
 - **Headless UI**: Zero styling, complete control via `data-*` attributes
 - **JSON-driven**: Define forms as JSON configuration
-- **15 Field Types**: text, email, number, textarea, date, daterange, select, radio, checkbox, table, datagrid, phone, info, formref, fileupload
+- **16 Field Types**: text, email, number, textarea, date, daterange, select, radio, checkbox, table, datagrid, phone, info, formref, fileupload, autocomplete
 - **Validation**: Built-in validators + custom validators with conditional validation
 - **Server Validation**: Same validation rules on client and server
-- **Form Builder**: Visual form builder UI included
+- **Form Builder**: Visual form builder with raw JSON editor and version history
 
 ## Quick Start
 
@@ -221,6 +221,53 @@ Style via data attributes for complete control:
 ```scss
 [data-field-valid="false"] { border-color: red; }
 [data-field-type="email"] input { /* email-specific styles */ }
+```
+
+## Form Builder
+
+The form builder provides a visual interface for creating and editing form configurations.
+
+```typescript
+import { NgxFormBuilder } from '@moe1399/ngx-dynamic-forms';
+
+@Component({
+  imports: [NgxFormBuilder],
+  template: `
+    <ngx-form-builder
+      [(config)]="formConfig"
+      [showToolbar]="true"
+      [showVersionHistory]="true"
+    />
+  `
+})
+export class FormEditorComponent {
+  formConfig: FormConfig | null = null;
+}
+```
+
+### Features
+
+- **Visual Editor**: Add/edit fields, sections, validations, and wizard pages
+- **Raw JSON Editor**: Edit form configuration as JSON with real-time validation
+- **Version History**: Create and restore named versions of form configurations
+- **Import/Export**: Import and export form configurations as JSON
+- **URL Sharing**: Share form configurations via compressed URL parameters
+
+### Toolbar Configuration
+
+Control which toolbar buttons are visible:
+
+```typescript
+<ngx-form-builder
+  [toolbarConfig]="{
+    showNewForm: true,
+    showSave: true,
+    showExport: true,
+    showImport: true,
+    showEditJson: true,
+    showShare: true
+  }"
+/>
 ```
 
 ## Development

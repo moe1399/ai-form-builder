@@ -115,7 +115,7 @@ GitHub Actions auto-deploys to GitHub Pages on push to `main` (`.github/workflow
 - Visual builder UI: sections, fields, validations, drag-drop ordering
 - Save/load, JSON import/export, URL sharing (compressed)
 - Uses helper methods (no spread in templates), signals for state
-- **Inputs**: `showToolbar`, `showSavedConfigs`, `showFormSettings` (all default `true`)
+- **Inputs**: `showToolbar`, `showSavedConfigs`, `showFormSettings`, `showVersionHistory`, `readOnly` (all default `true` except `readOnly` defaults `false`)
 - **Output**: `configChanged: FormConfig`
 
 **3. Services**:
