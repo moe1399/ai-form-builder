@@ -1,3 +1,13 @@
+## [0.11.2](https://github.com/moe1399/ngx-dynamic-forms/compare/v0.11.1...v0.11.2) (2026-01-15)
+
+
+### Features
+
+* add form configuration version history ([db16adf](https://github.com/moe1399/ngx-dynamic-forms/commit/db16adfcdfbbc5067f8a1ab3f6d29ccdcf97178c))
+* **form-builder:** add raw JSON editor with validation ([2d8e6b1](https://github.com/moe1399/ngx-dynamic-forms/commit/2d8e6b13f99ace73dcea4213d73f3b22372a58e3))
+
+
+
 ## [0.11.1](https://github.com/moe1399/ngx-dynamic-forms/compare/v0.11.0...v0.11.1) (2026-01-13)
 
 
