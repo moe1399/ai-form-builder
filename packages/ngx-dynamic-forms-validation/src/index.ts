@@ -94,3 +94,21 @@ export type {
   ConfigValidationError,
   ConfigValidationResult,
 } from './config-loader.js';
+
+/**
+ * Relative path to the JSON Schema file for FormConfig validation.
+ * The schema is auto-generated from TypeScript types and included in the package distribution.
+ *
+ * @example
+ * ```typescript
+ * // ESM with import attributes
+ * import schema from '@moe1399/ngx-dynamic-forms-validation/schema' with { type: 'json' };
+ *
+ * // With Ajv validator
+ * import Ajv from 'ajv';
+ * const ajv = new Ajv();
+ * const validate = ajv.compile(schema);
+ * const isValid = validate(formConfig);
+ * ```
+ */
+export const FORM_CONFIG_SCHEMA_PATH = 'form-config.schema.json';

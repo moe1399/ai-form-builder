@@ -110,6 +110,11 @@ cd "$ROOT_DIR"
 npm run build:lib
 npm run build:validation
 if [ -z "$NPM_ONLY" ]; then
+  echo ""
+  echo ">>> Regenerating .NET models from schema..."
+  cd "$ROOT_DIR/packages/form-validation-dotnet"
+  npm run generate
+  cd "$ROOT_DIR"
   npm run build:validation-dotnet
 fi
 

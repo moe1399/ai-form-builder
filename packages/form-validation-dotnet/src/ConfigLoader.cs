@@ -417,15 +417,7 @@ public static class ConfigLoader
             }
         }
 
-        if (string.IsNullOrEmpty(config.RowMode) ||
-            (config.RowMode != "fixed" && config.RowMode != "dynamic"))
-        {
-            errors.Add(new ConfigValidationError
-            {
-                Path = $"{path}.rowMode",
-                Message = "Table rowMode must be \"fixed\" or \"dynamic\""
-            });
-        }
+        // RowMode is now an enum (TableRowMode), validation is handled by JSON deserialization
 
         return errors;
     }

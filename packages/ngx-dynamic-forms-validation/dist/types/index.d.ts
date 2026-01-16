@@ -28,3 +28,20 @@ export { parseConfig, validateConfig, loadConfig, loadConfigSync, } from './conf
 export { validatorRegistry, asyncValidatorRegistry, autocompleteFetchRegistry } from './registry.js';
 export type { FormConfig, FormFieldConfig, FormSection, WizardPage, WizardConfig, FieldType, ValidationRule, ValidationRuleType, ValidationCondition, ValidationConditionOperator, CountryCodeOption, PhoneConfig, DateRangeConfig, FormRefConfig, FileUploadTiming, FileUploadConfig, FileUploadValue, AutocompleteOption, AutocompleteValue, AutocompleteConfig, AutocompleteFetchHandler, TableColumnType, TableRowMode, TableConfig, TableColumnConfig, DataGridColumnType, DataGridColumnGroup, DataGridFormula, DataGridConfig, DataGridColumnConfig, DataGridRowLabel, DataGridTotalsConfig, CustomValidatorFn, AsyncValidatorFn, AsyncValidationResult, AsyncValidationConfig, ValidationResult, FieldValidationError, } from './types.js';
 export type { ConfigValidationError, ConfigValidationResult, } from './config-loader.js';
+/**
+ * Relative path to the JSON Schema file for FormConfig validation.
+ * The schema is auto-generated from TypeScript types and included in the package distribution.
+ *
+ * @example
+ * ```typescript
+ * // ESM with import attributes
+ * import schema from '@moe1399/ngx-dynamic-forms-validation/schema' with { type: 'json' };
+ *
+ * // With Ajv validator
+ * import Ajv from 'ajv';
+ * const ajv = new Ajv();
+ * const validate = ajv.compile(schema);
+ * const isValid = validate(formConfig);
+ * ```
+ */
+export declare const FORM_CONFIG_SCHEMA_PATH = "form-config.schema.json";

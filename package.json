@@ -19,6 +19,7 @@
     "build:validation": "npm run build -w @moe1399/ngx-dynamic-forms-validation",
     "build:validation-dotnet": "cd packages/form-validation-dotnet && dotnet build -c Release",
     "build:all": "npm run build:lib && npm run build:validation && npm run build:validation-dotnet",
+    "generate:dotnet": "npm run build:validation && cd packages/form-validation-dotnet && npm run generate && dotnet build",
     "publish": "./scripts/publish.sh patch",
     "publish:minor": "./scripts/publish.sh minor",
     "publish:major": "./scripts/publish.sh major",

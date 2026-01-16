@@ -1,0 +1,13 @@
+{
+  "name": "form-validation-dotnet-scripts",
+  "private": true,
+  "description": "Build scripts for .NET form validation package",
+  "scripts": {
+    "generate": "quicktype --src ../ngx-dynamic-forms-validation/dist/form-config.schema.json --src-lang schema --lang csharp --namespace DynamicForms.FormValidation.Models --framework SystemTextJson --features attributes-only --array-type list --any-type object --out src/Models/FormConfig.g.cs && npm run postgenerate",
+    "postgenerate": "node scripts/fix-generated.js",
+    "generate:check": "npm run generate && echo 'Generated successfully - compare with existing models'"
+  },
+  "devDependencies": {
+    "quicktype": "^23.0.0"
+  }
+}

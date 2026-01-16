@@ -198,6 +198,40 @@ app.MapPost("/api/submit", async (HttpContext context) =>
 app.Run();
 ```
 
+## Schema Synchronization
+
+The .NET models are **generated** from the TypeScript types via JSON Schema. This ensures they stay in sync with the `@moe1399/ngx-dynamic-forms-validation` package.
+
+> **Note:** Regeneration is a **manual process**. When TypeScript types change, you must run the generation command to update the .NET models.
+
+### Regenerating Models
+
+From the repository root:
+
+```bash
+npm run generate:dotnet
+```
+
+This single command:
+1. Builds the TypeScript validation package (generates JSON Schema)
+2. Runs quicktype to generate C# models from the schema
+3. Builds the .NET project to verify compilation
+
+### How It Works
+
+1. TypeScript types in `@moe1399/ngx-dynamic-forms-validation` are the source of truth
+2. `npm run build` generates `form-config.schema.json` using `ts-json-schema-generator`
+3. `npm run generate` uses `quicktype` to generate C# classes from the schema
+4. A post-processor fixes naming conventions and adds missing types
+
+### Generated Files
+
+| File | Description |
+|------|-------------|
+| `src/Models/FormConfig.g.cs` | Auto-generated models (do not edit manually) |
+| `src/Models/ValidationResult.cs` | Custom result types (manually maintained) |
+| `src/Models/ConfigValidationResult.cs` | Config validation types (manually maintained) |
+
 ## JSON Deserialization
 
 The library works with `System.Text.Json` for deserializing form configurations:
