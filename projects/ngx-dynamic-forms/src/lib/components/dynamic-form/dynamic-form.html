@@ -1,6 +1,6 @@
 @if (isFormReady()) {
 <form
-  class="ngx-df"
+  class="ngx-df df-form"
   [formGroup]="form"
   [attr.data-form-id]="config().id"
   [attr.data-form-valid]="valid"
@@ -16,6 +16,7 @@
     <!-- Info field type - renders markdown content block -->
     @if (field.type === 'info') {
       <div
+        class="df-field df-info-block"
         [attr.data-field-name]="field.name"
         [attr.data-field-type]="field.type"
         [attr.data-field-archived]="field.archived || false"
@@ -23,6 +24,7 @@
         data-info-block
         [ngClass]="field.cssClass">
         <div
+          class="df-info-content"
           data-info-content
           [innerHTML]="parseMarkdown(field.content)">
         </div>
@@ -30,6 +32,12 @@
     } @else {
       <!-- Regular field types -->
       <div
+        class="df-field"
+        [class.df-field-width-1]="(field.width || 1) === 1"
+        [class.df-field-width-2]="field.width === 2"
+        [class.df-field-width-3]="field.width === 3"
+        [class.df-field-width-4]="field.width === 4"
+        [class.df-no-label]="!field.label"
         [attr.data-field-name]="field.name"
         [attr.data-field-type]="field.type"
         [attr.data-field-archived]="field.archived || false"
@@ -46,14 +54,16 @@
 
         @if (field.label) {
           <label
+            class="df-label"
             [for]="field.name"
             [attr.data-label-for]="field.name">
             {{ field.label }}
             @if (isFieldRequired(field)) {
-              <span data-required-indicator>*</span>
+              <span class="df-required-indicator" data-required-indicator>*</span>
             }
             @if (field.description) {
               <span
+                class="df-info-icon"
                 data-info-icon
                 (click)="togglePopover(field.name); $event.stopPropagation(); $event.preventDefault()"
                 [attr.data-popover-open]="activePopover === field.name"
@@ -61,10 +71,11 @@
                 &#9432;
               </span>
               @if (activePopover === field.name) {
-                <span data-popover>
-                  <span data-popover-content>{{ field.description }}</span>
+                <span class="df-popover" data-popover>
+                  <span class="df-popover-content" data-popover-content>{{ field.description }}</span>
                   <button
                     type="button"
+                    class="df-popover-close"
                     data-popover-close
                     (click)="closePopover(); $event.stopPropagation(); $event.preventDefault()">
                     &times;
@@ -75,10 +86,11 @@
           </label>
         }
 
-        <div data-input-container>
+        <div class="df-input-container" data-input-container>
         @switch (field.type) {
           @case ('text') {
             <input
+              class="df-input"
               [id]="field.name"
               [formControlName]="field.name"
               type="text"
@@ -89,6 +101,7 @@
           }
           @case ('email') {
             <input
+              class="df-input"
               [id]="field.name"
               [formControlName]="field.name"
               type="email"
@@ -99,6 +112,7 @@
           }
           @case ('number') {
             <input
+              class="df-input"
               [id]="field.name"
               [formControlName]="field.name"
               type="number"
@@ -109,6 +123,7 @@
           }
           @case ('textarea') {
             <textarea
+              class="df-input"
               [id]="field.name"
               [formControlName]="field.name"
               [placeholder]="field.placeholder || ''"
@@ -119,6 +134,7 @@
           }
           @case ('date') {
             <input
+              class="df-input"
               [id]="field.name"
               [formControlName]="field.name"
               type="date"
@@ -128,6 +144,7 @@
           }
           @case ('select') {
             <select
+              class="df-input"
               [id]="field.name"
               [formControlName]="field.name"
               [attr.data-input-type]="field.type"
@@ -144,22 +161,25 @@
           }
           @case ('radio') {
             <div
+              class="df-radio-group"
               data-radio-group
               role="radiogroup"
               [attr.aria-labelledby]="field.name + '-label'"
               [style.pointer-events]="readOnly ? 'none' : null">
               @for (option of field.options; track option.value) {
                 <label
+                  class="df-radio-option"
                   data-radio-option
                   [attr.data-option-value]="option.value">
                   <input
                     type="radio"
+                    class="df-radio-input"
                     [formControlName]="field.name"
                     [attr.name]="field.name"
                     [value]="option.value"
                     data-radio-input
                   />
-                  <span data-radio-label>{{ option.label }}</span>
+                  <span class="df-radio-label" data-radio-label>{{ option.label }}</span>
                 </label>
               }
             </div>
@@ -167,28 +187,32 @@
           @case ('checkbox') {
             @if (field.options && field.options.length > 0) {
               <div
+                class="df-checkbox-group"
                 data-checkbox-group
                 role="group"
                 [attr.aria-labelledby]="field.name + '-label'"
                 [style.pointer-events]="readOnly ? 'none' : null">
                 @for (option of field.options; track option.value) {
                   <label
+                    class="df-checkbox-option"
                     data-checkbox-option
                     [attr.data-option-value]="option.value"
                     [attr.data-option-selected]="isCheckboxOptionSelected(field.name, option.value)">
                     <input
                       type="checkbox"
+                      class="df-checkbox-input"
                       [attr.name]="field.name + '_' + option.value"
                       [checked]="isCheckboxOptionSelected(field.name, option.value)"
                       (change)="toggleCheckboxOption(field.name, option.value)"
                       data-checkbox-input
                     />
-                    <span data-checkbox-label [innerHTML]="parseMarkdown(option.label)"></span>
+                    <span class="df-checkbox-label" data-checkbox-label [innerHTML]="parseMarkdown(option.label)"></span>
                   </label>
                 }
               </div>
             } @else {
               <input
+                class="df-checkbox-single"
                 [id]="field.name"
                 [formControlName]="field.name"
                 type="checkbox"
@@ -200,35 +224,38 @@
           @case ('table') {
             @if (field.tableConfig) {
               <div
+                class="df-table-container"
                 data-table-container
                 [attr.data-table-name]="field.name"
                 [attr.data-row-mode]="field.tableConfig.rowMode"
                 [attr.data-table-valid]="isTableValid(field.name)">
 
-                <table data-table [attr.data-table-for]="field.name">
-                  <thead data-table-header>
-                    <tr data-table-header-row>
+                <table class="df-table" data-table [attr.data-table-for]="field.name">
+                  <thead class="df-table-header" data-table-header>
+                    <tr class="df-table-header-row" data-table-header-row>
                       @for (column of field.tableConfig.columns; track column.name) {
                         <th
+                          class="df-table-header-cell"
                           data-table-header-cell
                           [attr.data-column-name]="column.name"
                           [attr.data-column-type]="column.type"
                           [attr.data-column-width]="column.width || 1">
                           {{ column.label }}
                           @if (hasColumnRequiredValidation(column)) {
-                            <span data-required-indicator>*</span>
+                            <span class="df-required-indicator" data-required-indicator>*</span>
                           }
                         </th>
                       }
                       @if (field.tableConfig.rowMode === 'dynamic') {
-                        <th data-table-header-cell data-table-actions-column></th>
+                        <th class="df-table-header-cell df-table-actions-column" data-table-header-cell data-table-actions-column></th>
                       }
                     </tr>
                   </thead>
 
-                  <tbody data-table-body [formArrayName]="field.name">
+                  <tbody class="df-table-body" data-table-body [formArrayName]="field.name">
                     @for (rowControl of getTableFormArray(field.name)?.controls; track $index; let rowIndex = $index) {
                       <tr
+                        class="df-table-row"
                         data-table-row
                         [formGroupName]="rowIndex"
                         [attr.data-row-index]="rowIndex"
@@ -236,6 +263,7 @@
 
                         @for (column of field.tableConfig.columns; track column.name) {
                           <td
+                            class="df-table-cell"
                             data-table-cell
                             [attr.data-column-name]="column.name"
                             [attr.data-column-label]="column.label"
@@ -250,6 +278,7 @@
                               @case ('text') {
                                 <input
                                   type="text"
+                                  class="df-table-input"
                                   [formControlName]="column.name"
                                   [placeholder]="column.placeholder || ''"
                                   data-table-input
@@ -260,6 +289,7 @@
                               @case ('number') {
                                 <input
                                   type="number"
+                                  class="df-table-input"
                                   [formControlName]="column.name"
                                   [placeholder]="column.placeholder || ''"
                                   data-table-input
@@ -270,6 +300,7 @@
                               @case ('date') {
                                 <input
                                   type="date"
+                                  class="df-table-input"
                                   [formControlName]="column.name"
                                   data-table-input
                                   [attr.data-input-type]="column.type"
@@ -278,6 +309,7 @@
                               }
                               @case ('select') {
                                 <select
+                                  class="df-table-input"
                                   [formControlName]="column.name"
                                   data-table-input
                                   [attr.data-input-type]="column.type"
@@ -295,7 +327,7 @@
                             }
 
                             @if (hasTableCellError(field.name, rowIndex, column.name) && isCellTooltipActive(field.name, rowIndex, column.name)) {
-                              <div data-cell-error-tooltip>
+                              <div class="df-cell-error-tooltip" data-cell-error-tooltip>
                                 {{ getTableCellErrorMessage(field, rowIndex, column.name) }}
                               </div>
                             }
@@ -303,9 +335,10 @@
                         }
 
                         @if (field.tableConfig.rowMode === 'dynamic') {
-                          <td data-table-cell data-table-actions-cell>
+                          <td class="df-table-cell df-table-actions-cell" data-table-cell data-table-actions-cell>
                             <button
                               type="button"
+                              class="df-table-action"
                               data-table-action="remove"
                               [disabled]="!canRemoveTableRow(field)"
                               (click)="removeTableRow(field, rowIndex)"
@@ -320,9 +353,10 @@
                 </table>
 
                 @if (field.tableConfig.rowMode === 'dynamic') {
-                  <div data-table-footer>
+                  <div class="df-table-footer" data-table-footer>
                     <button
                       type="button"
+                      class="df-table-action"
                       data-table-action="add"
                       [disabled]="!canAddTableRow(field)"
                       (click)="addTableRow(field)">
@@ -336,10 +370,12 @@
           @case ('phone') {
             @if (field.phoneConfig) {
               <div
+                class="df-phone-container"
                 data-phone-container
                 [formGroupName]="field.name"
                 [attr.data-phone-valid]="isPhoneValid(field.name)">
                 <select
+                  class="df-phone-country-code"
                   formControlName="countryCode"
                   data-phone-country-code
                   [attr.data-input-type]="'phone-country'"
@@ -356,6 +392,7 @@
                 </select>
                 <input
                   type="tel"
+                  class="df-phone-number"
                   formControlName="number"
                   [placeholder]="field.placeholder || 'Phone number'"
                   data-phone-number
@@ -369,6 +406,7 @@
             }
             @if (hasPhoneError(field.name)) {
               <div
+                class="df-validation-error"
                 [attr.data-error-for]="field.name"
                 data-validation-error>
                 {{ getPhoneErrorMessage(field.name) }}
@@ -377,17 +415,19 @@
           }
           @case ('daterange') {
             <div
+              class="df-daterange-container"
               data-daterange-container
               [formGroupName]="field.name"
               [attr.data-daterange-valid]="!hasDateRangeError(field.name)">
-              <div data-daterange-field data-daterange-from-field>
+              <div class="df-daterange-field df-daterange-from-field" data-daterange-field data-daterange-from-field>
                 @if (field.daterangeConfig?.fromLabel) {
-                  <label data-daterange-label data-daterange-from-label>
+                  <label class="df-daterange-label df-daterange-from-label" data-daterange-label data-daterange-from-label>
                     {{ field.daterangeConfig.fromLabel }}
                   </label>
                 }
                 <input
                   type="date"
+                  class="df-daterange-input df-daterange-from"
                   formControlName="fromDate"
                   data-daterange-input
                   data-daterange-from
@@ -395,17 +435,18 @@
                   [readonly]="readOnly"
                 />
               </div>
-              <span data-daterange-separator>
+              <span class="df-daterange-separator" data-daterange-separator>
                 {{ field.daterangeConfig?.separatorText || 'to' }}
               </span>
-              <div data-daterange-field data-daterange-to-field>
+              <div class="df-daterange-field df-daterange-to-field" data-daterange-field data-daterange-to-field>
                 @if (field.daterangeConfig?.toLabel) {
-                  <label data-daterange-label data-daterange-to-label>
+                  <label class="df-daterange-label df-daterange-to-label" data-daterange-label data-daterange-to-label>
                     {{ field.daterangeConfig.toLabel }}
                   </label>
                 }
                 <input
                   type="date"
+                  class="df-daterange-input df-daterange-to"
                   formControlName="toDate"
                   data-daterange-input
                   data-daterange-to
@@ -416,6 +457,7 @@
             </div>
             @if (hasDateRangeError(field.name)) {
               <div
+                class="df-validation-error"
                 [attr.data-error-for]="field.name"
                 data-validation-error>
                 {{ getDateRangeErrorMessage(field.name) }}
@@ -425,6 +467,7 @@
           @case ('datagrid') {
             @if (field.datagridConfig) {
               <div
+                class="df-datagrid-container"
                 data-datagrid-container
                 [attr.data-datagrid-name]="field.name"
                 [attr.data-datagrid-valid]="isDataGridValid(field.name)"
@@ -432,25 +475,26 @@
                 [attr.data-has-row-totals]="hasDataGridRowTotals(field)"
                 [attr.data-has-column-totals]="hasDataGridColumnTotals(field)">
 
-                <table data-datagrid [attr.data-datagrid-for]="field.name">
+                <table class="df-datagrid" data-datagrid [attr.data-datagrid-for]="field.name">
                   <!-- Column width definitions with explicit equal widths -->
                   <colgroup>
-                    <col data-col-row-label style="width: 80px" />
+                    <col class="df-col-row-label" data-col-row-label style="width: 80px" />
                     @for (column of field.datagridConfig.columns; track column.name) {
-                      <col data-col-data [style.width]="getDataGridDataColumnWidth(field)" />
+                      <col class="df-col-data" data-col-data [style.width]="getDataGridDataColumnWidth(field)" />
                     }
                     @if (hasDataGridRowTotals(field)) {
-                      <col data-col-total style="width: 80px" />
+                      <col class="df-col-total" data-col-total style="width: 80px" />
                     }
                   </colgroup>
 
                   <!-- Two-tier header: Column Groups -->
                   @if (hasDataGridColumnGroups(field)) {
-                    <thead data-datagrid-header data-datagrid-header-groups>
+                    <thead class="df-datagrid-header df-datagrid-header-groups" data-datagrid-header data-datagrid-header-groups>
                       <!-- First row: Group headers and ungrouped columns in column order -->
-                      <tr data-datagrid-group-row>
+                      <tr class="df-datagrid-group-row" data-datagrid-group-row>
                         <!-- Row label column header (spans both rows) -->
                         <th
+                          class="df-datagrid-header-cell df-row-label-header"
                           data-datagrid-header-cell
                           data-row-label-header
                           rowspan="2">
@@ -461,6 +505,7 @@
                         @for (item of getDataGridOrderedHeaderItems(field); track item.type === 'group' ? item.group.id : item.column.name) {
                           @if (item.type === 'group') {
                             <th
+                              class="df-datagrid-header-cell df-column-group"
                               data-datagrid-header-cell
                               data-column-group
                               [attr.data-column-group-id]="item.group.id"
@@ -470,6 +515,7 @@
                             </th>
                           } @else {
                             <th
+                              class="df-datagrid-header-cell df-column-ungrouped"
                               data-datagrid-header-cell
                               data-column-ungrouped
                               [attr.data-column-name]="item.column.name"
@@ -479,7 +525,7 @@
                               rowspan="2">
                               {{ item.column.label }}
                               @if (!item.column.computed && hasDataGridColumnRequiredValidation(item.column)) {
-                                <span data-required-indicator>*</span>
+                                <span class="df-required-indicator" data-required-indicator>*</span>
                               }
                             </th>
                           }
@@ -488,6 +534,7 @@
                         <!-- Row total header (spans both rows) -->
                         @if (hasDataGridRowTotals(field)) {
                           <th
+                            class="df-datagrid-header-cell df-row-total-header"
                             data-datagrid-header-cell
                             data-row-total-header
                             rowspan="2">
@@ -497,11 +544,12 @@
                       </tr>
 
                       <!-- Second row: Individual columns within groups (in column order) -->
-                      <tr data-datagrid-column-row>
+                      <tr class="df-datagrid-column-row" data-datagrid-column-row>
                         @for (item of getDataGridOrderedHeaderItems(field); track item.type === 'group' ? item.group.id : item.column.name) {
                           @if (item.type === 'group') {
                             @for (columnName of item.group.columnIds; track columnName) {
                               <th
+                                class="df-datagrid-header-cell"
                                 data-datagrid-header-cell
                                 [attr.data-column-name]="columnName"
                                 [attr.data-column-type]="getDataGridColumn(field, columnName)?.type"
@@ -510,7 +558,7 @@
                                 [attr.data-in-group]="item.group.id">
                                 {{ getDataGridColumn(field, columnName)?.label }}
                                 @if (!getDataGridColumn(field, columnName)?.computed && hasDataGridColumnRequiredValidation(getDataGridColumn(field, columnName)!)) {
-                                  <span data-required-indicator>*</span>
+                                  <span class="df-required-indicator" data-required-indicator>*</span>
                                 }
                               </th>
                             }
@@ -520,13 +568,14 @@
                     </thead>
                   } @else {
                     <!-- Single-tier header (no groups) -->
-                    <thead data-datagrid-header>
-                      <tr data-datagrid-header-row>
-                        <th data-datagrid-header-cell data-row-label-header>
+                    <thead class="df-datagrid-header" data-datagrid-header>
+                      <tr class="df-datagrid-header-row" data-datagrid-header-row>
+                        <th class="df-datagrid-header-cell df-row-label-header" data-datagrid-header-cell data-row-label-header>
                           {{ field.datagridConfig.rowLabelHeader || '' }}
                         </th>
                         @for (column of field.datagridConfig.columns; track column.name) {
                           <th
+                            class="df-datagrid-header-cell"
                             data-datagrid-header-cell
                             [attr.data-column-name]="column.name"
                             [attr.data-column-type]="column.type"
@@ -534,12 +583,12 @@
                             [attr.data-column-width]="column.width || 1">
                             {{ column.label }}
                             @if (!column.computed && hasDataGridColumnRequiredValidation(column)) {
-                              <span data-required-indicator>*</span>
+                              <span class="df-required-indicator" data-required-indicator>*</span>
                             }
                           </th>
                         }
                         @if (hasDataGridRowTotals(field)) {
-                          <th data-datagrid-header-cell data-row-total-header>
+                          <th class="df-datagrid-header-cell df-row-total-header" data-datagrid-header-cell data-row-total-header>
                             {{ field.datagridConfig.totals?.rowTotalLabel || 'Total' }}
                           </th>
                         }
@@ -548,9 +597,10 @@
                   }
 
                   <!-- Data rows -->
-                  <tbody data-datagrid-body [formGroupName]="field.name">
+                  <tbody class="df-datagrid-body" data-datagrid-body [formGroupName]="field.name">
                     @for (rowLabel of field.datagridConfig.rowLabels; track rowLabel.id) {
                       <tr
+                        class="df-datagrid-row"
                         data-datagrid-row
                         [formGroupName]="rowLabel.id"
                         [attr.data-row-id]="rowLabel.id"
@@ -558,6 +608,7 @@
 
                         <!-- Row label cell -->
                         <td
+                          class="df-datagrid-cell df-row-label-cell"
                           data-datagrid-cell
                           data-row-label-cell
                           [attr.data-row-label-header]="field.datagridConfig.rowLabelHeader || ''">
@@ -567,6 +618,7 @@
                         <!-- Data cells -->
                         @for (column of field.datagridConfig.columns; track column.name) {
                           <td
+                            class="df-datagrid-cell"
                             data-datagrid-cell
                             [attr.data-column-name]="column.name"
                             [attr.data-column-label]="column.label"
@@ -577,7 +629,7 @@
 
                             @if (column.computed) {
                               <!-- Computed cell (read-only) -->
-                              <span data-datagrid-computed-value>
+                              <span class="df-datagrid-computed-value" data-datagrid-computed-value>
                                 {{ getDataGridComputedValue(field, rowLabel.id, column) }}
                               </span>
                             } @else {
@@ -586,6 +638,7 @@
                                 @case ('text') {
                                   <input
                                     type="text"
+                                    class="df-datagrid-input"
                                     [formControlName]="column.name"
                                     [placeholder]="column.placeholder || ''"
                                     data-datagrid-input
@@ -596,6 +649,7 @@
                                 @case ('number') {
                                   <input
                                     type="number"
+                                    class="df-datagrid-input"
                                     [formControlName]="column.name"
                                     [placeholder]="column.placeholder || ''"
                                     data-datagrid-input
@@ -606,6 +660,7 @@
                                 @case ('date') {
                                   <input
                                     type="date"
+                                    class="df-datagrid-input"
                                     [formControlName]="column.name"
                                     data-datagrid-input
                                     [attr.data-input-type]="column.type"
@@ -614,6 +669,7 @@
                                 }
                                 @case ('select') {
                                   <select
+                                    class="df-datagrid-input"
                                     [formControlName]="column.name"
                                     data-datagrid-input
                                     [attr.data-input-type]="column.type"
@@ -633,11 +689,12 @@
                         <!-- Row total cell -->
                         @if (hasDataGridRowTotals(field)) {
                           <td
+                            class="df-datagrid-cell df-row-total-cell"
                             data-datagrid-cell
                             data-row-total-cell
                             data-is-total-column="true"
                             [attr.data-total-label]="field.datagridConfig.totals?.rowTotalLabel || 'Total'">
-                            <span data-datagrid-computed-value>
+                            <span class="df-datagrid-computed-value" data-datagrid-computed-value>
                               {{ getDataGridRowTotal(field, rowLabel.id) }}
                             </span>
                           </td>
@@ -647,25 +704,26 @@
 
                     <!-- Column totals row -->
                     @if (hasDataGridColumnTotals(field)) {
-                      <tr data-datagrid-row data-is-total-row="true">
-                        <td data-datagrid-cell data-row-label-cell data-total-label-cell>
+                      <tr class="df-datagrid-row" data-datagrid-row data-is-total-row="true">
+                        <td class="df-datagrid-cell df-row-label-cell df-total-label-cell" data-datagrid-cell data-row-label-cell data-total-label-cell>
                           {{ field.datagridConfig.totals?.columnTotalLabel || 'Total' }}
                         </td>
                         @for (column of field.datagridConfig.columns; track column.name) {
                           <td
+                            class="df-datagrid-cell df-column-total-cell"
                             data-datagrid-cell
                             data-column-total-cell
                             [attr.data-column-name]="column.name"
                             [attr.data-column-label]="column.label"
                             data-is-total-row="true">
-                            <span data-datagrid-computed-value>
+                            <span class="df-datagrid-computed-value" data-datagrid-computed-value>
                               {{ getDataGridColumnTotal(field, column.name) }}
                             </span>
                           </td>
                         }
                         @if (hasDataGridRowTotals(field)) {
-                          <td data-datagrid-cell data-grand-total-cell data-is-total-row="true" data-is-total-column="true">
-                            <span data-datagrid-computed-value>
+                          <td class="df-datagrid-cell df-grand-total-cell" data-datagrid-cell data-grand-total-cell data-is-total-row="true" data-is-total-column="true">
+                            <span class="df-datagrid-computed-value" data-datagrid-computed-value>
                               {{ getDataGridGrandTotal(field) }}
                             </span>
                           </td>
@@ -680,6 +738,7 @@
           @case ('formref') {
             @if (field.formrefConfig && getResolvedFormRef(field.name)) {
               <div
+                class="df-formref-container"
                 data-formref-container
                 [formGroupName]="field.name"
                 [attr.data-formref-name]="field.name"
@@ -691,16 +750,18 @@
                 @if (field.formrefConfig.showSections) {
                   @for (section of getFormRefSections(field); track section.id) {
                     <div
+                      class="df-formref-section"
                       data-formref-section
                       [attr.data-formref-section-id]="section.id">
-                      <header data-formref-section-header>{{ section.title }}</header>
+                      <header class="df-formref-section-header" data-formref-section-header>{{ section.title }}</header>
                       @if (section.description) {
-                        <div data-formref-section-description>{{ section.description }}</div>
+                        <div class="df-formref-section-description" data-formref-section-description>{{ section.description }}</div>
                       }
                       <!-- Fields in this section -->
                       @for (embeddedField of getFormRefFields(field); track embeddedField.name) {
                         @if (embeddedField.sectionId === section.id) {
                           <div
+                            class="df-formref-field"
                             data-formref-field
                             [attr.data-formref-field-name]="embeddedField.name"
                             [attr.data-formref-field-type]="embeddedField.type"
@@ -708,14 +769,15 @@
                             [attr.data-field-touched]="getFormRefFormGroup(field.name)?.get(embeddedField.name)?.touched"
                             [attr.data-field-required]="embeddedField.validations && embeddedField.validations.length > 0 && embeddedField.validations[0].type === 'required'">
                             <label
+                              class="df-formref-label"
                               [for]="embeddedField.name"
                               data-formref-label>
                               {{ embeddedField.label }}
                               @if (embeddedField.validations && embeddedField.validations.length > 0 && embeddedField.validations[0].type === 'required') {
-                                <span data-required-indicator>*</span>
+                                <span class="df-required-indicator" data-required-indicator>*</span>
                               }
                             </label>
-                            <div data-formref-input-container>
+                            <div class="df-formref-input-container" data-formref-input-container>
                               @switch (embeddedField.type) {
                                 @case ('text') {
                                   <input
@@ -723,6 +785,7 @@
                                     [formControlName]="embeddedField.name"
                                     type="text"
                                     [placeholder]="embeddedField.placeholder || ''"
+                                    class="df-formref-input"
                                     data-formref-input
                                   />
                                 }
@@ -732,6 +795,7 @@
                                     [formControlName]="embeddedField.name"
                                     type="email"
                                     [placeholder]="embeddedField.placeholder || ''"
+                                    class="df-formref-input"
                                     data-formref-input
                                   />
                                 }
@@ -741,6 +805,7 @@
                                     [formControlName]="embeddedField.name"
                                     type="number"
                                     [placeholder]="embeddedField.placeholder || ''"
+                                    class="df-formref-input"
                                     data-formref-input
                                   />
                                 }
@@ -749,6 +814,7 @@
                                     [id]="embeddedField.name"
                                     [formControlName]="embeddedField.name"
                                     [placeholder]="embeddedField.placeholder || ''"
+                                    class="df-formref-input"
                                     data-formref-input
                                     rows="4"
                                   ></textarea>
@@ -758,6 +824,7 @@
                                     [id]="embeddedField.name"
                                     [formControlName]="embeddedField.name"
                                     type="date"
+                                    class="df-formref-input"
                                     data-formref-input
                                   />
                                 }
@@ -765,6 +832,7 @@
                                   <select
                                     [id]="embeddedField.name"
                                     [formControlName]="embeddedField.name"
+                                    class="df-formref-input"
                                     data-formref-input
                                     [style.pointer-events]="readOnly ? 'none' : null">
                                     @if (embeddedField.placeholder) {
@@ -777,32 +845,34 @@
                                   </select>
                                 }
                                 @case ('radio') {
-                                  <div data-formref-radio-group [style.pointer-events]="readOnly ? 'none' : null">
+                                  <div class="df-formref-radio-group" data-formref-radio-group [style.pointer-events]="readOnly ? 'none' : null">
                                     @for (option of embeddedField.options; track option.value) {
-                                      <label data-formref-radio-option>
+                                      <label class="df-formref-radio-option" data-formref-radio-option>
                                         <input
                                           type="radio"
                                           [formControlName]="embeddedField.name"
                                           [attr.name]="embeddedField.name"
                                           [value]="option.value"
+                                          class="df-formref-radio-input"
                                           data-formref-radio-input
                                         />
-                                        <span data-formref-radio-label>{{ option.label }}</span>
+                                        <span class="df-formref-radio-label" data-formref-radio-label>{{ option.label }}</span>
                                       </label>
                                     }
                                   </div>
                                 }
                                 @case ('checkbox') {
                                   @if (embeddedField.options && embeddedField.options.length > 0) {
-                                    <div data-formref-checkbox-group [style.pointer-events]="readOnly ? 'none' : null">
+                                    <div class="df-formref-checkbox-group" data-formref-checkbox-group [style.pointer-events]="readOnly ? 'none' : null">
                                       @for (option of embeddedField.options; track option.value) {
-                                        <label data-formref-checkbox-option>
+                                        <label class="df-formref-checkbox-option" data-formref-checkbox-option>
                                           <input
                                             type="checkbox"
                                             [attr.name]="embeddedField.name + '_' + option.value"
+                                            class="df-formref-checkbox-input"
                                             data-formref-checkbox-input
                                           />
-                                          <span data-formref-checkbox-label>{{ option.label }}</span>
+                                          <span class="df-formref-checkbox-label" data-formref-checkbox-label>{{ option.label }}</span>
                                         </label>
                                       }
                                     </div>
@@ -811,6 +881,7 @@
                                       [id]="embeddedField.name"
                                       [formControlName]="embeddedField.name"
                                       type="checkbox"
+                                      class="df-formref-checkbox-single"
                                       data-formref-checkbox-single
                                       [style.pointer-events]="readOnly ? 'none' : null"
                                     />
@@ -903,9 +974,9 @@
                               </select>
                             }
                             @case ('radio') {
-                              <div data-formref-radio-group [style.pointer-events]="readOnly ? 'none' : null">
+                              <div class="df-formref-radio-group" data-formref-radio-group [style.pointer-events]="readOnly ? 'none' : null">
                                 @for (option of embeddedField.options; track option.value) {
-                                  <label data-formref-radio-option>
+                                  <label class="df-formref-radio-option" data-formref-radio-option>
                                     <input
                                       type="radio"
                                       [formControlName]="embeddedField.name"
@@ -913,22 +984,22 @@
                                       [value]="option.value"
                                       data-formref-radio-input
                                     />
-                                    <span data-formref-radio-label>{{ option.label }}</span>
+                                    <span class="df-formref-radio-label" data-formref-radio-label>{{ option.label }}</span>
                                   </label>
                                 }
                               </div>
                             }
                             @case ('checkbox') {
                               @if (embeddedField.options && embeddedField.options.length > 0) {
-                                <div data-formref-checkbox-group [style.pointer-events]="readOnly ? 'none' : null">
+                                <div class="df-formref-checkbox-group" data-formref-checkbox-group [style.pointer-events]="readOnly ? 'none' : null">
                                   @for (option of embeddedField.options; track option.value) {
-                                    <label data-formref-checkbox-option>
+                                    <label class="df-formref-checkbox-option" data-formref-checkbox-option>
                                       <input
                                         type="checkbox"
                                         [attr.name]="embeddedField.name + '_' + option.value"
                                         data-formref-checkbox-input
                                       />
-                                      <span data-formref-checkbox-label>{{ option.label }}</span>
+                                      <span class="df-formref-checkbox-label" data-formref-checkbox-label>{{ option.label }}</span>
                                     </label>
                                   }
                                 </div>
@@ -1027,9 +1098,9 @@
                             </select>
                           }
                           @case ('radio') {
-                            <div data-formref-radio-group [style.pointer-events]="readOnly ? 'none' : null">
+                            <div class="df-formref-radio-group" data-formref-radio-group [style.pointer-events]="readOnly ? 'none' : null">
                               @for (option of embeddedField.options; track option.value) {
-                                <label data-formref-radio-option>
+                                <label class="df-formref-radio-option" data-formref-radio-option>
                                   <input
                                     type="radio"
                                     [formControlName]="embeddedField.name"
@@ -1037,22 +1108,22 @@
                                     [value]="option.value"
                                     data-formref-radio-input
                                   />
-                                  <span data-formref-radio-label>{{ option.label }}</span>
+                                  <span class="df-formref-radio-label" data-formref-radio-label>{{ option.label }}</span>
                                 </label>
                               }
                             </div>
                           }
                           @case ('checkbox') {
                             @if (embeddedField.options && embeddedField.options.length > 0) {
-                              <div data-formref-checkbox-group [style.pointer-events]="readOnly ? 'none' : null">
+                              <div class="df-formref-checkbox-group" data-formref-checkbox-group [style.pointer-events]="readOnly ? 'none' : null">
                                 @for (option of embeddedField.options; track option.value) {
-                                  <label data-formref-checkbox-option>
+                                  <label class="df-formref-checkbox-option" data-formref-checkbox-option>
                                     <input
                                       type="checkbox"
                                       [attr.name]="embeddedField.name + '_' + option.value"
                                       data-formref-checkbox-input
                                     />
-                                    <span data-formref-checkbox-label>{{ option.label }}</span>
+                                    <span class="df-formref-checkbox-label" data-formref-checkbox-label>{{ option.label }}</span>
                                   </label>
                                 }
                               </div>
@@ -1073,12 +1144,13 @@
                 }
               </div>
             } @else if (field.formrefConfig) {
-              <div data-formref-error>
+              <div class="df-formref-error" data-formref-error>
                 Form "{{ field.formrefConfig.formId }}" not found
               </div>
             }
             @if (hasFormRefError(field.name)) {
               <div
+                class="df-validation-error"
                 [attr.data-error-for]="field.name"
                 data-validation-error>
                 Some fields in the embedded form have errors
@@ -1269,15 +1341,17 @@
           }
           @case ('autocomplete') {
             <div
+              class="df-autocomplete-container"
               data-autocomplete-container
               [attr.data-autocomplete-name]="field.name"
               [attr.data-autocomplete-open]="isAutocompleteDropdownOpen(field.name)"
               [attr.data-autocomplete-loading]="isAutocompleteLoading(field.name)"
               [attr.data-autocomplete-has-selection]="hasAutocompleteSelection(field.name)">
 
-              <div data-autocomplete-input-wrapper>
+              <div class="df-autocomplete-input-wrapper" data-autocomplete-input-wrapper>
                 <input
                   type="text"
+                  class="df-autocomplete-input"
                   [id]="field.name"
                   [value]="getAutocompleteSearchText(field.name)"
                   (input)="onAutocompleteInput($event, field.name)"
@@ -1298,6 +1372,7 @@
                 @if (!readOnly && hasAutocompleteSelection(field.name)) {
                   <button
                     type="button"
+                    class="df-autocomplete-clear"
                     data-autocomplete-clear
                     (click)="clearAutocompleteSelection(field.name); $event.stopPropagation()"
                     aria-label="Clear selection">
@@ -1308,19 +1383,20 @@
 
               @if (isAutocompleteDropdownOpen(field.name)) {
                 <div
+                  class="df-autocomplete-dropdown"
                   data-autocomplete-dropdown
                   [id]="field.name + '-listbox'"
                   role="listbox"
                   [attr.aria-label]="field.label">
 
                   @if (isAutocompleteLoading(field.name)) {
-                    <div data-autocomplete-loading-message>
+                    <div class="df-autocomplete-loading-message" data-autocomplete-loading-message>
                       {{ field.autocompleteConfig?.loadingMessage || 'Loading...' }}
                     </div>
                   }
 
                   @if (!isAutocompleteLoading(field.name) && getAutocompleteOptions(field.name).length === 0) {
-                    <div data-autocomplete-no-results>
+                    <div class="df-autocomplete-no-results" data-autocomplete-no-results>
                       {{ field.autocompleteConfig?.noResultsMessage || 'No results found' }}
                     </div>
                   }
@@ -1328,6 +1404,7 @@
                   @if (!isAutocompleteLoading(field.name)) {
                     @for (option of getAutocompleteOptions(field.name); track option.value; let i = $index) {
                       <div
+                        class="df-autocomplete-option"
                         data-autocomplete-option
                         [attr.data-option-value]="option.value"
                         [attr.data-option-highlighted]="i === getAutocompleteHighlightedIndex(field.name)"
@@ -1348,6 +1425,7 @@
 
         @if (hasError(field.name)) {
           <div
+            class="df-validation-error"
             [attr.data-error-for]="field.name"
             data-validation-error>
             {{ getErrorMessage(field.name) }}
@@ -1363,15 +1441,17 @@
     <!-- Wizard Progress Bar -->
     @if (config().wizard?.showProgressBar !== false) {
       <nav
+        class="df-wizard-progress"
         data-wizard-progress
         [attr.data-wizard-total-pages]="totalPages"
         [attr.data-wizard-current-page]="currentPage"
         role="navigation"
         aria-label="Form progress">
 
-        <ol data-wizard-steps>
+        <ol class="df-wizard-steps" data-wizard-steps>
           @for (page of getVisiblePages(); track page.id; let i = $index) {
             <li
+              class="df-wizard-step"
               data-wizard-step
               [attr.data-step-index]="i"
               [attr.data-step-id]="page.id"
@@ -1383,23 +1463,24 @@
 
               <button
                 type="button"
+                class="df-wizard-step-button"
                 data-wizard-step-button
                 (click)="goToPage(i)"
                 [disabled]="!(i <= currentPage || config().wizard?.allowFreeNavigation)"
                 [attr.aria-current]="i === currentPage ? 'step' : null">
-                <span data-wizard-step-number>{{ i + 1 }}</span>
-                <span data-wizard-step-title>{{ page.title }}</span>
+                <span class="df-wizard-step-number" data-wizard-step-number>{{ i + 1 }}</span>
+                <span class="df-wizard-step-title" data-wizard-step-title>{{ page.title }}</span>
               </button>
 
               @if (i < totalPages - 1) {
-                <span data-wizard-step-connector></span>
+                <span class="df-wizard-step-connector" data-wizard-step-connector></span>
               }
             </li>
           }
         </ol>
 
         @if (config().wizard?.showPageNumbers !== false) {
-          <div data-wizard-page-indicator>
+          <div class="df-wizard-page-indicator" data-wizard-page-indicator>
             Step {{ currentPage + 1 }} of {{ totalPages }}
           </div>
         }
@@ -1408,17 +1489,19 @@
 
     <!-- Wizard Page Container -->
     <div
+      class="df-wizard-page-container"
       data-wizard-page-container
       [attr.data-current-page]="currentPage">
 
       @if (getCurrentPageConfig(); as currentPageConfig) {
         <div
+          class="df-wizard-page"
           data-wizard-page
           [attr.data-page-id]="currentPageConfig.id"
           [attr.data-page-index]="currentPage">
 
           @if (currentPageConfig.description) {
-            <div data-wizard-page-description>
+            <div class="df-wizard-page-description" data-wizard-page-description>
               {{ currentPageConfig.description }}
             </div>
           }
@@ -1427,6 +1510,7 @@
           @if (currentPage === 0) {
             @for (group of getUngroupedFields(); track $index) {
               <div
+                class="df-field-row"
                 data-field-row
                 [attr.data-inline-group]="isInlineGroup(group) ? group[0].inlineGroup : null">
                 @for (field of group; track field.name) {
@@ -1442,15 +1526,17 @@
           @for (section of getCurrentPageSections(); track section.id) {
             @if (isSectionVisible(section.id)) {
               <section
+                class="df-section"
                 [id]="getSectionAnchorId(section)"
                 [attr.data-section-id]="section.id"
                 [attr.data-section-hidden]="false">
-                <header data-section-header>{{ section.title }}</header>
+                <header class="df-section-header" data-section-header>{{ section.title }}</header>
                 @if (section.description) {
-                  <div data-section-description>{{ section.description }}</div>
+                  <div class="df-section-description" data-section-description>{{ section.description }}</div>
                 }
                 @for (group of getFieldsForSection(section.id); track $index) {
                   <div
+                    class="df-field-row"
                     data-field-row
                     [attr.data-inline-group]="isInlineGroup(group) ? group[0].inlineGroup : null">
                     @for (field of group; track field.name) {
@@ -1469,12 +1555,14 @@
 
     <!-- Wizard Navigation Buttons -->
     <div
+      class="df-wizard-navigation"
       data-wizard-navigation
       [attr.data-is-first-page]="isFirstPage"
       [attr.data-is-last-page]="isLastPage">
 
       <button
         type="button"
+        class="df-wizard-prev"
         data-wizard-prev
         (click)="prevPage()"
         [disabled]="isFirstPage">
@@ -1484,6 +1572,7 @@
       @if (!isLastPage) {
         <button
           type="button"
+          class="df-wizard-next"
           data-wizard-next
           (click)="nextPage()">
           {{ config().wizard?.nextLabel || 'Next' }}
@@ -1491,6 +1580,7 @@
       } @else {
         <button
           type="submit"
+          class="df-wizard-submit"
           data-wizard-submit
           (click)="submitForm()">
           {{ config().wizard?.submitLabel || 'Submit' }}
@@ -1499,10 +1589,11 @@
     </div>
   } @else {
     <!-- Normal Mode (non-wizard) -->
-    <div data-form-section="fields">
+    <div class="df-form-fields" data-form-section="fields">
       <!-- Ungrouped fields (not assigned to any section) -->
       @for (group of getUngroupedFields(); track $index) {
         <div
+          class="df-field-row"
           data-field-row
           [attr.data-inline-group]="isInlineGroup(group) ? group[0].inlineGroup : null">
           @for (field of group; track field.name) {
@@ -1517,15 +1608,17 @@
       @for (section of getSections(); track section.id) {
         @if (isSectionVisible(section.id)) {
           <section
+            class="df-section"
             [id]="getSectionAnchorId(section)"
             [attr.data-section-id]="section.id"
             [attr.data-section-hidden]="false">
-            <header data-section-header>{{ section.title }}</header>
+            <header class="df-section-header" data-section-header>{{ section.title }}</header>
             @if (section.description) {
-              <div data-section-description>{{ section.description }}</div>
+              <div class="df-section-description" data-section-description>{{ section.description }}</div>
             }
             @for (group of getFieldsForSection(section.id); track $index) {
               <div
+                class="df-field-row"
                 data-field-row
                 [attr.data-inline-group]="isInlineGroup(group) ? group[0].inlineGroup : null">
                 @for (field of group; track field.name) {
@@ -1543,6 +1636,7 @@
       @if (!hasSections() && getUngroupedFields().length === 0) {
         @for (group of getGroupedFields(); track $index) {
           <div
+            class="df-field-row"
             data-field-row
             [attr.data-inline-group]="isInlineGroup(group) ? group[0].inlineGroup : null">
             @for (field of group; track field.name) {

@@ -126,10 +126,39 @@ GitHub Actions auto-deploys to GitHub Pages on push to `main` (`.github/workflow
 - `url-schema.ts`: URL sharing with base64 compression (param: `schema`)
   - Methods: `encodeSchema`, `decodeSchema`, `generateShareUrl`, `getSchemaFromUrl`, `hasSchemaInUrl`, `clearSchemaFromUrl`, `copyShareUrlToClipboard`
 
-### Theming
+### Theming (CUBE CSS)
 
-Default theme (`src/styles/form-themes/default.scss`): Purple headers (#512B58), lavender backgrounds (#E8E0ED), table layout, Arial font.
-Style via attribute selectors: `form[data-form-id]`, `[data-field-row]`, `[data-field-valid="false"]`, etc.
+Default theme (`projects/ngx-dynamic-forms/src/styles/themes/default.scss`): Purple headers (#512B58), lavender backgrounds (#E8E0ED), table layout, Arial font.
+
+**CUBE CSS Pattern**: This library uses the CUBE CSS methodology:
+- **Classes** (`df-*`) → Structural styling (layout, base appearance)
+- **Data attributes** → State/modifiers (valid, dirty, disabled, etc.)
+
+**Styling approaches** (both work, class selectors preferred for new themes):
+```scss
+// Class-based (recommended for new themes)
+.df-field-row { display: flex; }
+.df-field[data-field-valid="false"] .df-input { border-color: red; }
+
+// Data attribute-based (backward compatible)
+[data-field-row] { display: flex; }
+[data-field-valid="false"] input { border-color: red; }
+```
+
+**Key class names**:
+- Form: `.df-form`, `.df-form-fields`, `.df-form-actions`
+- Sections: `.df-section`, `.df-section-header`, `.df-section-description`
+- Fields: `.df-field`, `.df-field-row`, `.df-label`, `.df-input-container`, `.df-input`
+- Field widths: `.df-field-width-1` through `.df-field-width-4`
+- Validation: `.df-validation-error`, `.df-required-indicator`
+- Radio/Checkbox: `.df-radio-group`, `.df-radio-option`, `.df-checkbox-group`, `.df-checkbox-option`
+- Phone: `.df-phone-container`, `.df-phone-country-code`, `.df-phone-number`
+- Table: `.df-table-container`, `.df-table`, `.df-table-row`, `.df-table-cell`, `.df-table-input`
+- Wizard: `.df-wizard-progress`, `.df-wizard-steps`, `.df-wizard-step`, `.df-wizard-navigation`
+
+**State attributes** (use data-* for these):
+- `data-form-valid`, `data-form-dirty`, `data-form-touched`, `data-form-readonly`
+- `data-field-valid`, `data-field-touched`, `data-field-dirty`, `data-field-disabled`, `data-field-hidden`
 
 ### Field Types
 
@@ -275,9 +304,12 @@ src/styles/
 
 ### Extending
 
-**New Field Type**: Add to `FieldType` in interface, render in `dynamic-form.html` (`@switch/@case`), update builder dropdown, add `data-field-type`, theme styles.
+**New Field Type**: Add to `FieldType` in interface, render in `dynamic-form.html` (`@switch/@case`), update builder dropdown, add `data-field-type` and `df-*` classes, theme styles.
 **New Validation**: Add to `ValidationRule`, update `getValidators()` in `dynamic-form.ts`, add to `validationTypes` in `form-builder.ts`, update validation UI.
-**Theme**: Edit `default.scss`, use `data-*` selectors (`[data-field-row]`, `[data-inline-group]`, `[data-field-name]`, `[data-input-container]`).
+**Theme**: Edit `default.scss` using CUBE CSS pattern:
+- Use `df-*` class selectors for structure (`.df-field-row`, `.df-input-container`, `.df-field`)
+- Use `data-*` attribute selectors for state (`[data-field-valid="false"]`, `[data-field-disabled="true"]`)
+- For backward compatibility, add dual selectors: `.df-field-row, [data-field-row] { ... }`
 
 ### Template Limitations
 

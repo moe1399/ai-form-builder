@@ -99,6 +99,7 @@
      ======================================== */
 
   /* Form Container */
+  &.df-form,
   &[data-form-id] {
     max-width: 800px;
     margin: 0 auto;
@@ -153,16 +154,19 @@
   }
 
   /* Fields Section */
+  .df-form-fields,
   [data-form-section="fields"] {
     margin: 0;
   }
 
   /* Section Container */
+  .df-section,
   [data-section-id] {
     margin: 0;
   }
 
   /* Section Headers - Purple background */
+  .df-section-header,
   [data-section-header] {
     background: var(--df-color-primary);
     color: var(--df-color-text-inverse);
@@ -174,11 +178,13 @@
   }
 
   /* Remove header border when followed by description */
+  .df-section-header + .df-section-description,
   [data-section-header] + [data-section-description] {
     margin-top: -1px; /* Merge with header border */
   }
 
   /* Section Description - Purple background, smaller text */
+  .df-section-description,
   [data-section-description] {
     background: var(--df-color-primary);
     color: var(--df-color-text-inverse);
@@ -191,44 +197,53 @@
   }
 
   /* Field Row - Container for one or more fields */
+  .df-field-row,
   [data-field-row] {
     display: flex;
     flex-wrap: nowrap;
     border-bottom: 1px solid var(--df-color-border);
   }
 
+  .df-field-row:last-child,
   [data-field-row]:last-child {
     border-bottom: none;
   }
 
   /* Inline Group - Multiple fields in a row */
+  .df-field-row[data-inline-group] .df-field,
   [data-field-row][data-inline-group] [data-field-name] {
     border-bottom: none;
     border-right: 1px solid var(--df-color-border);
   }
 
+  .df-field-row[data-inline-group] .df-field:last-child,
   [data-field-row][data-inline-group] [data-field-name]:last-child {
     border-right: none;
   }
 
   /* Field width proportions for inline groups */
+  .df-field-row[data-inline-group] .df-field-width-1,
   [data-field-row][data-inline-group] [data-field-width="1"] {
     flex: 1;
   }
 
+  .df-field-row[data-inline-group] .df-field-width-2,
   [data-field-row][data-inline-group] [data-field-width="2"] {
     flex: 2;
   }
 
+  .df-field-row[data-inline-group] .df-field-width-3,
   [data-field-row][data-inline-group] [data-field-width="3"] {
     flex: 3;
   }
 
+  .df-field-row[data-inline-group] .df-field-width-4,
   [data-field-row][data-inline-group] [data-field-width="4"] {
     flex: 4;
   }
 
   /* Individual Field - Table row style */
+  .df-field,
   [data-field-name] {
     display: flex;
     flex-wrap: wrap;
@@ -239,6 +254,7 @@
   }
 
   /* Labels - Left column style */
+  .df-label,
   label[data-label-for] {
     display: flex;
     align-items: center;
@@ -255,6 +271,7 @@
   }
 
   /* Required Indicator */
+  .df-required-indicator,
   [data-required-indicator] {
     color: var(--df-color-error);
     font-size: var(--df-font-size-base);
@@ -262,6 +279,7 @@
   }
 
   /* Input container - Right column style */
+  .df-input-container,
   [data-input-container] {
     flex: 1;
     display: flex;
@@ -272,6 +290,7 @@
   }
 
   /* Input Fields */
+  .df-input,
   input[data-input-type],
   textarea[data-input-type],
   select[data-input-type] {
@@ -283,6 +302,7 @@
     background: var(--df-color-surface);
   }
 
+  .df-input:focus,
   input[data-input-type]:focus,
   textarea[data-input-type]:focus,
   select[data-input-type]:focus {
@@ -291,16 +311,19 @@
     box-shadow: var(--df-shadow-focus);
   }
 
+  textarea.df-input,
   textarea[data-input-type] {
     min-height: var(--df-input-min-height);
     resize: vertical;
   }
 
+  select.df-input,
   select[data-input-type] {
     cursor: pointer;
   }
 
   /* Invalid Field State - excludes table inputs which use cell-level validation */
+  .df-field[data-field-valid="false"] .df-input:not(.df-table-input),
   [data-field-valid="false"] input:not([data-table-input]),
   [data-field-valid="false"] textarea:not([data-table-input]),
   [data-field-valid="false"] select:not([data-table-input]) {
@@ -308,6 +331,7 @@
     background: var(--df-color-error-bg);
   }
 
+  .df-field[data-field-valid="false"] .df-input:not(.df-table-input):focus,
   [data-field-valid="false"] input:not([data-table-input]):focus,
   [data-field-valid="false"] textarea:not([data-table-input]):focus,
   [data-field-valid="false"] select:not([data-table-input]):focus {
@@ -315,6 +339,7 @@
   }
 
   /* Validation Error Messages */
+  .df-validation-error,
   [data-validation-error] {
     color: var(--df-color-error);
     font-size: var(--df-font-size-xs);
@@ -369,6 +394,7 @@
   }
 
   /* Actions Section */
+  .df-form-actions,
   [data-form-section="actions"] {
     display: flex;
     gap: var(--df-spacing-lg);
@@ -379,6 +405,7 @@
   }
 
   /* Buttons */
+  .df-action,
   button[data-action] {
     padding: var(--df-button-padding);
     font-size: var(--df-font-size-sm);
@@ -390,54 +417,65 @@
     color: var(--df-color-text);
   }
 
+  .df-action:hover,
   button[data-action]:hover {
     background: #e8e8e8;
   }
 
+  .df-action:active,
   button[data-action]:active {
     background: var(--df-color-border-light);
   }
 
+  .df-action-save,
   button[data-action="save"] {
     background: var(--df-color-surface-hover);
     color: var(--df-color-text);
   }
 
+  .df-action-save:hover,
   button[data-action="save"]:hover {
     background: #e8e8e8;
   }
 
+  .df-action-submit,
   button[data-action="submit"] {
     background: var(--df-color-primary);
     color: var(--df-color-text-inverse);
     border-color: var(--df-color-primary);
   }
 
+  .df-action-submit:hover,
   button[data-action="submit"]:hover {
     background: var(--df-color-primary-dark);
   }
 
+  .df-action-submit[data-can-submit="false"],
   button[data-action="submit"][data-can-submit="false"] {
     opacity: 0.5;
     cursor: not-allowed;
   }
 
+  .df-action-submit[data-can-submit="false"]:hover,
   button[data-action="submit"][data-can-submit="false"]:hover {
     background: var(--df-color-primary);
   }
 
   /* Fields without labels - input takes full width */
+  .df-no-label .df-input-container,
   [data-has-label="false"] [data-input-container] {
     flex: 1;
     width: 100%;
   }
 
   /* Single Checkbox fields (boolean toggle without options) */
+  [data-field-type="checkbox"]:has(.df-checkbox-single),
   [data-field-type="checkbox"]:has([data-checkbox-single]) {
     flex-direction: row;
     align-items: center;
   }
 
+  [data-field-type="checkbox"]:has(.df-checkbox-single) .df-label,
   [data-field-type="checkbox"]:has([data-checkbox-single]) label[data-label-for] {
     flex: none;
     min-width: auto;
@@ -445,12 +483,14 @@
     border-right: none;
   }
 
+  .df-checkbox-single,
   [data-checkbox-single] {
     width: auto;
     margin-right: var(--df-spacing-md);
   }
 
   /* Radio Group */
+  .df-radio-group,
   [data-radio-group] {
     display: flex;
     flex-direction: column;
@@ -458,6 +498,7 @@
     width: 100%;
   }
 
+  .df-radio-option,
   [data-radio-option] {
     display: flex;
     align-items: center;
@@ -468,14 +509,17 @@
     transition: background 0.15s;
   }
 
+  .df-radio-option:last-child,
   [data-radio-option]:last-child {
     border-bottom: none;
   }
 
+  .df-radio-option:hover,
   [data-radio-option]:hover {
     background: var(--df-color-surface-hover);
   }
 
+  .df-radio-input,
   [data-radio-input] {
     width: 16px;
     height: 16px;
@@ -485,6 +529,7 @@
     accent-color: var(--df-color-primary);
   }
 
+  .df-radio-label,
   [data-radio-label] {
     font-size: var(--df-font-size-sm);
     color: var(--df-color-text);
@@ -492,6 +537,7 @@
   }
 
   /* Checkbox Group (multiple selection) */
+  .df-checkbox-group,
   [data-checkbox-group] {
     display: flex;
     flex-direction: column;
@@ -499,6 +545,7 @@
     width: 100%;
   }
 
+  .df-checkbox-option,
   [data-checkbox-option] {
     display: flex;
     align-items: center;
@@ -509,18 +556,22 @@
     transition: background 0.15s;
   }
 
+  .df-checkbox-option:last-child,
   [data-checkbox-option]:last-child {
     border-bottom: none;
   }
 
+  .df-checkbox-option:hover,
   [data-checkbox-option]:hover {
     background: var(--df-color-surface-hover);
   }
 
+  .df-checkbox-option[data-option-selected="true"],
   [data-checkbox-option][data-option-selected="true"] {
     background: var(--df-color-background-light);
   }
 
+  .df-checkbox-input,
   [data-checkbox-input] {
     width: 16px;
     height: 16px;
@@ -530,6 +581,7 @@
     accent-color: var(--df-color-primary);
   }
 
+  .df-checkbox-label,
   [data-checkbox-label] {
     font-size: var(--df-font-size-sm);
     color: var(--df-color-text);
@@ -537,30 +589,37 @@
   }
 
   /* Checkbox label markdown styles */
+  .df-checkbox-label a,
   [data-checkbox-label] a {
     color: var(--df-color-primary);
     text-decoration: underline;
   }
 
+  .df-checkbox-label a:hover,
   [data-checkbox-label] a:hover {
     color: var(--df-color-primary-dark);
   }
 
+  .df-checkbox-label strong,
   [data-checkbox-label] strong {
     font-weight: bold;
   }
 
+  .df-checkbox-label em,
   [data-checkbox-label] em {
     font-style: italic;
   }
 
   /* Radio/Checkbox fields - adjust input container */
+  [data-field-type="radio"] .df-input-container,
   [data-field-type="radio"] [data-input-container],
+  [data-field-type="checkbox"]:has(.df-checkbox-group) .df-input-container,
   [data-field-type="checkbox"]:has([data-checkbox-group]) [data-input-container] {
     padding: 0;
   }
 
   /* Info Icon */
+  .df-info-icon,
   [data-info-icon] {
     display: inline-flex;
     align-items: center;
@@ -577,16 +636,19 @@
     position: relative;
   }
 
+  .df-info-icon:hover,
   [data-info-icon]:hover {
     background: rgba(81, 43, 88, 0.1);
   }
 
+  .df-info-icon[data-popover-open="true"],
   [data-info-icon][data-popover-open="true"] {
     background: var(--df-color-primary);
     color: var(--df-color-text-inverse);
   }
 
   /* Popover */
+  .df-popover,
   [data-popover] {
     position: absolute;
     top: 50%;
@@ -608,10 +670,12 @@
     color: var(--df-color-text);
   }
 
+  .df-popover-content,
   [data-popover-content] {
     flex: 1;
   }
 
+  .df-popover-close,
   [data-popover-close] {
     flex-shrink: 0;
     padding: 0;
@@ -634,6 +698,7 @@
      ======================================== */
 
   /* Phone field container */
+  .df-phone-container,
   [data-phone-container] {
     display: flex;
     gap: var(--df-spacing-md);
@@ -642,6 +707,7 @@
   }
 
   /* Country code select - override global width: 100% */
+  .df-phone-country-code,
   select[data-phone-country-code] {
     width: auto !important;
     min-width: 180px;
@@ -655,6 +721,7 @@
     flex: 0 0 auto;
   }
 
+  .df-phone-country-code:focus,
   select[data-phone-country-code]:focus {
     outline: none;
     border-color: var(--df-color-primary);
@@ -662,6 +729,7 @@
   }
 
   /* Phone number input - override global width: 100% */
+  .df-phone-number,
   input[data-phone-number] {
     width: auto !important;
     flex: 1 1 auto;
@@ -673,6 +741,7 @@
     background: var(--df-color-surface);
   }
 
+  .df-phone-number:focus,
   input[data-phone-number]:focus {
     outline: none;
     border-color: var(--df-color-primary);
@@ -680,11 +749,13 @@
   }
 
   /* Invalid phone field state */
+  .df-phone-container[data-phone-valid="false"] .df-phone-number,
   [data-phone-valid="false"] [data-phone-number] {
     border-color: var(--df-color-error);
     background: var(--df-color-error-bg);
   }
 
+  .df-phone-container[data-phone-valid="false"] .df-phone-number:focus,
   [data-phone-valid="false"] [data-phone-number]:focus {
     box-shadow: var(--df-shadow-focus-error);
   }
@@ -774,6 +845,7 @@
      ======================================== */
 
   /* Info block container */
+  .df-info-block,
   [data-info-block] {
     flex: 1;
     background: var(--df-color-background);
@@ -781,6 +853,7 @@
   }
 
   /* Info content */
+  .df-info-content,
   [data-info-content] {
     padding: var(--df-spacing-xl) var(--df-spacing-2xl);
     font-size: var(--df-font-size-sm);
@@ -789,20 +862,24 @@
   }
 
   /* Info block markdown styles */
+  .df-info-content strong,
   [data-info-content] strong {
     color: var(--df-color-primary);
     font-weight: bold;
   }
 
+  .df-info-content em,
   [data-info-content] em {
     font-style: italic;
   }
 
+  .df-info-content a,
   [data-info-content] a {
     color: var(--df-color-primary);
     text-decoration: underline;
   }
 
+  .df-info-content a:hover,
   [data-info-content] a:hover {
     color: var(--df-color-primary-dark);
   }
