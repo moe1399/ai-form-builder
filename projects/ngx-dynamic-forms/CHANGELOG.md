@@ -1,3 +1,21 @@
+## [0.11.5](https://github.com/moe1399/ngx-dynamic-forms/compare/v0.11.3...v0.11.5) (2026-01-24)
+
+
+### Bug Fixes
+
+* **fileupload:** replace Unicode emoji icon with SVG for consistent rendering ([ecae6ff](https://github.com/moe1399/ngx-dynamic-forms/commit/ecae6fff604e2810af2b0ec504d9139123fc8f21)), closes [#128206](https://github.com/moe1399/ngx-dynamic-forms/issues/128206)
+
+
+
+## [0.11.4](https://github.com/moe1399/ngx-dynamic-forms/compare/v0.11.3...v0.11.4) (2026-01-24)
+
+
+### Bug Fixes
+
+* **fileupload:** replace Unicode emoji icon with SVG for consistent rendering ([ecae6ff](https://github.com/moe1399/ngx-dynamic-forms/commit/ecae6fff604e2810af2b0ec504d9139123fc8f21)), closes [#128206](https://github.com/moe1399/ngx-dynamic-forms/issues/128206)
+
+
+
 ## [0.11.3](https://github.com/moe1399/ngx-dynamic-forms/compare/v0.11.2...v0.11.3) (2026-01-20)
 
 
