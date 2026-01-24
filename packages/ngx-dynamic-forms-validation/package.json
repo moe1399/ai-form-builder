@@ -16,9 +16,10 @@
     "dist"
   ],
   "scripts": {
-    "build": "npm run build:esm && npm run build:cjs",
+    "build": "npm run build:esm && npm run build:cjs && npm run build:schema",
     "build:esm": "tsc -p tsconfig.esm.json",
     "build:cjs": "tsc -p tsconfig.cjs.json",
+    "build:schema": "ts-json-schema-generator --path src/types.ts --type FormConfig --tsconfig tsconfig.esm.json -o dist/form-config.schema.json",
     "clean": "rm -rf dist",
     "prepublishOnly": "npm run clean && npm run build"
   },
@@ -33,6 +34,7 @@
   "license": "MIT",
   "devDependencies": {
     "@types/node": "^22.0.0",
+    "ts-json-schema-generator": "^2.4.0",
     "typescript": "^5.0.0"
   },
   "engines": {
