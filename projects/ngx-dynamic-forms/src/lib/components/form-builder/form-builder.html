@@ -359,7 +359,12 @@
             [fileUploadHandler]="previewFileUploadHandler"
             [fileDownloadHandler]="previewFileDownloadHandler"
             [fileRemoveHandler]="previewFileRemoveHandler"
+            (valueChanges)="onPreviewValueChange($event)"
           />
+        </div>
+        <div class="live-preview-data">
+          <h4>Form Data</h4>
+          <pre class="json-preview"><code>{{ livePreviewFormData() | json }}</code></pre>
         </div>
       } @else if (versionPreviewMode() && previewedVersionConfig()) {
         <!-- Version Preview Banner -->

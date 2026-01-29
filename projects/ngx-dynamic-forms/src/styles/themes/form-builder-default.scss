@@ -599,6 +599,39 @@
     min-height: 300px;
   }
 
+  .live-preview-data {
+    margin-top: var(--fb-spacing-xl);
+    border: 1px solid var(--fb-color-border);
+    background: var(--fb-color-surface);
+
+    h4 {
+      margin: 0;
+      padding: var(--fb-spacing-md) var(--fb-spacing-lg);
+      font-size: var(--fb-font-size-base);
+      font-weight: bold;
+      text-transform: uppercase;
+      color: var(--fb-color-text-inverse);
+      background: var(--fb-color-primary);
+    }
+
+    .json-preview {
+      margin: 0;
+      padding: var(--fb-spacing-lg);
+      background: var(--fb-color-surface-alt);
+      max-height: 300px;
+      overflow: auto;
+      font-size: var(--fb-font-size-sm);
+      line-height: 1.4;
+
+      code {
+        font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+        color: var(--fb-color-text);
+        white-space: pre-wrap;
+        word-break: break-word;
+      }
+    }
+  }
+
   /* ========================================
      Preview Toolbar Button
      ======================================== */

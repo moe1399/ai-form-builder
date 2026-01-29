@@ -129,6 +129,7 @@ export class NgxFormBuilder {
   // Live preview state
   livePreviewMode = signal<boolean>(false);
   livePreviewReadOnly = signal<boolean>(false);
+  livePreviewFormData = signal<Record<string, unknown>>({});
 
   // Field types for dropdown
   fieldTypes: FieldType[] = ['text', 'email', 'number', 'textarea', 'date', 'daterange', 'select', 'radio', 'checkbox', 'table', 'info', 'datagrid', 'phone', 'formref', 'fileupload', 'autocomplete'];
@@ -3054,6 +3055,7 @@ export class NgxFormBuilder {
   exitLivePreviewMode(): void {
     this.livePreviewMode.set(false);
     this.livePreviewReadOnly.set(false);
+    this.livePreviewFormData.set({});
   }
 
   /**
@@ -3061,6 +3063,13 @@ export class NgxFormBuilder {
    */
   toggleLivePreviewReadOnly(): void {
     this.livePreviewReadOnly.update((v) => !v);
+  }
+
+  /**
+   * Handle value changes from the preview form
+   */
+  onPreviewValueChange(data: Record<string, unknown>): void {
+    this.livePreviewFormData.set(data);
   }
 
   /**
