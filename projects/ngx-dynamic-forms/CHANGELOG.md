@@ -1,3 +1,14 @@
+# [0.12.0](https://github.com/moe1399/ngx-dynamic-forms/compare/v0.11.5...v0.12.0) (2026-01-29)
+
+
+### Features
+
+* **form-builder:** add live preview mode for testing forms ([9ed458f](https://github.com/moe1399/ngx-dynamic-forms/commit/9ed458ffc854a4f93dc657f9418cba0e0e46bcaf))
+* **markdown:** add markdown support for section descriptions with images ([ac3fd34](https://github.com/moe1399/ngx-dynamic-forms/commit/ac3fd342f33d0afd137181cf4ad6a50927ea2a89))
+* **validation:** add JSON schema generation for .NET model sync ([e238152](https://github.com/moe1399/ngx-dynamic-forms/commit/e2381528c07fb3af8996ddb5a4954aae9ce6458f))
+
+
+
 ## [0.11.5](https://github.com/moe1399/ngx-dynamic-forms/compare/v0.11.3...v0.11.5) (2026-01-24)
 
 
