@@ -699,7 +699,7 @@
                                             [attr.data-formref-section-id]="section.id">
                       <header class="df-formref-section-header" >{{ section.title }}</header>
                       @if (section.description) {
-                        <div class="df-formref-section-description" >{{ section.description }}</div>
+                        <div class="df-formref-section-description" [innerHTML]="parseMarkdown(section.description)"></div>
                       }
                       <!-- Fields in this section -->
                       @for (embeddedField of getFormRefFields(field); track embeddedField.name) {
@@ -1439,7 +1439,7 @@
                 [attr.data-section-hidden]="false">
                 <header class="df-section-header" >{{ section.title }}</header>
                 @if (section.description) {
-                  <div class="df-section-description" >{{ section.description }}</div>
+                  <div class="df-section-description" [innerHTML]="parseMarkdown(section.description)"></div>
                 }
                 @for (group of getFieldsForSection(section.id); track $index) {
                   <div
@@ -1515,7 +1515,7 @@
             [attr.data-section-hidden]="false">
             <header class="df-section-header" >{{ section.title }}</header>
             @if (section.description) {
-              <div class="df-section-description" >{{ section.description }}</div>
+              <div class="df-section-description" [innerHTML]="parseMarkdown(section.description)"></div>
             }
             @for (group of getFieldsForSection(section.id); track $index) {
               <div

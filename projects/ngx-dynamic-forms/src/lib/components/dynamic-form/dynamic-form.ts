@@ -2278,7 +2278,7 @@ export class DynamicForm implements OnInit, OnDestroy {
 
   /**
    * Parse markdown content to HTML
-   * Supports: **bold**, *italic*, [links](url), line breaks
+   * Supports: **bold**, *italic*, ![images](url), [links](url), line breaks
    */
   parseMarkdown(content: string | undefined): string {
     if (!content) return '';
@@ -2294,6 +2294,8 @@ export class DynamicForm implements OnInit, OnDestroy {
       // Italic: *text* or _text_
       .replace(/\*(.+?)\*/g, '<em>$1</em>')
       .replace(/_(.+?)_/g, '<em>$1</em>')
+      // Images: ![alt](url) - must be before links
+      .replace(/!\[([^\]]*)\]\(([^)]+)\)/g, '<img src="$2" alt="$1">')
       // Links: [text](url)
       .replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank" rel="noopener">$1</a>')
       // Line breaks

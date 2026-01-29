@@ -190,6 +190,31 @@
     border-bottom: 1px solid var(--df-color-border);
   }
 
+  /* Section Description markdown styles */
+  .df-section-description strong {
+    font-weight: bold;
+  }
+
+  .df-section-description em {
+    font-style: italic;
+  }
+
+  .df-section-description a {
+    color: var(--df-color-text-inverse);
+    text-decoration: underline;
+  }
+
+  .df-section-description a:hover {
+    opacity: 0.8;
+  }
+
+  .df-section-description img {
+    max-width: 100%;
+    height: auto;
+    margin: var(--df-spacing-sm) 0;
+    border-radius: var(--df-border-radius);
+  }
+
   /* Field Row - Container for one or more fields */
   .df-field-row {
     display: flex;
@@ -799,6 +824,13 @@
     color: var(--df-color-primary-dark);
   }
 
+  .df-info-content img {
+    max-width: 100%;
+    height: auto;
+    margin: var(--df-spacing-sm) 0;
+    border-radius: var(--df-border-radius);
+  }
+
   /* ========================================
      Form Reference (formref) Field Styles
      ======================================== */
@@ -853,6 +885,31 @@
     line-height: 1.4;
     margin: 0;
     border-bottom: 1px solid var(--df-color-border);
+  }
+
+  /* Formref Section Description markdown styles */
+  .df-formref-section-description strong {
+    font-weight: bold;
+  }
+
+  .df-formref-section-description em {
+    font-style: italic;
+  }
+
+  .df-formref-section-description a {
+    color: var(--df-color-text-inverse);
+    text-decoration: underline;
+  }
+
+  .df-formref-section-description a:hover {
+    opacity: 0.8;
+  }
+
+  .df-formref-section-description img {
+    max-width: 100%;
+    height: auto;
+    margin: var(--df-spacing-sm) 0;
+    border-radius: var(--df-border-radius);
   }
 
   /* Formref Field */
